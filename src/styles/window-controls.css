@@ -1,0 +1,50 @@
+@layer components {
+  .window-top-bar {
+    -webkit-app-region: drag;
+  }
+
+  .window-controls {
+    -webkit-app-region: no-drag;
+
+    @apply w-30 h-full absolute right-10 rtl:left-10 bg-primary flex flex-row items-center justify-evenly rounded-b-xl gap-2;
+
+    .before,
+    .after {
+      @apply absolute top-0 bg-primary w-7 h-6 overflow-hidden;
+    }
+
+    .before {
+      @apply -left-6;
+
+      &::before {
+        content: "";
+        @apply absolute -bottom-[28px] -left-[28px] w-13 h-13 bg-white rounded-full;
+      }
+    }
+
+    .after {
+      @apply -right-6;
+
+      &::before {
+        content: "";
+        @apply absolute -bottom-[28px] -right-[28px] w-13 h-13 bg-white rounded-full;
+      }
+    }
+
+    .control {
+      @apply !bg-white !w-6 !h-6 !rounded-full !text-primary;
+
+      &.minimize {
+        @apply hover:!bg-yellow-500 hover:!text-white;
+      }
+
+      &.maximize {
+        @apply hover:!bg-green-500 hover:!text-white;
+      }
+
+      &.close {
+        @apply hover:!bg-red-500 hover:!text-white;
+      }
+    }
+  }
+}
