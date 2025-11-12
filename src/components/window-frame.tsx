@@ -68,7 +68,7 @@ function WindowFrame({ children }: { children: React.ReactNode }) {
           <div className="after"></div>
         </div>
       </div>
-      {children}
+      <div className="window-content">{children}</div>
     </div>
   );
 }
