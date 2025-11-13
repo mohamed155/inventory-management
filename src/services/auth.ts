@@ -1,14 +1,16 @@
-import { redirect } from 'react-router';
-import type { User } from '@/models/user.ts';
-import { getPrisma } from '@/services/prisma.ts';
+import type { UserModel } from '@/models/user.ts';
 
-export const isAuthenticated = () => {
-  throw redirect('signup');
+export const createUser = async (user: UserModel) => {
+  const createUser = window.electronAPI.createUser;
+  return await createUser(user);
 };
 
-export const createUser = (user: User) => {
-  const prisma = getPrisma();
-  prisma.user.create({
-    data: user,
-  });
+export const getUserByUsername = async (username: string) => {
+  const getUserByUsername = window.electronAPI.getUserByUsername;
+  return await getUserByUsername(username);
+};
+
+export const logout = () => {
+  localStorage.clear();
+  window.location.href = '/login';
 };

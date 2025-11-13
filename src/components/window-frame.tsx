@@ -3,20 +3,6 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/animate-ui/components/buttons/button.tsx';
 
-declare global {
-  interface Window {
-    electronAPI: {
-      isMaximized: () => Promise<boolean>;
-      onWindowMaximized: (callback: (isMaximized: boolean) => void) => void;
-
-      closeWindow: () => void;
-      maximizeWindow: () => void;
-      minimizeWindow: () => void;
-      restoreWindow: () => void;
-    };
-  }
-}
-
 function WindowFrame({ children }: { children: React.ReactNode }) {
   const [isMaximized, setIsMaximized] = useState(false);
 

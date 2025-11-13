@@ -1,9 +1,6 @@
-export type User = {
-  id?: string;
-  firstname: string;
-  lastname: string;
-  username: string;
-  password: string;
-};
+import type { User } from '../../generated/prisma/client.ts';
 
-export type CurrentUser = Omit<User, 'password'>;
+export type UserModel = Omit<User, 'createdAt' | 'updatedAt' | 'id'> & {
+  id?: string;
+};
+export type CurrentUser = Omit<User, 'password' | 'createdAt' | 'updatedAt'>;

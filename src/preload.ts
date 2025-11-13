@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { User } from '../generated/prisma/client.ts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // properties
@@ -10,9 +11,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(isMaximized),
     ),
 
-  // methods
+  // window methods
   closeWindow: () => ipcRenderer.send('close-window'),
   maximizeWindow: () => ipcRenderer.send('maximize-window'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   restoreWindow: () => ipcRenderer.send('restore-window'),
+
+  // prisma actions
+  createUser: (user: User) => ipcRenderer.invoke('createUser', user),
+  getUsers: () => ipcRenderer.invoke('getUsers'),
+  getUserById: (id: number) => ipcRenderer.invoke('getUserById', id),
+  getUserByUsername: (username: string) =>
+    ipcRenderer.invoke('getUserByUsername', username),
 });

@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Activity, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import z from 'zod';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -17,7 +16,6 @@ import { useCurrentUserStore } from '@/store/user.store.ts';
 
 function Signup() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const setCurrentUser = useCurrentUserStore(
     (state: any) => state.setCurrentUser,
   );
@@ -26,8 +24,8 @@ function Signup() {
     () =>
       z
         .object({
-          firstName: z.string().min(1, t('First name is required')),
-          lastName: z.string().min(1, t('Last name is required')),
+          firstname: z.string().min(1, t('First name is required')),
+          lastname: z.string().min(1, t('Last name is required')),
           username: z.string().min(1, t('Username is required')),
           password: z
             .string()
@@ -46,24 +44,28 @@ function Signup() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      firstname: '',
+      lastname: '',
       username: '',
       password: '',
       confirmPassword: '',
     },
   });
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     const user = form.getValues();
-    createUser({
-      firstname: user.firstName,
-      lastname: user.lastName,
+    await setCurrentUser({
+      firstname: user.firstname,
+      lastname: user.lastname,
+      username: user.username,
+    });
+    await createUser({
+      firstname: user.firstname,
+      lastname: user.lastname,
       username: user.username,
       password: user.password,
     });
-    setCurrentUser(form.getValues());
-    navigate('/dashboard');
+    window.location.href = '/';
   };
 
   return (
@@ -77,7 +79,7 @@ function Signup() {
           <FieldGroup>
             <div className="grid grid-cols-2 gap-4">
               <Controller
-                name="firstName"
+                name="firstname"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -94,7 +96,7 @@ function Signup() {
                 )}
               />
               <Controller
-                name="lastName"
+                name="lastname"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
