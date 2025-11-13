@@ -23,4 +23,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getUserById: (id: number) => ipcRenderer.invoke('getUserById', id),
   getUserByUsername: (username: string) =>
     ipcRenderer.invoke('getUserByUsername', username),
+  getUsersCount: () => ipcRenderer.invoke('getUsersCount'),
 });

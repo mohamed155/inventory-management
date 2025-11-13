@@ -10,6 +10,11 @@ export const getUserByUsername = async (username: string) => {
   return await getUserByUsername(username);
 };
 
+export const getUsersCount = async () => {
+  const getUsersCount = window.electronAPI.getUsersCount;
+  return await getUsersCount();
+};
+
 export const logout = () => {
   localStorage.clear();
   window.location.href = '/login';

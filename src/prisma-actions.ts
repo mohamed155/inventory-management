@@ -18,6 +18,10 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     });
   });
 
+  ipcMain.handle('getUsersCount', () => {
+    return prisma.user.count();
+  });
+
   ipcMain.handle('createUser', (_, user) => {
     return prisma.user.create({
       data: user,
