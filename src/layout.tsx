@@ -1,10 +1,15 @@
 import { Outlet } from 'react-router';
+import Sidenav from '@/components/sidenav.tsx';
 
 function Layout() {
   return (
-    <div>
-      <h1>Layout</h1>
-      <Outlet />
+    <div className="flex h-full w-full">
+      <Sidenav />
+      <div className="w-full">
+        <div className="p-5 bg-neutral-100 h-full w-full rounded-md">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 }

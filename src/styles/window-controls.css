@@ -6,7 +6,7 @@
   .window-controls {
     -webkit-app-region: no-drag;
 
-    @apply w-30 h-full absolute right-10 rtl:left-10 bg-primary flex flex-row items-center justify-evenly rounded-b-xl gap-2;
+    @apply w-30 h-9 absolute right-10 top-0 rtl:left-10 bg-primary flex flex-row items-center justify-evenly rounded-b-xl gap-2;
 
     .before,
     .after {
@@ -49,6 +49,6 @@
   }
 
   .window-content {
-    height: calc(100vh - 40px);
+    height: calc(100vh - 13 * var(--spacing));
   }
 }

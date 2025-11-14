@@ -1,7 +1,13 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import Layout from '@/layout.tsx';
+import Customers from '@/pages/customers.tsx';
 import Dashboard from '@/pages/dashboard.tsx';
 import Login from '@/pages/login.tsx';
+import Products from '@/pages/products.tsx';
+import Providers from '@/pages/providers.tsx';
+import Purchases from '@/pages/purchases.tsx';
+import Sales from '@/pages/sales.tsx';
+import Settings from '@/pages/settings.tsx';
 import Signup from '@/pages/signup.tsx';
 import { getUsersCount } from '@/services/auth.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
@@ -39,6 +45,30 @@ function Router() {
         {
           path: 'dashboard',
           element: <Dashboard />,
+        },
+        {
+          path: 'products',
+          element: <Products />,
+        },
+        {
+          path: 'purchases',
+          element: <Purchases />,
+        },
+        {
+          path: 'sales',
+          element: <Sales />,
+        },
+        {
+          path: 'customers',
+          element: <Customers />,
+        },
+        {
+          path: 'providers',
+          element: <Providers />,
+        },
+        {
+          path: 'settings',
+          element: <Settings />,
         },
       ],
     },
