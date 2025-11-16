@@ -20,3 +20,93 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  quantity    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  firstname String
+  lastname  String
+  phone     String   @unique
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Provider {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Purchase {
+  id         String   @id @default(uuid())
+  userId     String
+  providerId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id])
+  provider Provider       @relation(fields: [providerId], references: [id])
+  items    PurchaseItem[]
+
+  @@index([userId])
+  @@index([providerId])
+}
+
+model PurchaseItem {
+  id         String  @id @default(uuid())
+  purchaseId String
+  productId  String
+  quantity   Int
+  buyPrice   Decimal @db.Decimal(10, 2)
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@index([purchaseId])
+  @@index([productId])
+}
+
+model Sale {
+  id            String   @id @default(uuid())
+  userId        String
+  customerId    String
+  invoiceNumber Int      @default(autoincrement())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id])
+  customer Customer   @relation(fields: [customerId], references: [id])
+  items    SaleItem[]
+
+  @@index([userId])
+  @@index([customerId])
+}
+
+model SaleItem {
+  id        String  @id @default(uuid())
+  saleId    String
+  productId String
+  quantity  Int
+  sellPrice Decimal @db.Decimal(10, 2)
+
+  sale    Sale    @relation(fields: [saleId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([saleId])
+  @@index([productId])
+}

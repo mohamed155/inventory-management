@@ -13,6 +13,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button.tsx';
+import { cn } from '@/lib/utils.ts';
 import { logout } from '@/services/auth.ts';
 
 function MenuItem({
@@ -102,7 +103,24 @@ function Sidenav() {
           onClick={() => navigate('/settings')}
         />
         <Button
-          className={`w-full shadow-none bg-white justify-start font-semibold flex px-3 py-2 hover:bg-red-500/10 rounded-md text-red-700 text-sm align-center mb-1 cursor-pointer transition`}
+          className={cn(
+            'w-full',
+            'shadow-none',
+            'bg-white',
+            'justify-start',
+            'font-semibold',
+            'flex',
+            'px-3',
+            'py-2',
+            'hover:bg-red-500/10',
+            'rounded-md',
+            'text-red-700',
+            'text-sm',
+            'align-center',
+            'mb-1',
+            'cursor-pointer',
+            'transition',
+          )}
           onClick={logout}
         >
           <div className="mr-2 flex justify-center items-center">
