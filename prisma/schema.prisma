@@ -12,13 +12,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   firstname String
   lastname  String
-  username  String   @unique
+  username  String     @unique
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  purchases Purchase[]
+  sales     Sale[]
 }
 
 model Product {
@@ -41,23 +43,27 @@ model Customer {
   address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  sales     Sale[]
 }
 
 model Provider {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
-  phone     String   @unique
+  phone     String     @unique
   address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  purchases Purchase[]
 }
 
 model Purchase {
-  id         String   @id @default(uuid())
-  userId     String
-  providerId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  userId      String
+  providerId  String
+  paidAmount  Float
+  totalAmount Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user     User           @relation(fields: [userId], references: [id])
   provider Provider       @relation(fields: [providerId], references: [id])
@@ -68,11 +74,11 @@ model Purchase {
 }
 
 model PurchaseItem {
-  id         String  @id @default(uuid())
+  id         String @id @default(uuid())
   purchaseId String
   productId  String
   quantity   Int
-  buyPrice   Decimal @db.Decimal(10, 2)
+  buyPrice   Float
 
   purchase Purchase @relation(fields: [purchaseId], references: [id])
   product  Product  @relation(fields: [productId], references: [id])
@@ -82,12 +88,14 @@ model PurchaseItem {
 }
 
 model Sale {
-  id            String   @id @default(uuid())
-  userId        String
-  customerId    String
-  invoiceNumber Int      @default(autoincrement())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(uuid())
+  userId      String
+  customerId  String
+  paidAmount  Float
+  discount    Float
+  totalAmount Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user     User       @relation(fields: [userId], references: [id])
   customer Customer   @relation(fields: [customerId], references: [id])
@@ -98,11 +106,11 @@ model Sale {
 }
 
 model SaleItem {
-  id        String  @id @default(uuid())
+  id        String @id @default(uuid())
   saleId    String
   productId String
   quantity  Int
-  sellPrice Decimal @db.Decimal(10, 2)
+  sellPrice Float
 
   sale    Sale    @relation(fields: [saleId], references: [id])
   product Product @relation(fields: [productId], references: [id])
