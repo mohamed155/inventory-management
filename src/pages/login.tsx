@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Activity, useMemo } from 'react';
+import { Activity, useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import z from 'zod';
 import { Button } from '@/components/ui/button.tsx';
@@ -12,11 +13,12 @@ import {
   FieldLabel,
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
-import { getUserByUsername } from '@/services/auth.ts';
+import { getUsersCount, signIn } from '@/services/auth.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
 
 function Login() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const setCurrentUser = useCurrentUserStore(
     (state: any) => state.setCurrentUser,
   );
@@ -32,6 +34,14 @@ function Login() {
     [t],
   );
 
+  useEffect(() => {
+    getUsersCount().then((count) => {
+      if (count === 0) {
+        navigate('/signup');
+      }
+    });
+  }, [navigate]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,8 +52,8 @@ function Login() {
 
   const onSubmit = async () => {
     const loginValue = form.getValues();
-    const user = await getUserByUsername(loginValue.username);
-    if (user && user.password === loginValue.password) {
+    const user = await signIn(loginValue.username, loginValue.password);
+    if (user) {
       await setCurrentUser({
         firstname: user.firstname,
         lastname: user.lastname,

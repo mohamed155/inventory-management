@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import type { User } from '../../generated/prisma/client.ts';
 
 export const getAllUsers = (prisma: PrismaClient) => {
@@ -21,8 +22,26 @@ export const getUsersCount = (prisma: PrismaClient) => {
   return prisma.user.count();
 };
 
-export const createUser = (prisma: PrismaClient, user: User) => {
+export const createUser = async (prisma: PrismaClient, user: User) => {
+  const hashedPassword = await bcrypt.hash(user.password, 10);
+
   return prisma.user.create({
-    data: user,
+    data: { ...user, password: hashedPassword },
   });
+};
+
+export const signIn = async (
+  prisma: PrismaClient,
+  username: string,
+  password: string,
+) => {
+  console.log(username, password);
+  const user = await getUserByUsername(prisma, username);
+  console.log(user);
+  const isMatch = await bcrypt.compare(password, user?.password || '');
+  console.log(isMatch);
+  if (user && isMatch) {
+    return user;
+  }
+  return null;
 };

@@ -1,13 +1,14 @@
 import type { PrismaClient } from '@prisma/client';
 import { ipcMain } from 'electron';
+import type { User } from '../generated/prisma/client.ts';
 import {
   createUser,
   getAllUsers,
   getUserById,
   getUserByUsername,
   getUsersCount,
-} from '@/prisma/users.prisma.ts';
-import type { User } from '../generated/prisma/client.ts';
+  signIn,
+} from './prisma/users.prisma.ts';
 
 export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('getUsers', () => getAllUsers(prisma));
@@ -17,4 +18,7 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('getUsersCount', () => getUsersCount(prisma));
   ipcMain.handle('createUser', (_, user: User) => createUser(prisma, user));
+  ipcMain.handle('signIn', (_, username, password) =>
+    signIn(prisma, username, password),
+  );
 };

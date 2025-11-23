@@ -17,6 +17,7 @@ declare global {
       getUserByUsername: (username: string) => Promise<User | null>;
       getUsersCount: () => Promise<number>;
       createUser: (user: UserModel) => Promise<User>;
+      signIn: (username: string, password: string) => Promise<User | null>;
     };
   }
 }
