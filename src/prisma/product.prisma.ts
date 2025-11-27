@@ -6,11 +6,15 @@ export const getAllProducts = (
   prisma: PrismaClient,
   { page, orderDirection, orderProperty, filter }: DataParams<Product>,
 ) => {
+  console.log('filter:');
+  console.log({ page, orderDirection, orderProperty, filter });
   return prisma.product.findMany({
-    where: Object.entries(filter).map(([key, value]) => ({
-      [key]: { contains: value },
-    })),
-    orderBy: { [orderProperty]: orderDirection },
+    where: filter
+      ? Object.entries(filter).map(([key, value]) => ({
+          [key]: { contains: value },
+        }))
+      : undefined,
+    orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
     skip: (page - 1) * 10,
     take: 10,
   });

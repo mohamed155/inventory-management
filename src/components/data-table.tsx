@@ -8,8 +8,8 @@ import {
   type PaginationState,
   useReactTable,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp } from 'lucide-react';
-import { Activity, useMemo, useState } from 'react';
+import { MoveDown, MoveUp } from 'lucide-react';
+import { Activity, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { uuid } from 'zod';
 import {
   Pagination,
@@ -32,18 +32,32 @@ import {
 function DataTable<T>({
   data,
   columns,
+  pageChanged,
 }: {
-  data: T[];
+  data: T[] | undefined;
   columns: ColumnDef<T>[];
+  pageChanged?: (page: number) => void;
 }) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
 
+  const pageChangeEvent = useEffectEvent((page: number) => {
+    if (pageChanged) {
+      pageChanged(page);
+    }
+  });
+
+  useEffect(() => {
+    if (pagination.pageIndex !== undefined) {
+      pageChangeEvent(pagination.pageIndex + 1);
+    }
+  }, [pagination]);
+
   const table = useReactTable<T>({
     columns,
-    data,
+    data: data || [],
     debugTable: true,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -108,17 +122,26 @@ function DataTable<T>({
 
   return (
     <>
-      <Table>
+      <Table className="rounded-md overflow-hidden">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow
+              key={headerGroup.id}
+              className="bg-primary hover:bg-primary"
+            >
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} colSpan={header.colSpan}>
+                <TableHead
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  className="text-white h-[30px]"
+                >
                   <div
-                    {...{
-                      className: header.column.getCanSort()
+                    className={`flex justify-center ${
+                      header.column.getCanSort()
                         ? 'cursor-pointer select-none'
-                        : '',
+                        : ''
+                    }`}
+                    {...{
                       onClick: header.column.getToggleSortingHandler(),
                     }}
                   >
@@ -126,9 +149,10 @@ function DataTable<T>({
                       header.column.columnDef.header,
                       header.getContext(),
                     )}
-                    {{ asc: <ArrowUp />, desc: <ArrowDown /> }[
-                      header.column.getIsSorted() as string
-                    ] ?? null}
+                    {{
+                      asc: <MoveUp size={16} />,
+                      desc: <MoveDown size={16} />,
+                    }[header.column.getIsSorted() as string] ?? null}
                   </div>
                 </TableHead>
               ))}
@@ -150,7 +174,10 @@ function DataTable<T>({
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious onClick={goToPreviousPage} />
+            <PaginationPrevious
+              className="hover:bg-primary/10 cursor-pointer"
+              onClick={goToPreviousPage}
+            />
           </PaginationItem>
           <Activity mode={showStartEllipsis ? 'visible' : 'hidden'}>
             <PaginationItem>
@@ -172,7 +199,10 @@ function DataTable<T>({
             </PaginationItem>
           </Activity>
           <PaginationItem>
-            <PaginationNext onClick={goToNextPage} />
+            <PaginationNext
+              className="hover:bg-primary/10 cursor-pointer"
+              onClick={goToNextPage}
+            />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
