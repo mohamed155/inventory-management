@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { User } from '../generated/prisma/client.ts';
+import type { Product, User } from '../generated/prisma/client.ts';
+import type { DataParams } from './models/params.ts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // properties
@@ -26,4 +27,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getUsersCount: () => ipcRenderer.invoke('getUsersCount'),
   signIn: (username: string, password: string) =>
     ipcRenderer.invoke('signIn', username, password),
+
+  getAllProducts: (params: DataParams<Product>) =>
+    ipcRenderer.invoke('getAllProducts', params),
+  getProductById: (id: string) => ipcRenderer.invoke('getProductById', id),
+  createProduct: (product: Product) =>
+    ipcRenderer.invoke('createProduct', product),
+  updateProduct: (id: string, product: Product) =>
+    ipcRenderer.invoke('updateProduct', id, product),
+  deleteProduct: (id: string) => ipcRenderer.invoke('deleteProduct', id),
 });

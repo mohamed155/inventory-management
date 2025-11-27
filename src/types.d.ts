@@ -1,5 +1,6 @@
+import type { DataParams } from '@/models/params.ts';
 import type { UserModel } from '@/models/user.ts';
-import type { User } from '../generated/prisma/browser.ts';
+import type { Product, User } from '../generated/prisma/browser.ts';
 
 declare global {
   interface Window {
@@ -18,6 +19,12 @@ declare global {
       getUsersCount: () => Promise<number>;
       createUser: (user: UserModel) => Promise<User>;
       signIn: (username: string, password: string) => Promise<User | null>;
+
+      getAllProducts: (params: DataParams<Product>) => Promise<Product[]>;
+      getProductById: (id: string) => Promise<Product | null>;
+      createProduct: (product: Product) => Promise<Product>;
+      updateProduct: (id: string, product: Product) => Promise<Product>;
+      deleteProduct: (id: string) => Promise<Product>;
     };
   }
 }
