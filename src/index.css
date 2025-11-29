@@ -1,7 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./styles/globals.css";
-@import "./styles/window-controls.css";
+
+/* components */
+@import "./styles/components/window-controls.css";
+@import "./styles/components/pagination.css";
 
 @custom-variant dark (&:is(.dark *));
 

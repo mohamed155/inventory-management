@@ -175,7 +175,7 @@ function DataTable<T>({
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
-              className="hover:bg-primary/10 cursor-pointer"
+              className="pagination-button"
               onClick={goToPreviousPage}
             />
           </PaginationItem>
@@ -189,6 +189,7 @@ function DataTable<T>({
               key={uuid().toString()}
               isActive={pagination.pageIndex === i}
               onClick={() => goToPage(i)}
+              className="pagination-button"
             >
               {i + 1}
             </PaginationLink>
@@ -200,7 +201,7 @@ function DataTable<T>({
           </Activity>
           <PaginationItem>
             <PaginationNext
-              className="hover:bg-primary/10 cursor-pointer"
+              className="pagination-button"
               onClick={goToNextPage}
             />
           </PaginationItem>
