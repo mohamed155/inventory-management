@@ -1,6 +1,8 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
 import { app, BrowserWindow, ipcMain } from 'electron';
+import { env } from 'prisma/config';
 import { PrismaClient } from '../generated/prisma/client.ts';
 import { initPrismaActions } from './prisma-actions.ts';
 
@@ -32,7 +34,11 @@ const initWindow = async () => {
       },
     });
 
-    prisma = new PrismaClient();
+    const adapter = new PrismaLibSql({
+      url: env('DATABASE_URL'),
+    });
+
+    prisma = new PrismaClient({ adapter });
 
     if (process.env.ELECTRON_START_URL) {
       window.loadURL(process.env.ELECTRON_START_URL);

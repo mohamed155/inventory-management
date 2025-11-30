@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
+import ProductDialog from '@/components/product-dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
@@ -48,6 +49,7 @@ function Products() {
           <Plus size={30} />
           {t('Add Product')}
         </Button>
+        <ProductDialog open={dialogOpen} />
       </div>
       <DataTable data={data} columns={columns} pageChanged={setPage} />
     </div>

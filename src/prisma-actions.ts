@@ -1,5 +1,5 @@
-import type { PrismaClient } from '@prisma/client';
 import { ipcMain } from 'electron';
+import type { PrismaClient } from '../generated/prisma/client';
 import type { Product, User } from '../generated/prisma/client.ts';
 import type { DataParams } from './models/params.ts';
 import {
