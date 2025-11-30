@@ -1,9 +1,14 @@
 import type { DataParams } from '@/models/params.ts';
 import type { Product } from '../../generated/prisma/browser.ts';
 
-export const getAllProducts = (params: DataParams<Product>) => {
+export const getAllProductsPaginated = (params: DataParams<Product>) => {
+  const getAllProductsPaginated = window.electronAPI.getAllProductsPaginated;
+  return getAllProductsPaginated(params);
+};
+
+export const getAllProducts = () => {
   const getAllProducts = window.electronAPI.getAllProducts;
-  return getAllProducts(params);
+  return getAllProducts();
 };
 
 export const getProductById = (id: string) => {

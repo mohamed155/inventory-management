@@ -18,7 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   restoreWindow: () => ipcRenderer.send('restore-window'),
 
-  // prisma actions
+  // prisma-actions actions
   createUser: (user: User) => ipcRenderer.invoke('createUser', user),
   getUsers: () => ipcRenderer.invoke('getUsers'),
   getUserById: (id: number) => ipcRenderer.invoke('getUserById', id),
@@ -28,8 +28,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   signIn: (username: string, password: string) =>
     ipcRenderer.invoke('signIn', username, password),
 
-  getAllProducts: (params: DataParams<Product>) =>
-    ipcRenderer.invoke('getAllProducts', params),
+  // products actions
+  getAllProductsPaginated: (params: DataParams<Product>) =>
+    ipcRenderer.invoke('getAllProductsPaginated', params),
+  getAllProducts: () => ipcRenderer.invoke('getAllProducts'),
   getProductById: (id: string) => ipcRenderer.invoke('getProductById', id),
   createProduct: (product: Product) =>
     ipcRenderer.invoke('createProduct', product),

@@ -6,9 +6,10 @@ import {
   createProduct,
   deleteProduct,
   getAllProducts,
+  getAllProductsPaginated,
   getProductById,
   updateProduct,
-} from './prisma/product.prisma.ts';
+} from './prisma-actions/product.action.ts';
 import {
   createUser,
   getAllUsers,
@@ -16,7 +17,7 @@ import {
   getUserByUsername,
   getUsersCount,
   signIn,
-} from './prisma/users.prisma.ts';
+} from './prisma-actions/users.action.ts';
 
 export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('getUsers', () => getAllUsers(prisma));
@@ -30,9 +31,10 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     signIn(prisma, username, password),
   );
 
-  ipcMain.handle('getAllProducts', (_, params: DataParams<Product>) =>
-    getAllProducts(prisma, params),
+  ipcMain.handle('getAllProductsPaginated', (_, params: DataParams<Product>) =>
+    getAllProductsPaginated(prisma, params),
   );
+  ipcMain.handle('getAllProducts', () => getAllProducts(prisma));
   ipcMain.handle('getProductById', (_, id: string) =>
     getProductById(prisma, id),
   );

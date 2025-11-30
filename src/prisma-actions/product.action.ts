@@ -2,12 +2,10 @@ import type { PrismaClient } from '@prisma/client';
 import type { Product } from '../../generated/prisma/client.ts';
 import type { DataParams } from '../models/params.ts';
 
-export const getAllProducts = (
+export const getAllProductsPaginated = (
   prisma: PrismaClient,
   { page, orderDirection, orderProperty, filter }: DataParams<Product>,
 ) => {
-  console.log('filter:');
-  console.log({ page, orderDirection, orderProperty, filter });
   return prisma.product.findMany({
     where: filter
       ? Object.entries(filter).map(([key, value]) => ({
@@ -18,6 +16,14 @@ export const getAllProducts = (
     skip: (page - 1) * 10,
     take: 10,
   });
+};
+
+export const getAllProducts = async (prisma: PrismaClient) => {
+  const products = await prisma.product.findMany({});
+  return products.map((product: Product) => ({
+    id: product.id,
+    name: product.name,
+  }));
 };
 
 export const getProductById = (prisma: PrismaClient, id: string) => {

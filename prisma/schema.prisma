@@ -2,8 +2,8 @@
 // Prisma Setup
 // ------------------------------
 generator client {
-  provider               = "prisma-client"
-  output                 = "../generated/prisma"
+  provider               = "prisma-actions-client"
+  output                 = "../generated/prisma-actions"
   importFileExtension    = "ts"
 }
 

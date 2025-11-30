@@ -20,7 +20,10 @@ declare global {
       createUser: (user: UserModel) => Promise<User>;
       signIn: (username: string, password: string) => Promise<User | null>;
 
-      getAllProducts: (params: DataParams<Product>) => Promise<Product[]>;
+      getAllProductsPaginated: (
+        params: DataParams<Product>,
+      ) => Promise<Product[]>;
+      getAllProducts: () => Promise<Pick<Product, 'id' | 'name'>[]>;
       getProductById: (id: string) => Promise<Product | null>;
       createProduct: (product: Product) => Promise<Product>;
       updateProduct: (id: string, product: Product) => Promise<Product>;

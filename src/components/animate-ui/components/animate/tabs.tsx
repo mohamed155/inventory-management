@@ -1,18 +1,16 @@
-import * as React from 'react';
-
 import {
-  Tabs as TabsPrimitive,
-  TabsList as TabsListPrimitive,
-  TabsTrigger as TabsTriggerPrimitive,
   TabsContent as TabsContentPrimitive,
-  TabsContents as TabsContentsPrimitive,
-  TabsHighlight as TabsHighlightPrimitive,
-  TabsHighlightItem as TabsHighlightItemPrimitive,
-  type TabsProps as TabsPrimitiveProps,
-  type TabsListProps as TabsListPrimitiveProps,
-  type TabsTriggerProps as TabsTriggerPrimitiveProps,
   type TabsContentProps as TabsContentPrimitiveProps,
+  TabsContents as TabsContentsPrimitive,
   type TabsContentsProps as TabsContentsPrimitiveProps,
+  TabsHighlightItem as TabsHighlightItemPrimitive,
+  TabsHighlight as TabsHighlightPrimitive,
+  TabsList as TabsListPrimitive,
+  type TabsListProps as TabsListPrimitiveProps,
+  Tabs as TabsPrimitive,
+  type TabsProps as TabsPrimitiveProps,
+  TabsTrigger as TabsTriggerPrimitive,
+  type TabsTriggerProps as TabsTriggerPrimitiveProps,
 } from '@/components/animate-ui/primitives/animate/tabs';
 import { cn } from '@/lib/utils';
 

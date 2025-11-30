@@ -6,15 +6,7 @@ import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
 import ProductDialog from '@/components/product-dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog.tsx';
-import { getAllProducts } from '@/services/products.ts';
+import { getAllProductsPaginated } from '@/services/products.ts';
 import type { Product } from '../../generated/prisma/browser.ts';
 
 function Products() {
@@ -24,7 +16,7 @@ function Products() {
 
   const { data } = useQuery({
     queryKey: ['products', page],
-    queryFn: () => getAllProducts({ page: page + 1 }),
+    queryFn: () => getAllProductsPaginated({ page: page + 1 }),
   });
 
   const columns = useMemo<ColumnDef<Product>[]>(
@@ -40,6 +32,7 @@ function Products() {
 
   return (
     <div>
+      <ProductDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Products')}</h2>
         <Button
@@ -49,7 +42,6 @@ function Products() {
           <Plus size={30} />
           {t('Add Product')}
         </Button>
-        <ProductDialog open={dialogOpen} />
       </div>
       <DataTable data={data} columns={columns} pageChanged={setPage} />
     </div>
