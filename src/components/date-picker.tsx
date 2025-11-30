@@ -13,6 +13,7 @@ function DatePicker({
   value,
   onChange,
   placeholder,
+  ...props
 }: {
   value?: Date | undefined;
   onChange?: (date: Date | undefined) => void;
@@ -34,6 +35,7 @@ function DatePicker({
           variant="outline"
           id="date"
           className="w-full flex justify-between"
+          {...props}
         >
           {date
             ? date.toLocaleDateString()

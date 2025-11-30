@@ -167,7 +167,7 @@ function Signup() {
               )}
             />
           </FieldGroup>
-          <Button className="mt-12 w-full">Submit</Button>
+          <Button className="mt-12 w-full">{t('Submit')}</Button>
         </form>
       </div>
     </div>

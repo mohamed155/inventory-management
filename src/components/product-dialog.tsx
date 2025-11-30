@@ -149,7 +149,7 @@ function ProductDialog({
             </Activity>
             <Activity mode={status === 'add' ? 'visible' : 'hidden'}>
               <Controller
-                name="description"
+                name="productId"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -160,6 +160,9 @@ function ProductDialog({
                       valueProp="id"
                       labelProp="name"
                     />
+                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                      <FieldError errors={[fieldState.error]} />
+                    </Activity>
                   </Field>
                 )}
               />
@@ -186,6 +189,9 @@ function ProductDialog({
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>{t('Production Date')}</FieldLabel>
                   <DatePicker {...field}></DatePicker>
+                  <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                    <FieldError errors={[fieldState.error]} />
+                  </Activity>
                 </Field>
               )}
             />
@@ -195,7 +201,10 @@ function ProductDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>{t('Expiration Date')}</FieldLabel>
-                  <DatePicker {...field}></DatePicker>
+                  <DatePicker
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                  ></DatePicker>
                   <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
                     <FieldError errors={[fieldState.error]} />
                   </Activity>
@@ -209,7 +218,7 @@ function ProductDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button>{t('Save')}</Button>
+            <Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>
