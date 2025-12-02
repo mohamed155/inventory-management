@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, useMemo, useState } from 'react';
+import moment from 'moment';
+import { Activity, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import z from 'zod';
@@ -50,7 +51,7 @@ function ProductDialog({
     () =>
       z
         .object({
-          ...(status
+          ...(status === 'new'
             ? {
                 productName: z.string().min(1, t('Product name is required')),
                 description: z.string(),
@@ -58,16 +59,16 @@ function ProductDialog({
             : {
                 productId: z.string().min(1, t('Product is required')),
               }),
-          quantity: z.number(),
+          quantity: z.number().min(1, t('Quantity can not be zero or less')),
           productionDate: z.date(),
           expirationDate: z.date(),
         })
         .refine(
           (data) =>
-            data.expirationDate?.getTime() < data.productionDate.getTime(),
+            moment(data.expirationDate).isAfter(moment(data.productionDate)),
           {
             message: t('Expiration date can not be before production date'),
-            path: ['productionDate'],
+            path: ['expirationDate'],
           },
         ),
     [t, status],
@@ -76,19 +77,36 @@ function ProductDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      productId: '',
-      productName: '',
-      description: '',
+      productId: status === 'add' ? '' : undefined,
+      productName: status === 'new' ? '' : undefined,
+      description: status === 'new' ? '' : undefined,
       quantity: 0,
       productionDate: new Date(),
       expirationDate: new Date(),
     },
   });
 
-  const onSubmit = () => {
-    if (onClose) {
-      onClose(form.getValues() as Partial<Product & ProductBatch>);
+  useEffect(() => {
+    if (status === 'new') {
+      form.unregister('productId');
+    } else {
+      form.unregister(['productName', 'description']);
     }
+    form.reset({
+      productId: status === 'add' ? '' : undefined,
+      productName: status === 'new' ? '' : undefined,
+      description: status === 'new' ? '' : undefined,
+      quantity: 0,
+      productionDate: new Date(),
+      expirationDate: new Date(),
+    });
+  }, [status, form]);
+
+  const onSubmit = () => {
+    // if (onClose) {
+    //   onClose(form.getValues() as Partial<Product & ProductBatch>);
+    // }
+    console.log(form.getValues());
   };
 
   const openChange = (isOpen: boolean) => {
@@ -175,10 +193,19 @@ function ProductDialog({
                   <FieldLabel>{t('Quantity')}</FieldLabel>
                   <Input
                     {...field}
+                    onChange={(e) =>
+                      field.onChange({
+                        ...e,
+                        target: { ...e.target, value: Number(e.target.value) },
+                      })
+                    }
                     aria-invalid={fieldState.invalid}
                     autoComplete="off"
                     type="number"
                   />
+                  <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                    <FieldError errors={[fieldState.error]} />
+                  </Activity>
                 </Field>
               )}
             />
@@ -188,7 +215,12 @@ function ProductDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>{t('Production Date')}</FieldLabel>
-                  <DatePicker {...field}></DatePicker>
+                  <DatePicker
+                    {...field}
+                    onChange={(date) =>
+                      field.onChange({ target: { value: date } })
+                    }
+                  ></DatePicker>
                   <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
                     <FieldError errors={[fieldState.error]} />
                   </Activity>
@@ -203,6 +235,9 @@ function ProductDialog({
                   <FieldLabel>{t('Expiration Date')}</FieldLabel>
                   <DatePicker
                     {...field}
+                    onChange={(date) =>
+                      field.onChange({ target: { value: date } })
+                    }
                     aria-invalid={fieldState.invalid}
                   ></DatePicker>
                   <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
@@ -218,7 +253,14 @@ function ProductDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
+            <Button
+              onClick={() => {
+                console.log(form.formState.errors);
+                form.handleSubmit(onSubmit)();
+              }}
+            >
+              {t('Save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </form>
