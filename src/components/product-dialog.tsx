@@ -32,9 +32,11 @@ import { getAllProducts } from '@/services/products.ts';
 import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
 
 function ProductDialog({
+  product,
   open,
   onClose,
 }: {
+  product?: Partial<Product & ProductBatch>;
   open: boolean;
   onClose?: (product?: Partial<Product & ProductBatch>) => void;
 }) {
@@ -51,7 +53,7 @@ function ProductDialog({
     () =>
       z
         .object({
-          ...(status === 'new'
+          ...(status === 'new' || product
             ? {
                 productName: z.string().min(1, t('Product name is required')),
                 description: z.string(),
@@ -71,13 +73,13 @@ function ProductDialog({
             path: ['expirationDate'],
           },
         ),
-    [t, status],
+    [t, status, product],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      productId: status === 'add' ? '' : undefined,
+      productId: !product && status === 'add' ? '' : undefined,
       productName: status === 'new' ? '' : undefined,
       description: status === 'new' ? '' : undefined,
       quantity: 0,
@@ -93,20 +95,19 @@ function ProductDialog({
       form.unregister(['productName', 'description']);
     }
     form.reset({
-      productId: status === 'add' ? '' : undefined,
+      productId: !product && status === 'add' ? '' : undefined,
       productName: status === 'new' ? '' : undefined,
       description: status === 'new' ? '' : undefined,
       quantity: 0,
       productionDate: new Date(),
       expirationDate: new Date(),
     });
-  }, [status, form]);
+  }, [status, form, product]);
 
   const onSubmit = () => {
-    // if (onClose) {
-    //   onClose(form.getValues() as Partial<Product & ProductBatch>);
-    // }
-    console.log(form.getValues());
+    if (onClose) {
+      onClose(form.getValues() as Partial<Product & ProductBatch>);
+    }
   };
 
   const openChange = (isOpen: boolean) => {
@@ -122,68 +123,78 @@ function ProductDialog({
           <DialogHeader>
             <DialogTitle>{t('Add Product')}</DialogTitle>
           </DialogHeader>
-          <Tabs
-            value={status}
-            onValueChange={(value: string) => setStatus(value as 'new' | 'add')}
-          >
-            <TabsList className="w-full">
-              <TabsTrigger value="new">{t('New Product')}</TabsTrigger>
-              <TabsTrigger value="add">{t('Add Quantity')}</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <Activity mode={!product ? 'visible' : 'hidden'}>
+            <Tabs
+              value={status}
+              onValueChange={(value: string) =>
+                setStatus(value as 'new' | 'add')
+              }
+            >
+              <TabsList className="w-full">
+                <TabsTrigger value="new">{t('New Product')}</TabsTrigger>
+                <TabsTrigger value="add">{t('Add Quantity')}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </Activity>
           <FieldGroup>
-            <Activity mode={status === 'new' ? 'visible' : 'hidden'}>
-              <Controller
-                name="productName"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Product name')}</FieldLabel>
-                    <Input
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="off"
-                    />
-                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
-                      <FieldError errors={[fieldState.error]} />
-                    </Activity>
-                  </Field>
-                )}
-              />
-              <Controller
-                name="description"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Description')}</FieldLabel>
-                    <Input
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="off"
-                    />
-                  </Field>
-                )}
-              />
-            </Activity>
-            <Activity mode={status === 'add' ? 'visible' : 'hidden'}>
-              <Controller
-                name="productId"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Choose Product')}</FieldLabel>
-                    <Combobox
-                      {...field}
-                      list={data || []}
-                      valueProp="id"
-                      labelProp="name"
-                    />
-                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
-                      <FieldError errors={[fieldState.error]} />
-                    </Activity>
-                  </Field>
-                )}
-              />
+            <Activity mode={!product ? 'visible' : 'hidden'}>
+              <Activity mode={status === 'new' ? 'visible' : 'hidden'}>
+                <Controller
+                  name="productName"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Product name')}</FieldLabel>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="description"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Description')}</FieldLabel>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                    </Field>
+                  )}
+                />
+              </Activity>
+              <Activity mode={status === 'add' ? 'visible' : 'hidden'}>
+                <Controller
+                  name="productId"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Choose Product')}</FieldLabel>
+                      <Combobox
+                        {...field}
+                        list={data || []}
+                        valueProp="id"
+                        labelProp="name"
+                      />
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+              </Activity>
             </Activity>
             <Controller
               name="quantity"
@@ -253,12 +264,7 @@ function ProductDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button
-              onClick={() => {
-                console.log(form.formState.errors);
-                form.handleSubmit(onSubmit)();
-              }}
-            >
+            <Button onClick={() => form.handleSubmit(onSubmit)}>
               {t('Save')}
             </Button>
           </DialogFooter>
