@@ -1,14 +1,20 @@
 import { ipcMain } from 'electron';
-import type { PrismaClient } from '../generated/prisma/client';
+import type { PrismaClient, ProductBatch } from '../generated/prisma/client';
 import type { Product, User } from '../generated/prisma/client.ts';
 import type { DataParams } from './models/params.ts';
 import {
   createProduct,
+  createProductBatch,
   deleteProduct,
+  deleteProductBatch,
+  getAllProductBatches,
+  getAllProductBatchesPaginated,
   getAllProducts,
   getAllProductsPaginated,
+  getProductBatch,
   getProductById,
   updateProduct,
+  updateProductBatch,
 } from './prisma-actions/product.action.ts';
 import {
   createUser,
@@ -45,4 +51,27 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     updateProduct(prisma, id, product),
   );
   ipcMain.handle('deleteProduct', (_, id: string) => deleteProduct(prisma, id));
+
+  ipcMain.handle(
+    'getAllProductBatchesPaginated',
+    (_, params: DataParams<Product & ProductBatch>) =>
+      getAllProductBatchesPaginated(prisma, params),
+  );
+  ipcMain.handle('getAllProductBatches', () => getAllProductBatches(prisma));
+  ipcMain.handle('getProductBatch', (_, id: string) =>
+    getProductBatch(prisma, id),
+  );
+  ipcMain.handle(
+    'createProductBatch',
+    (_, productBatch: Product & ProductBatch) =>
+      createProductBatch(prisma, productBatch),
+  );
+  ipcMain.handle(
+    'updateProductBatch',
+    (_, id: string, productBatch: Product & ProductBatch) =>
+      updateProductBatch(prisma, id, productBatch),
+  );
+  ipcMain.handle('deleteProductBatch', (_, id: string) =>
+    deleteProductBatch(prisma, id),
+  );
 };

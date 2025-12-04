@@ -106,7 +106,13 @@ function ProductDialog({
 
   const onSubmit = () => {
     if (onClose) {
-      onClose(form.getValues() as Partial<Product & ProductBatch>);
+      if (product) {
+        onClose({ ...form.getValues(), productId: product?.id } as Partial<
+          Product & ProductBatch
+        >);
+      } else {
+        onClose(form.getValues() as Partial<Product & ProductBatch>);
+      }
     }
   };
 

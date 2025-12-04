@@ -2,9 +2,10 @@
 // Prisma Setup
 // ------------------------------
 generator client {
-  provider               = "prisma-actions-client"
-  output                 = "../generated/prisma-actions"
-  importFileExtension    = "ts"
+  provider            = "prisma-actions-client"
+  output              = "../generated/prisma-actions"
+  previewFeatures     = ["relationJoins"]
+  importFileExtension = "ts"
 }
 
 datasource db {

@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
 import ProductDialog from '@/components/product-dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { getAllProductsPaginated } from '@/services/products.ts';
-import type { Product } from '../../generated/prisma/browser.ts';
+import { getAllProductsPaginated, updateProduct } from '@/services/products.ts';
+import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
 
 function Products() {
   const { t } = useTranslation();
@@ -30,9 +30,18 @@ function Products() {
     [],
   );
 
+  const handleDialogClose = (product?: Partial<Product & ProductBatch>) => {
+    if (product) {
+      if (product.productId) {
+        updateProduct(product.productId, product);
+      }
+    }
+    setDialogOpen(false);
+  };
+
   return (
     <div>
-      <ProductDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+      <ProductDialog open={dialogOpen} onClose={handleDialogClose} />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Products')}</h2>
         <Button
