@@ -55,7 +55,7 @@ export const deleteProduct = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const getAllProductBatchesPaginated = (
+export const getAllProductBatchesPaginated = async (
   prisma: PrismaClient,
   {
     page,
@@ -64,7 +64,8 @@ export const getAllProductBatchesPaginated = (
     filter,
   }: DataParams<Product & ProductBatch>,
 ) => {
-  return prisma.productBatch.findMany({
+  console.log('page ', page);
+  const batches = await prisma.productBatch.findMany({
     where: filter
       ? Object.entries(filter).map(([key, value]) => ({
           [key]: { contains: value },
@@ -73,11 +74,20 @@ export const getAllProductBatchesPaginated = (
     orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
     skip: (page - 1) * 10,
     take: 10,
-    relationLoadStrategy: 'join',
     include: {
       product: true,
     },
   });
+
+  console.log('batches ', batches);
+
+  const res = batches.map((batch: ProductBatch & { product: Product }) => ({
+    ...batch.product,
+    ...batch,
+    productId: batch.product.id,
+  }));
+  console.log('res ', res);
+  return res;
 };
 
 export const getAllProductBatches = (prisma: PrismaClient) => {
@@ -99,21 +109,42 @@ export const getProductBatch = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const createProductBatch = (
+export const createProductBatch = async (
   prisma: PrismaClient,
   productBatch: Product & ProductBatch,
 ) => {
-  const product = prisma.product.findUnique({
-    where: { id: productBatch.productId },
-  });
+  if (productBatch.productId) {
+    const product = await prisma.product.findUnique({
+      where: { id: productBatch.productId },
+    });
 
-  if (product) {
-    return prisma.productBatch.create(productBatch);
-  } else {
-    const product = prisma.product.create(productBatch);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
     return prisma.productBatch.create({
-      ...productBatch,
-      productId: product.id,
+      data: {
+        id: productBatch.id,
+        productId: product.id,
+        productionDate: productBatch.productionDate,
+        expirationDate: productBatch.expirationDate,
+        quantity: productBatch.quantity,
+      },
+    });
+  } else {
+    const product = await prisma.product.create({
+      data: {
+        name: productBatch.name,
+        description: productBatch.description,
+      },
+    });
+    return prisma.productBatch.create({
+      data: {
+        productId: product.id,
+        productionDate: productBatch.productionDate,
+        expirationDate: productBatch.expirationDate,
+        quantity: productBatch.quantity,
+      },
     });
   }
 };

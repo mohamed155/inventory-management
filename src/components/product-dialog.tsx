@@ -55,7 +55,7 @@ function ProductDialog({
         .object({
           ...(status === 'new' || product
             ? {
-                productName: z.string().min(1, t('Product name is required')),
+                name: z.string().min(1, t('Product name is required')),
                 description: z.string(),
               }
             : {
@@ -80,7 +80,7 @@ function ProductDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       productId: !product && status === 'add' ? '' : undefined,
-      productName: status === 'new' ? '' : undefined,
+      name: status === 'new' ? '' : undefined,
       description: status === 'new' ? '' : undefined,
       quantity: 0,
       productionDate: new Date(),
@@ -92,11 +92,11 @@ function ProductDialog({
     if (status === 'new') {
       form.unregister('productId');
     } else {
-      form.unregister(['productName', 'description']);
+      form.unregister(['name', 'description']);
     }
     form.reset({
       productId: !product && status === 'add' ? '' : undefined,
-      productName: status === 'new' ? '' : undefined,
+      name: status === 'new' ? '' : undefined,
       description: status === 'new' ? '' : undefined,
       quantity: 0,
       productionDate: new Date(),
@@ -105,7 +105,9 @@ function ProductDialog({
   }, [status, form, product]);
 
   const onSubmit = () => {
+    console.log(onClose);
     if (onClose) {
+      console.log(form.getValues());
       if (product) {
         onClose({ ...form.getValues(), productId: product?.id } as Partial<
           Product & ProductBatch
@@ -146,7 +148,7 @@ function ProductDialog({
             <Activity mode={!product ? 'visible' : 'hidden'}>
               <Activity mode={status === 'new' ? 'visible' : 'hidden'}>
                 <Controller
-                  name="productName"
+                  name="name"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -270,9 +272,7 @@ function ProductDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button onClick={() => form.handleSubmit(onSubmit)}>
-              {t('Save')}
-            </Button>
+            <Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>

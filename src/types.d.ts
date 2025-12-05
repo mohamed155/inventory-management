@@ -1,6 +1,10 @@
 import type { DataParams } from '@/models/params.ts';
 import type { UserModel } from '@/models/user.ts';
-import type { Product, User } from '../generated/prisma/browser.ts';
+import type {
+  Product,
+  ProductBatch,
+  User,
+} from '../generated/prisma/browser.ts';
 
 declare global {
   interface Window {
@@ -28,6 +32,20 @@ declare global {
       createProduct: (product: Product) => Promise<Product>;
       updateProduct: (id: string, product: Product) => Promise<Product>;
       deleteProduct: (id: string) => Promise<Product>;
+
+      getAllProductBatchesPaginated: (
+        params: DataParams<Product & ProductBatch>,
+      ) => Promise<(Product & ProductBatch)[]>;
+      getAllProductBatches: () => Promise<Pick<Product & ProductBatch>[]>;
+      getProductBatchById: (
+        id: string,
+      ) => Promise<(Product & ProductBatch) | null>;
+      createProductBatch: (product: Product) => Promise<Product & ProductBatch>;
+      updateProductBatch: (
+        id: string,
+        product: Product & ProductBatch,
+      ) => Promise<Product & ProductBatch>;
+      deleteProductBatch: (id: string) => Promise<Product & ProductBatch>;
     };
   }
 }

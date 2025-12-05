@@ -6,7 +6,11 @@ import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
 import ProductDialog from '@/components/product-dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { getAllProductsPaginated, updateProduct } from '@/services/products.ts';
+import {
+  createProductBatch,
+  getAllProductBatchesPaginated,
+  updateProductBatch,
+} from '@/services/products.ts';
 import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
 
 function Products() {
@@ -14,9 +18,9 @@ function Products() {
   const [page, setPage] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data } = useQuery({
+  const { data, refetch: refetchProducts } = useQuery({
     queryKey: ['products', page],
-    queryFn: () => getAllProductsPaginated({ page: page + 1 }),
+    queryFn: () => getAllProductBatchesPaginated({ page: page + 1 }),
   });
 
   const columns = useMemo<ColumnDef<Product>[]>(
@@ -30,11 +34,18 @@ function Products() {
     [],
   );
 
-  const handleDialogClose = (product?: Partial<Product & ProductBatch>) => {
-    if (product) {
-      if (product.productId) {
-        updateProduct(product.productId, product);
-      }
+  const handleDialogClose = (
+    productBatch?: Partial<Product & ProductBatch>,
+  ) => {
+    if (productBatch?.id) {
+      updateProductBatch(
+        productBatch.id,
+        productBatch as Product & ProductBatch,
+      ).then(() => refetchProducts());
+    } else {
+      createProductBatch(productBatch as Product & ProductBatch).then(() =>
+        refetchProducts(),
+      );
     }
     setDialogOpen(false);
   };

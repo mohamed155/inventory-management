@@ -9,7 +9,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { MoveDown, MoveUp } from 'lucide-react';
-import { Activity, useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { Activity, useEffect, useMemo, useState } from 'react';
 import { uuid } from 'zod';
 import {
   Pagination,
@@ -43,17 +43,11 @@ function DataTable<T>({
     pageSize: 10,
   });
 
-  const pageChangeEvent = useEffectEvent((page: number) => {
-    if (pageChanged) {
-      pageChanged(page);
-    }
-  });
-
   useEffect(() => {
-    if (pagination.pageIndex !== undefined) {
-      pageChangeEvent(pagination.pageIndex + 1);
+    if (pageChanged) {
+      pageChanged(pagination.pageIndex);
     }
-  }, [pagination]);
+  }, [pagination.pageIndex, pageChanged]);
 
   const table = useReactTable<T>({
     columns,
