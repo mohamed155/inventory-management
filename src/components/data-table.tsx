@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { MoveDown, MoveUp } from 'lucide-react';
 import { Activity, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { uuid } from 'zod';
 import {
   Pagination,
@@ -38,6 +39,8 @@ function DataTable<T>({
   columns: ColumnDef<T>[];
   pageChanged?: (page: number) => void;
 }) {
+  const { t } = useTranslation();
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -62,44 +65,46 @@ function DataTable<T>({
   });
 
   const visiblePages = useMemo(() => {
-    const totalPages = table.getPageCount();
-    const currentPage = pagination.pageIndex;
-    const maxVisiblePages = 5;
+    if (data) {
+      const totalPages = table.getPageCount();
+      const currentPage = pagination.pageIndex;
+      const maxVisiblePages = 5;
 
-    if (totalPages <= maxVisiblePages + 2) {
-      return Array.from({ length: totalPages }, (_, i) => i);
-    }
+      if (totalPages <= maxVisiblePages + 2) {
+        return Array.from({ length: totalPages }, (_, i) => i);
+      }
 
-    if (currentPage < 3) {
-      return [0, 1, 2, 3, 4];
-    }
+      if (currentPage < 3) {
+        return [0, 1, 2, 3, 4];
+      }
 
-    if (currentPage > totalPages - 4) {
+      if (currentPage > totalPages - 4) {
+        return [
+          totalPages - 5,
+          totalPages - 4,
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+        ];
+      }
+
       return [
-        totalPages - 5,
-        totalPages - 4,
-        totalPages - 3,
-        totalPages - 2,
-        totalPages - 1,
+        currentPage - 2,
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        currentPage + 2,
       ];
     }
-
-    return [
-      currentPage - 2,
-      currentPage - 1,
-      currentPage,
-      currentPage + 1,
-      currentPage + 2,
-    ];
-  }, [pagination.pageIndex, table.getPageCount]);
+  }, [pagination.pageIndex, table.getPageCount, data]);
 
   const showStartEllipsis = useMemo(() => {
-    return table.getPageCount() > 7 && !visiblePages.includes(0);
+    return table.getPageCount() > 7 && !visiblePages?.includes(0);
   }, [table.getPageCount, visiblePages]);
 
   const showEndEllipsis = useMemo(() => {
     const lastPage = table.getPageCount() - 1;
-    return table.getPageCount() > 7 && !visiblePages.includes(lastPage);
+    return table.getPageCount() > 7 && !visiblePages?.includes(lastPage);
   }, [table.getPageCount, visiblePages]);
 
   const goToPreviousPage = () => {
@@ -130,7 +135,7 @@ function DataTable<T>({
                   className="text-white h-[30px]"
                 >
                   <div
-                    className={`flex justify-center ${
+                    className={`flex ${
                       header.column.getCanSort()
                         ? 'cursor-pointer select-none'
                         : ''
@@ -169,6 +174,7 @@ function DataTable<T>({
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
+              content={t('Previous')}
               className="pagination-button"
               onClick={goToPreviousPage}
             />
@@ -178,7 +184,7 @@ function DataTable<T>({
               <PaginationEllipsis />
             </PaginationItem>
           </Activity>
-          {visiblePages.map((i) => (
+          {visiblePages?.map((i) => (
             <PaginationLink
               key={uuid().toString()}
               isActive={pagination.pageIndex === i}
@@ -195,6 +201,7 @@ function DataTable<T>({
           </Activity>
           <PaginationItem>
             <PaginationNext
+              content={t('Next')}
               className="pagination-button"
               onClick={goToNextPage}
             />

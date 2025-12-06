@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const queryClient = new QueryClient();
 
 function App() {
-  // document.documentElement.dir = 'rtl';
+  document.documentElement.dir = 'rtl';
 
   return (
     <WindowFrame>

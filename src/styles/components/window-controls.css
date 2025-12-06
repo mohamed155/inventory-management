@@ -6,7 +6,7 @@
   .window-controls {
     -webkit-app-region: no-drag;
 
-    @apply w-30 h-9 absolute right-10 top-0 rtl:left-10 bg-primary flex flex-row items-center justify-evenly rounded-b-xl gap-2;
+    @apply w-30 h-9 absolute right-10 left-0 top-0 rtl:left-10 rtl:right-[unset] bg-primary flex flex-row items-center justify-evenly rounded-b-xl gap-2;
 
     .before,
     .after {

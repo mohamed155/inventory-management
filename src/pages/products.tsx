@@ -25,13 +25,21 @@ function Products() {
 
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
-      { accessorKey: 'name', Header: 'Name' },
-      { accessorKey: 'description', Header: 'Description' },
-      { accessorKey: 'quantity', Header: 'Quantity' },
-      { accessorKey: 'createdAt', Header: 'Created At' },
-      { accessorKey: 'updatedAt', Header: 'Updated At' },
+      { accessorKey: 'name', header: () => t('Name') },
+      { accessorKey: 'description', header: () => t('Description') },
+      { accessorKey: 'quantity', header: () => t('Quantity') },
+      {
+        accessorKey: 'createdAt',
+        header: () => t('Created At'),
+        cell: (info) => (info.getValue() as Date).toLocaleDateString(),
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: () => t('Updated At'),
+        cell: (info) => (info.getValue() as Date).toLocaleDateString(),
+      },
     ],
-    [],
+    [t],
   );
 
   const handleDialogClose = (

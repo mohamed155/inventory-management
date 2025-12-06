@@ -4,7 +4,9 @@ import {
   MoreHorizontalIcon,
 } from 'lucide-react';
 import type * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { type Button, buttonVariants } from '@/components/ui/button';
+import { useIsRTL } from '@/hooks/is-rtl.hook.ts';
 import { cn } from '@/lib/utils';
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
@@ -68,6 +70,9 @@ function PaginationPrevious({
   className,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) {
+  const { t } = useTranslation();
+  const isRtl = useIsRTL();
+
   return (
     <PaginationLink
       aria-label="Go to previous page"
@@ -75,8 +80,8 @@ function PaginationPrevious({
       className={cn('gap-1 px-2.5 sm:pl-2.5', className)}
       {...props}
     >
-      <ChevronLeftIcon />
-      <span className="hidden sm:block">Previous</span>
+      {isRtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+      <span className="hidden sm:block">{t('Previous')}</span>
     </PaginationLink>
   );
 }
@@ -85,6 +90,9 @@ function PaginationNext({
   className,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) {
+  const { t } = useTranslation();
+  const isRtl = useIsRTL();
+
   return (
     <PaginationLink
       aria-label="Go to next page"
@@ -92,8 +100,8 @@ function PaginationNext({
       className={cn('gap-1 px-2.5 sm:pr-2.5', className)}
       {...props}
     >
-      <span className="hidden sm:block">Next</span>
-      <ChevronRightIcon />
+      <span className="hidden sm:block">{t('Next')}</span>
+      {isRtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
     </PaginationLink>
   );
 }
