@@ -29,7 +29,10 @@ import {
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { getAllProducts } from '@/services/products.ts';
-import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
+import type {
+  Product,
+  ProductBatch,
+} from '../../../generated/prisma/browser.ts';
 
 function ProductDialog({
   product,
@@ -95,19 +98,25 @@ function ProductDialog({
       form.unregister(['name', 'description']);
     }
     form.reset({
-      productId: !product && status === 'add' ? '' : undefined,
-      name: status === 'new' ? '' : undefined,
-      description: status === 'new' ? '' : undefined,
-      quantity: 0,
-      productionDate: new Date(),
-      expirationDate: new Date(),
+      productId: product
+        ? product.productId
+        : status === 'add'
+          ? ''
+          : undefined,
+      name: product ? product.name : status === 'new' ? '' : undefined,
+      description: product
+        ? product.description || undefined
+        : status === 'new'
+          ? ''
+          : undefined,
+      quantity: product ? product.quantity : 0,
+      productionDate: product ? product.productionDate : new Date(),
+      expirationDate: product ? product.expirationDate : new Date(),
     });
   }, [status, form, product]);
 
   const onSubmit = () => {
-    console.log(onClose);
     if (onClose) {
-      console.log(form.getValues());
       if (product) {
         onClose({ ...form.getValues(), productId: product?.id } as Partial<
           Product & ProductBatch
@@ -145,64 +154,58 @@ function ProductDialog({
             </Tabs>
           </Activity>
           <FieldGroup>
-            <Activity mode={!product ? 'visible' : 'hidden'}>
-              <Activity mode={status === 'new' ? 'visible' : 'hidden'}>
-                <Controller
-                  name="name"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>{t('Product name')}</FieldLabel>
-                      <Input
-                        {...field}
-                        aria-invalid={fieldState.invalid}
-                        autoComplete="off"
-                      />
-                      <Activity
-                        mode={fieldState.invalid ? 'visible' : 'hidden'}
-                      >
-                        <FieldError errors={[fieldState.error]} />
-                      </Activity>
-                    </Field>
-                  )}
-                />
-                <Controller
-                  name="description"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>{t('Description')}</FieldLabel>
-                      <Input
-                        {...field}
-                        aria-invalid={fieldState.invalid}
-                        autoComplete="off"
-                      />
-                    </Field>
-                  )}
-                />
-              </Activity>
-              <Activity mode={status === 'add' ? 'visible' : 'hidden'}>
-                <Controller
-                  name="productId"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>{t('Choose Product')}</FieldLabel>
-                      <Combobox
-                        {...field}
-                        list={data || []}
-                        valueProp="id"
-                        labelProp="name"
-                      />
-                      <Activity
-                        mode={fieldState.invalid ? 'visible' : 'hidden'}
-                      >
-                        <FieldError errors={[fieldState.error]} />
-                      </Activity>
-                    </Field>
-                  )}
-                />
-              </Activity>
+            <Activity mode={status === 'new' ? 'visible' : 'hidden'}>
+              <Controller
+                name="name"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>{t('Product name')}</FieldLabel>
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                    />
+                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                      <FieldError errors={[fieldState.error]} />
+                    </Activity>
+                  </Field>
+                )}
+              />
+              <Controller
+                name="description"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>{t('Description')}</FieldLabel>
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                    />
+                  </Field>
+                )}
+              />
+            </Activity>
+            <Activity mode={status === 'add' ? 'visible' : 'hidden'}>
+              <Controller
+                name="productId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>{t('Choose Product')}</FieldLabel>
+                    <Combobox
+                      {...field}
+                      list={data || []}
+                      valueProp="id"
+                      labelProp="name"
+                    />
+                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                      <FieldError errors={[fieldState.error]} />
+                    </Activity>
+                  </Field>
+                )}
+              />
             </Activity>
             <Controller
               name="quantity"

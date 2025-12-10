@@ -99,7 +99,7 @@ function Sidenav() {
         <MenuItem
           name="Settings"
           icon={<Settings size={18} />}
-          selected={isItemSelected('settings')}
+          selected={isItemSelected(t('settings'))}
           onClick={() => navigate('/settings')}
         />
         <Button

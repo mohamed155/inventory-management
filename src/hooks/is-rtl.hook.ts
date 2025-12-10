@@ -1,11 +1,11 @@
+import i18n from 'i18next';
 import { useEffect, useState } from 'react';
 
 export function useIsRTL() {
   const [isRTL, setIsRTL] = useState(false);
   useEffect(() => {
-    const dir = document.documentElement.dir;
+    const dir = i18n.dir(i18n.language);
     setIsRTL(dir === 'rtl');
-    // Or with i18next: const dir = i18n.dir(i18n.language);
   }, []);
   return isRTL;
 }

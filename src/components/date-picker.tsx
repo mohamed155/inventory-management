@@ -38,7 +38,7 @@ function DatePicker({
           {...props}
         >
           {date
-            ? date.toLocaleDateString()
+            ? date.toLocaleDateString('en-GB')
             : placeholder
               ? placeholder
               : t('Select Date')}

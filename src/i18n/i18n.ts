@@ -12,6 +12,6 @@ i18n.use(initReactI18next).init({
       translation: ar,
     },
   },
-  lng: 'ar',
-  fallbackLng: 'ar',
+  lng: 'en',
+  fallbackLng: 'en',
 });

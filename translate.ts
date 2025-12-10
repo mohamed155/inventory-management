@@ -135,8 +135,8 @@ async function generateFileContent(
     }
 
     const safeValue = value.replace(/'/g, "\\'");
-    // Determine if key needs quotes (if it has spaces or special chars)
-    const safeKey = key.match(/^[a-zA-Z0-9_]+$/) ? key : `'${key}'`;
+
+    const safeKey = `'${key}'`;
 
     lines.push(`  ${safeKey}: '${safeValue}',`);
   }

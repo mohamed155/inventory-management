@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Edit, Plus, Trash2 } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
-import ProductDialog from '@/components/product-dialog.tsx';
+import ProductDialog from '@/components/dialogs/product-dialog.tsx';
+import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
   createProductBatch,
@@ -17,50 +18,134 @@ function Products() {
   const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState<
+    Product & ProductBatch
+  >();
 
   const { data, refetch: refetchProducts } = useQuery({
     queryKey: ['products', page],
     queryFn: () => getAllProductBatchesPaginated({ page: page + 1 }),
   });
 
+  const editProduct = useCallback(
+    (id: string) => {
+      const product = data?.find((batch) => batch.id === id);
+      if (product) {
+        setCurrentProduct(product);
+      }
+      setDialogOpen(true);
+    },
+    [data],
+  );
+
+  const deleteProduct = (id: string) => {};
+
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
       { accessorKey: 'name', header: () => t('Name') },
       { accessorKey: 'description', header: () => t('Description') },
-      { accessorKey: 'quantity', header: () => t('Quantity') },
       {
-        accessorKey: 'createdAt',
-        header: () => t('Created At'),
-        cell: (info) => (info.getValue() as Date).toLocaleDateString(),
+        accessorKey: 'quantity',
+        header: () => t('Quantity'),
+        cell: (info) => (
+          <Badge
+            variant={
+              (info.getValue() as number) < 10 ? 'destructive' : 'default'
+            }
+          >
+            {info.getValue() as number}{' '}
+            {(info.getValue() as number) > 1 ? t('Units') : t('Unit')}
+          </Badge>
+        ),
       },
       {
-        accessorKey: 'updatedAt',
-        header: () => t('Updated At'),
-        cell: (info) => (info.getValue() as Date).toLocaleDateString(),
+        accessorKey: 'productionDate',
+        header: () => t('Production Date'),
+        cell: (info) => (info.getValue() as Date).toLocaleDateString('en-GB'),
+      },
+      {
+        accessorKey: 'expirationDate',
+        header: () => t('Expire Date'),
+        cell: (info) => {
+          const expireDate = new Date(info.getValue() as Date);
+          const today = new Date();
+          const daysUntilExpiry = Math.floor(
+            (expireDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+          );
+          const isExpiringSoon = daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+          const isExpired = daysUntilExpiry <= 0;
+          return (
+            <span
+              className={
+                isExpired
+                  ? 'text-red-600'
+                  : isExpiringSoon
+                    ? 'text-yellow-600'
+                    : ''
+              }
+            >
+              {expireDate.toLocaleDateString('en-GB')}
+              {isExpiringSoon && ` (${daysUntilExpiry} ${t('days')})`}
+              {isExpired && ` (${t('Expired')})`}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'id',
+        header: () => t('Actions'),
+        enableSorting: false,
+        cell: (info) => (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => editProduct(info.getValue() as string)}
+            >
+              <Edit className="text-primary" />
+            </Button>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => deleteProduct(info.getValue() as string)}
+            >
+              <Trash2 className="text-red-600" />
+            </Button>
+          </div>
+        ),
       },
     ],
-    [t],
+    [t, editProduct],
   );
 
   const handleDialogClose = (
     productBatch?: Partial<Product & ProductBatch>,
   ) => {
-    if (productBatch?.id) {
-      updateProductBatch(
-        productBatch.id,
-        productBatch as Product & ProductBatch,
-      ).then(() => refetchProducts());
-    } else {
-      createProductBatch(productBatch as Product & ProductBatch).then(() =>
-        refetchProducts(),
-      );
+    if (productBatch) {
+      if (productBatch?.id) {
+        updateProductBatch(
+          productBatch.id,
+          productBatch as Product & ProductBatch,
+        ).then(() => refetchProducts());
+      } else {
+        createProductBatch(productBatch as Product & ProductBatch).then(() =>
+          refetchProducts(),
+        );
+      }
     }
     setDialogOpen(false);
+    setTimeout(() => {
+      setCurrentProduct(undefined);
+    }, 250);
   };
 
   return (
     <div>
-      <ProductDialog open={dialogOpen} onClose={handleDialogClose} />
+      <ProductDialog
+        open={dialogOpen}
+        product={currentProduct}
+        onClose={handleDialogClose}
+      />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Products')}</h2>
         <Button
