@@ -156,12 +156,19 @@ export const updateProductBatch = async (
 ) => {
   await prisma.product.update({
     where: { id: productBatch.productId },
-    data: productBatch,
+    data: {
+      name: productBatch.name,
+      description: productBatch.description,
+    },
   });
 
   return prisma.productBatch.update({
     where: { id },
-    data: productBatch,
+    data: {
+      quantity: productBatch.quantity,
+      productionDate: productBatch.productionDate,
+      expirationDate: productBatch.expirationDate,
+    },
   });
 };
 

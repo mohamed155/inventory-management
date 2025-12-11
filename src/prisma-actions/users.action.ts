@@ -35,11 +35,8 @@ export const signIn = async (
   username: string,
   password: string,
 ) => {
-  console.log(username, password);
   const user = await getUserByUsername(prisma, username);
-  console.log(user);
   const isMatch = await bcrypt.compare(password, user?.password || '');
-  console.log(isMatch);
   if (user && isMatch) {
     return user;
   }

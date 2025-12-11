@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
   createProductBatch,
+  deleteProductBatch,
   getAllProductBatchesPaginated,
   updateProductBatch,
 } from '@/services/products.ts';
@@ -38,7 +39,14 @@ function Products() {
     [data],
   );
 
-  const deleteProduct = (id: string) => {};
+  const deleteProduct = useCallback(
+    (id: string) => {
+      deleteProductBatch(id).then(() => {
+        refetchProducts();
+      });
+    },
+    [refetchProducts],
+  );
 
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
@@ -115,7 +123,7 @@ function Products() {
         ),
       },
     ],
-    [t, editProduct],
+    [t, editProduct, deleteProduct],
   );
 
   const handleDialogClose = (
