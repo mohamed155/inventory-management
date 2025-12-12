@@ -26,7 +26,7 @@ declare global {
 
       getAllProductsPaginated: (
         params: DataParams<Product>,
-      ) => Promise<Product[]>;
+      ) => Promise<{ data: Product[]; total: number }>;
       getAllProducts: () => Promise<Pick<Product, 'id' | 'name'>[]>;
       getProductById: (id: string) => Promise<Product | null>;
       createProduct: (product: Product) => Promise<Product>;
@@ -35,7 +35,7 @@ declare global {
 
       getAllProductBatchesPaginated: (
         params: DataParams<Product & ProductBatch>,
-      ) => Promise<(Product & ProductBatch)[]>;
+      ) => Promise<{ data: (Product & ProductBatch)[]; total: number }>;
       getAllProductBatches: () => Promise<Pick<Product & ProductBatch>[]>;
       getProductBatchById: (
         id: string,

@@ -2,11 +2,11 @@ import type { PrismaClient } from '@prisma/client';
 import type { Product, ProductBatch } from '../../generated/prisma/client.ts';
 import type { DataParams } from '../models/params.ts';
 
-export const getAllProductsPaginated = (
+export const getAllProductsPaginated = async (
   prisma: PrismaClient,
   { page, orderDirection, orderProperty, filter }: DataParams<Product>,
 ) => {
-  return prisma.product.findMany({
+  const data = await prisma.product.findMany({
     where: filter
       ? Object.entries(filter).map(([key, value]) => ({
           [key]: { contains: value },
@@ -16,6 +16,8 @@ export const getAllProductsPaginated = (
     skip: (page - 1) * 10,
     take: 10,
   });
+  const total = (await prisma.product.count()) as number;
+  return { data, total };
 };
 
 export const getAllProducts = async (prisma: PrismaClient) => {
@@ -78,11 +80,15 @@ export const getAllProductBatchesPaginated = async (
     },
   });
 
-  return batches.map((batch: ProductBatch & { product: Product }) => ({
+  const data = batches.map((batch: ProductBatch & { product: Product }) => ({
     ...batch.product,
     ...batch,
     productId: batch.product.id,
   }));
+
+  const total = (await prisma.productBatch.count()) as number;
+
+  return { data, total };
 };
 
 export const getAllProductBatches = (prisma: PrismaClient) => {

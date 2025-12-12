@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,20 +19,25 @@ import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
 function Products() {
   const { t } = useTranslation();
   const { confirm } = useConfirm();
-  const [page, setPage] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<
     Product & ProductBatch
   >();
 
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
   const { data, refetch: refetchProducts } = useQuery({
-    queryKey: ['products', page],
-    queryFn: () => getAllProductBatchesPaginated({ page: page + 1 }),
+    queryKey: ['products', pagination.pageIndex],
+    queryFn: () =>
+      getAllProductBatchesPaginated({ page: pagination.pageIndex + 1 }),
   });
 
   const editProduct = useCallback(
     (id: string) => {
-      const product = data?.find((batch) => batch.id === id);
+      const product = data?.data.find((batch) => batch.id === id);
       if (product) {
         setCurrentProduct(product);
       }
@@ -172,7 +177,13 @@ function Products() {
           {t('Add Product')}
         </Button>
       </div>
-      <DataTable data={data} columns={columns} pageChanged={setPage} />
+      <DataTable
+        data={data?.data}
+        total={data?.total || 0}
+        columns={columns}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+      />
     </div>
   );
 }

@@ -9,9 +9,8 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { MoveDown, MoveUp } from 'lucide-react';
-import { Activity, useEffect, useMemo, useState } from 'react';
+import { Activity, type Dispatch, type SetStateAction, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { uuid } from 'zod';
 import {
   Pagination,
   PaginationContent,
@@ -32,36 +31,31 @@ import {
 
 function DataTable<T>({
   data,
+  total,
   columns,
-  pageChanged,
+  pagination,
+  onPaginationChange,
 }: {
   data: T[] | undefined;
+  total: number;
   columns: ColumnDef<T>[];
-  pageChanged?: (page: number) => void;
+  pagination: PaginationState;
+  onPaginationChange: Dispatch<SetStateAction<PaginationState>>;
 }) {
   const { t } = useTranslation();
-
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-
-  useEffect(() => {
-    if (pageChanged) {
-      pageChanged(pagination.pageIndex);
-    }
-  }, [pagination.pageIndex, pageChanged]);
 
   const table = useReactTable<T>({
     columns,
     data: data || [],
+    rowCount: total,
     debugTable: true,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
+    onPaginationChange: onPaginationChange,
     state: { pagination },
+    manualPagination: true,
   });
 
   const visiblePages = useMemo(() => {
@@ -106,18 +100,6 @@ function DataTable<T>({
     const lastPage = table.getPageCount() - 1;
     return table.getPageCount() > 7 && !visiblePages?.includes(lastPage);
   }, [table.getPageCount, visiblePages]);
-
-  const goToPreviousPage = () => {
-    setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex - 1 }));
-  };
-
-  const goToNextPage = () => {
-    setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex + 1 }));
-  };
-
-  const goToPage = (pageIndex: number) => {
-    setPagination((prev) => ({ ...prev, pageIndex }));
-  };
 
   return (
     <>
@@ -174,9 +156,10 @@ function DataTable<T>({
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
+              aria-disabled={pagination.pageIndex === 0}
               content={t('Previous')}
               className="pagination-button"
-              onClick={goToPreviousPage}
+              onClick={() => table.previousPage()}
             />
           </PaginationItem>
           <Activity mode={showStartEllipsis ? 'visible' : 'hidden'}>
@@ -186,9 +169,9 @@ function DataTable<T>({
           </Activity>
           {visiblePages?.map((i) => (
             <PaginationLink
-              key={uuid().toString()}
+              key={i}
               isActive={pagination.pageIndex === i}
-              onClick={() => goToPage(i)}
+              onClick={() => table.setPageIndex(i)}
               className="pagination-button"
             >
               {i + 1}
@@ -201,9 +184,10 @@ function DataTable<T>({
           </Activity>
           <PaginationItem>
             <PaginationNext
+              aria-disabled={pagination.pageIndex === table.getPageCount() - 1}
               content={t('Next')}
               className="pagination-button"
-              onClick={goToNextPage}
+              onClick={() => table.nextPage()}
             />
           </PaginationItem>
         </PaginationContent>
