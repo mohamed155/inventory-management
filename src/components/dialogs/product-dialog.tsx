@@ -28,6 +28,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
+import { useConfirm } from '@/context/confirm-context.tsx';
 import { getAllProducts } from '@/services/products.ts';
 import type {
   Product,
@@ -44,6 +45,7 @@ function ProductDialog({
   onClose?: (product?: Partial<Product & ProductBatch>) => void;
 }) {
   const { t } = useTranslation();
+  const { confirm } = useConfirm();
 
   const [status, setStatus] = useState<'new' | 'add'>('new');
 
@@ -115,12 +117,19 @@ function ProductDialog({
     });
   }, [status, form, product]);
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (onClose) {
       if (product) {
-        onClose({ ...form.getValues(), productId: product?.id } as Partial<
-          Product & ProductBatch
-        >);
+        const editConfirm = await confirm(
+          t('Are you sure to edit this record?'),
+        );
+        if (editConfirm) {
+          onClose({
+            ...form.getValues(),
+            productId: product?.productId,
+            id: product.id,
+          } as Partial<Product & ProductBatch>);
+        }
       } else {
         onClose(form.getValues() as Partial<Product & ProductBatch>);
       }
@@ -138,7 +147,9 @@ function ProductDialog({
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('Add Product')}</DialogTitle>
+            <DialogTitle>
+              {product ? t('Edit Product') : t('Add Product')}
+            </DialogTitle>
           </DialogHeader>
           <Activity mode={!product ? 'visible' : 'hidden'}>
             <Tabs

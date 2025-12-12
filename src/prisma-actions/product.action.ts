@@ -64,7 +64,6 @@ export const getAllProductBatchesPaginated = async (
     filter,
   }: DataParams<Product & ProductBatch>,
 ) => {
-  console.log('page ', page);
   const batches = await prisma.productBatch.findMany({
     where: filter
       ? Object.entries(filter).map(([key, value]) => ({
@@ -79,15 +78,11 @@ export const getAllProductBatchesPaginated = async (
     },
   });
 
-  console.log('batches ', batches);
-
-  const res = batches.map((batch: ProductBatch & { product: Product }) => ({
+  return batches.map((batch: ProductBatch & { product: Product }) => ({
     ...batch.product,
     ...batch,
     productId: batch.product.id,
   }));
-  console.log('res ', res);
-  return res;
 };
 
 export const getAllProductBatches = (prisma: PrismaClient) => {

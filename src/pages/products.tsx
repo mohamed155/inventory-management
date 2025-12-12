@@ -7,6 +7,7 @@ import DataTable from '@/components/data-table.tsx';
 import ProductDialog from '@/components/dialogs/product-dialog.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { useConfirm } from '@/context/confirm-context.tsx';
 import {
   createProductBatch,
   deleteProductBatch,
@@ -17,6 +18,7 @@ import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
 
 function Products() {
   const { t } = useTranslation();
+  const { confirm } = useConfirm();
   const [page, setPage] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<
@@ -40,12 +42,18 @@ function Products() {
   );
 
   const deleteProduct = useCallback(
-    (id: string) => {
-      deleteProductBatch(id).then(() => {
-        refetchProducts();
+    async (id: string) => {
+      const confirmDelete = await confirm({
+        message: t('Are you sure to delete this record?'),
+        variant: 'destructive',
       });
+      if (confirmDelete) {
+        deleteProductBatch(id).then(() => {
+          refetchProducts();
+        });
+      }
     },
-    [refetchProducts],
+    [refetchProducts, confirm, t],
   );
 
   const columns = useMemo<ColumnDef<Product>[]>(
