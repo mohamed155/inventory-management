@@ -66,13 +66,23 @@ export const getAllProductBatchesPaginated = async (
     filter,
   }: DataParams<Product & ProductBatch>,
 ) => {
+  const isProductProperty = ['name', 'description'].includes(
+    orderProperty as string,
+  );
+
+  const orderBy = orderProperty
+    ? isProductProperty
+      ? { product: { [orderProperty]: orderDirection } }
+      : { [orderProperty]: orderDirection }
+    : undefined;
+
   const batches = await prisma.productBatch.findMany({
     where: filter
       ? Object.entries(filter).map(([key, value]) => ({
           [key]: { contains: value },
         }))
       : undefined,
-    orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
+    orderBy: orderBy,
     skip: (page - 1) * 10,
     take: 10,
     include: {

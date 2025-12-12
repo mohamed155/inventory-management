@@ -6,6 +6,12 @@ import type {
   User,
 } from '../generated/prisma/browser.ts';
 
+declare module '@tanstack/react-table' {
+  interface ColumnMeta<TData extends RowData, TValue> {
+    filterVariant?: 'text' | 'range' | 'select';
+  }
+}
+
 declare global {
   interface Window {
     electronAPI: {

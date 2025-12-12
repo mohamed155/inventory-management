@@ -6,6 +6,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   type PaginationState,
+  type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
 import { MoveDown, MoveUp } from 'lucide-react';
@@ -35,12 +36,16 @@ function DataTable<T>({
   columns,
   pagination,
   onPaginationChange,
+  sorting,
+  onSortingChange,
 }: {
   data: T[] | undefined;
   total: number;
   columns: ColumnDef<T>[];
   pagination: PaginationState;
   onPaginationChange: Dispatch<SetStateAction<PaginationState>>;
+  sorting: SortingState;
+  onSortingChange: Dispatch<SetStateAction<SortingState>>;
 }) {
   const { t } = useTranslation();
 
@@ -54,8 +59,10 @@ function DataTable<T>({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: onPaginationChange,
-    state: { pagination },
+    onSortingChange: onSortingChange,
+    state: { pagination, sorting },
     manualPagination: true,
+    manualSorting: true,
   });
 
   const visiblePages = useMemo(() => {

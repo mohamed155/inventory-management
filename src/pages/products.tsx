@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import type { ColumnDef, PaginationState } from '@tanstack/react-table';
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+} from '@tanstack/react-table';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,10 +33,18 @@ function Products() {
     pageSize: 10,
   });
 
+  const [sorting, setSorting] = useState<SortingState>([]);
+
   const { data, refetch: refetchProducts } = useQuery({
-    queryKey: ['products', pagination.pageIndex],
+    queryKey: ['products', pagination.pageIndex, sorting],
     queryFn: () =>
-      getAllProductBatchesPaginated({ page: pagination.pageIndex + 1 }),
+      getAllProductBatchesPaginated({
+        page: pagination.pageIndex + 1,
+        orderProperty:
+          sorting.length > 0 ? (sorting[0].id as keyof Product) : undefined,
+        orderDirection:
+          sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
+      }),
   });
 
   const editProduct = useCallback(
@@ -183,6 +195,8 @@ function Products() {
         columns={columns}
         pagination={pagination}
         onPaginationChange={setPagination}
+        sorting={sorting}
+        onSortingChange={setSorting}
       />
     </div>
   );
