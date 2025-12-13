@@ -1,5 +1,6 @@
 import {
   type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -12,6 +13,7 @@ import {
 import { MoveDown, MoveUp } from 'lucide-react';
 import { Activity, type Dispatch, type SetStateAction, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import DebouncedInput from '@/components/debounced-input.tsx';
 import {
   Pagination,
   PaginationContent,
@@ -38,14 +40,18 @@ function DataTable<T>({
   onPaginationChange,
   sorting,
   onSortingChange,
+  columnFilters,
+  onColumnFiltersChange,
 }: {
   data: T[] | undefined;
   total: number;
   columns: ColumnDef<T>[];
   pagination: PaginationState;
   onPaginationChange: Dispatch<SetStateAction<PaginationState>>;
-  sorting: SortingState;
-  onSortingChange: Dispatch<SetStateAction<SortingState>>;
+  sorting?: SortingState;
+  onSortingChange?: Dispatch<SetStateAction<SortingState>>;
+  columnFilters?: ColumnFiltersState;
+  onColumnFiltersChange?: Dispatch<SetStateAction<ColumnFiltersState>>;
 }) {
   const { t } = useTranslation();
 
@@ -60,9 +66,11 @@ function DataTable<T>({
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: onPaginationChange,
     onSortingChange: onSortingChange,
-    state: { pagination, sorting },
+    onColumnFiltersChange: onColumnFiltersChange,
+    state: { pagination, sorting, columnFilters },
     manualPagination: true,
     manualSorting: true,
+    manualFiltering: true,
   });
 
   const visiblePages = useMemo(() => {
@@ -141,6 +149,20 @@ function DataTable<T>({
                       asc: <MoveUp size={16} />,
                       desc: <MoveDown size={16} />,
                     }[header.column.getIsSorted() as string] ?? null}
+                  </div>
+                  <div className="my-1">
+                    {header.column.getCanFilter() ? (
+                      <DebouncedInput
+                        className="bg-white"
+                        value={
+                          header.column.getFilterValue() as string | number
+                        }
+                        onChange={(value) =>
+                          header.column.setFilterValue(value)
+                        }
+                        placeholder={t('Filter...')}
+                      />
+                    ) : null}
                   </div>
                 </TableHead>
               ))}

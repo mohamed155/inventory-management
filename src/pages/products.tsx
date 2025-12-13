@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type {
   ColumnDef,
+  ColumnFiltering,
+  ColumnFiltersState,
   PaginationState,
   SortingState,
 } from '@tanstack/react-table';
@@ -32,8 +34,8 @@ function Products() {
     pageIndex: 0,
     pageSize: 10,
   });
-
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [filtering, setFiltering] = useState<ColumnFiltersState>([]);
 
   const { data, refetch: refetchProducts } = useQuery({
     queryKey: ['products', pagination.pageIndex, sorting],
@@ -197,6 +199,8 @@ function Products() {
         onPaginationChange={setPagination}
         sorting={sorting}
         onSortingChange={setSorting}
+        columnFilters={filtering}
+        onColumnFiltersChange={console.log}
       />
     </div>
   );
