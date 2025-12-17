@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type {
   ColumnDef,
-  ColumnFiltering,
   ColumnFiltersState,
   PaginationState,
   SortingState,
@@ -38,7 +37,7 @@ function Products() {
   const [filtering, setFiltering] = useState<ColumnFiltersState>([]);
 
   const { data, refetch: refetchProducts } = useQuery({
-    queryKey: ['products', pagination.pageIndex, sorting],
+    queryKey: ['products', pagination.pageIndex, sorting, filtering],
     queryFn: () =>
       getAllProductBatchesPaginated({
         page: pagination.pageIndex + 1,
@@ -46,19 +45,20 @@ function Products() {
           sorting.length > 0 ? (sorting[0].id as keyof Product) : undefined,
         orderDirection:
           sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
+        filter:
+          filtering.length > 0
+            ? (filtering.reduce(
+                (acc, filter) => ({ ...acc, [filter.id]: filter.value }),
+                {},
+              ) as any)
+            : undefined,
       }),
   });
 
-  const editProduct = useCallback(
-    (id: string) => {
-      const product = data?.data.find((batch) => batch.id === id);
-      if (product) {
-        setCurrentProduct(product);
-      }
-      setDialogOpen(true);
-    },
-    [data],
-  );
+  const editProduct = useCallback((product: Product & ProductBatch) => {
+    setCurrentProduct(product);
+    setDialogOpen(true);
+  }, []);
 
   const deleteProduct = useCallback(
     async (id: string) => {
@@ -75,7 +75,7 @@ function Products() {
     [refetchProducts, confirm, t],
   );
 
-  const columns = useMemo<ColumnDef<Product>[]>(
+  const columns = useMemo<ColumnDef<Product & ProductBatch>[]>(
     () => [
       { accessorKey: 'name', header: () => t('Name') },
       { accessorKey: 'description', header: () => t('Description') },
@@ -135,7 +135,9 @@ function Products() {
             <Button
               variant="outline"
               className="cursor-pointer"
-              onClick={() => editProduct(info.getValue() as string)}
+              onClick={() =>
+                editProduct(info.row.original as Product & ProductBatch)
+              }
             >
               <Edit className="text-primary" />
             </Button>
@@ -200,7 +202,7 @@ function Products() {
         sorting={sorting}
         onSortingChange={setSorting}
         columnFilters={filtering}
-        onColumnFiltersChange={console.log}
+        onColumnFiltersChange={setFiltering}
       />
     </div>
   );

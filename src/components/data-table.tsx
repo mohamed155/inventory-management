@@ -153,7 +153,7 @@ function DataTable<T>({
                   <div className="my-1">
                     {header.column.getCanFilter() ? (
                       <DebouncedInput
-                        className="bg-white"
+                        className="bg-white text-black"
                         value={
                           header.column.getFilterValue() as string | number
                         }
