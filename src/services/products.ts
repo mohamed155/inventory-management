@@ -1,7 +1,11 @@
 import type { DataParams } from '@/models/params.ts';
 import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
+import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';
+import type { ProductBatchWhereInput } from '../../generated/prisma/models/ProductBatch.ts';
 
-export const getAllProductsPaginated = (params: DataParams<Product>) => {
+export const getAllProductsPaginated = (
+  params: DataParams<Product, ProductWhereInput>,
+) => {
   const getAllProductsPaginated = window.electronAPI.getAllProductsPaginated;
   return getAllProductsPaginated(params);
 };
@@ -32,7 +36,10 @@ export const deleteProduct = (id: string) => {
 };
 
 export const getAllProductBatchesPaginated = (
-  params: DataParams<Product & ProductBatch>,
+  params: DataParams<
+    Product & ProductBatch,
+    ProductBatchWhereInput & { product: ProductWhereInput }
+  >,
 ) => {
   const getAllProductBatchesPaginated =
     window.electronAPI.getAllProductBatchesPaginated;

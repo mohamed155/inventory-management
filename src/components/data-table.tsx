@@ -11,7 +11,13 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { MoveDown, MoveUp } from 'lucide-react';
-import { Activity, type Dispatch, type SetStateAction, useMemo } from 'react';
+import {
+  Activity,
+  type Dispatch,
+  memo,
+  type SetStateAction,
+  useMemo,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import TableColumnFilter from '@/components/table-column-filter.tsx';
 import {
@@ -32,7 +38,7 @@ import {
   TableRow,
 } from '@/components/ui/table.tsx';
 
-function DataTable<T>({
+function DataTableInner<T>({
   data,
   total,
   columns,
@@ -107,16 +113,16 @@ function DataTable<T>({
         currentPage + 2,
       ];
     }
-  }, [pagination.pageIndex, table.getPageCount, data]);
+  }, [pagination.pageIndex, table, data]);
 
   const showStartEllipsis = useMemo(() => {
     return table.getPageCount() > 7 && !visiblePages?.includes(0);
-  }, [table.getPageCount, visiblePages]);
+  }, [table, visiblePages]);
 
   const showEndEllipsis = useMemo(() => {
     const lastPage = table.getPageCount() - 1;
     return table.getPageCount() > 7 && !visiblePages?.includes(lastPage);
-  }, [table.getPageCount, visiblePages]);
+  }, [table, visiblePages]);
 
   return (
     <>
@@ -223,5 +229,7 @@ function DataTable<T>({
     </>
   );
 }
+
+const DataTable = memo(DataTableInner) as typeof DataTableInner;
 
 export default DataTable;

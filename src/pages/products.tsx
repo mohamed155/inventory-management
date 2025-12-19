@@ -21,6 +21,8 @@ import {
   updateProductBatch,
 } from '@/services/products.ts';
 import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
+import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';
+import type { ProductBatchWhereInput } from '../../generated/prisma/models/ProductBatch.ts';
 
 function Products() {
   const { t } = useTranslation();
@@ -51,14 +53,14 @@ function Products() {
       quantity: quantity ? { equals: Number(quantity) } : undefined,
       productionDate: productionDate
         ? {
-            gte: startOfDay(new Date(productionDate as Date)),
-            lte: endOfDay(new Date(productionDate as Date)),
+            gte: startOfDay(new Date(productionDate as string)),
+            lte: endOfDay(new Date(productionDate as string)),
           }
         : undefined,
       expirationDate: expirationDate
         ? {
-            gte: startOfDay(new Date(expirationDate as Date)),
-            lte: endOfDay(new Date(expirationDate as Date)),
+            gte: startOfDay(new Date(expirationDate as string)),
+            lte: endOfDay(new Date(expirationDate as string)),
           }
         : undefined,
       product:
@@ -72,11 +74,17 @@ function Products() {
                 : undefined,
             }
           : undefined,
-    };
+    } as ProductBatchWhereInput & { product: ProductWhereInput };
   }, [filtering]);
 
   const { data, refetch: refetchProducts } = useQuery({
-    queryKey: ['products', pagination.pageIndex, sorting, filtering],
+    queryKey: [
+      'products',
+      pagination.pageIndex,
+      pagination.pageSize,
+      sorting,
+      filtering,
+    ],
     queryFn: () =>
       getAllProductBatchesPaginated({
         page: pagination.pageIndex + 1,
@@ -86,6 +94,7 @@ function Products() {
           sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
         filter,
       }),
+    refetchOnWindowFocus: false,
   });
 
   const editProduct = useCallback((product: Product & ProductBatch) => {
