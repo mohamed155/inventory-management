@@ -13,7 +13,7 @@ import {
 import { MoveDown, MoveUp } from 'lucide-react';
 import { Activity, type Dispatch, type SetStateAction, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import DebouncedInput from '@/components/debounced-input.tsx';
+import TableColumnFilter from '@/components/table-column-filter.tsx';
 import {
   Pagination,
   PaginationContent,
@@ -36,6 +36,7 @@ function DataTable<T>({
   data,
   total,
   columns,
+  showFilters,
   pagination,
   onPaginationChange,
   sorting,
@@ -46,6 +47,7 @@ function DataTable<T>({
   data: T[] | undefined;
   total: number;
   columns: ColumnDef<T>[];
+  showFilters?: boolean;
   pagination: PaginationState;
   onPaginationChange: Dispatch<SetStateAction<PaginationState>>;
   sorting?: SortingState;
@@ -150,20 +152,17 @@ function DataTable<T>({
                       desc: <MoveDown size={16} />,
                     }[header.column.getIsSorted() as string] ?? null}
                   </div>
-                  <div className="my-1">
-                    {header.column.getCanFilter() ? (
-                      <DebouncedInput
-                        className="bg-white text-black"
-                        value={
-                          header.column.getFilterValue() as string | number
-                        }
-                        onChange={(value) =>
-                          header.column.setFilterValue(value)
-                        }
-                        placeholder={t('Filter...')}
-                      />
-                    ) : null}
-                  </div>
+                  <Activity
+                    mode={
+                      showFilters && header.column.getCanFilter()
+                        ? 'visible'
+                        : 'hidden'
+                    }
+                  >
+                    <div className="my-1">
+                      <TableColumnFilter column={header.column} />
+                    </div>
+                  </Activity>
                 </TableHead>
               ))}
             </TableRow>

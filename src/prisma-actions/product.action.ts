@@ -1,17 +1,20 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Product, ProductBatch } from '../../generated/prisma/client.ts';
+import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';
+import type { ProductBatchWhereInput } from '../../generated/prisma/models/ProductBatch.ts';
 import type { DataParams } from '../models/params.ts';
 
 export const getAllProductsPaginated = async (
   prisma: PrismaClient,
-  { page, orderDirection, orderProperty, filter }: DataParams<Product>,
+  {
+    page,
+    orderDirection,
+    orderProperty,
+    filter,
+  }: DataParams<Product, ProductWhereInput>,
 ) => {
   const data = await prisma.product.findMany({
-    where: filter
-      ? Object.entries(filter).map(([key, value]) => ({
-          [key]: { contains: value },
-        }))
-      : undefined,
+    where: { AND: filter },
     orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
     skip: (page - 1) * 10,
     take: 10,
@@ -64,11 +67,13 @@ export const getAllProductBatchesPaginated = async (
     orderDirection,
     orderProperty,
     filter,
-  }: DataParams<Product & ProductBatch>,
+  }: DataParams<
+    Product & ProductBatch,
+    ProductBatchWhereInput & { product?: ProductWhereInput }
+  >,
 ) => {
-  const isProductProperty = ['name', 'description'].includes(
-    orderProperty as string,
-  );
+  const productProperties = ['name', 'description'];
+  const isProductProperty = productProperties.includes(orderProperty as string);
 
   const orderBy = orderProperty
     ? isProductProperty
@@ -77,12 +82,8 @@ export const getAllProductBatchesPaginated = async (
     : undefined;
 
   const batches = await prisma.productBatch.findMany({
-    where: filter
-      ? Object.entries(filter).map(([key, value]) => ({
-          [key]: { contains: value },
-        }))
-      : undefined,
-    orderBy: orderBy,
+    where: { AND: filter },
+    orderBy,
     skip: (page - 1) * 10,
     take: 10,
     include: {

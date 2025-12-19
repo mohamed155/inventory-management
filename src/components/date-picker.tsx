@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
@@ -13,11 +13,15 @@ function DatePicker({
   value,
   onChange,
   placeholder,
+  className,
+  dismissable,
   ...props
 }: {
   value?: Date | undefined;
   onChange?: (date: Date | undefined) => void;
+  className?: string;
   placeholder?: string;
+  dismissable?: boolean;
 }) {
   const { t } = useTranslation();
 
@@ -34,7 +38,7 @@ function DatePicker({
         <Button
           variant="outline"
           id="date"
-          className="w-full flex justify-between"
+          className={`w-full flex justify-between ${className ?? ''}`}
           {...props}
         >
           {date
@@ -42,7 +46,22 @@ function DatePicker({
             : placeholder
               ? placeholder
               : t('Select Date')}
-          <ChevronDownIcon />
+          {date && dismissable ? (
+            <div
+              className="text-destructive p-0!"
+              {...{
+                onClick: (e) => {
+                  e.preventDefault();
+                  setDate(undefined);
+                  onChange?.(undefined);
+                },
+              }}
+            >
+              <X />
+            </div>
+          ) : (
+            <ChevronDownIcon />
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto overflow-hidden p-0" align="start">

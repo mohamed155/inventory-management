@@ -1,6 +1,6 @@
-export interface DataParams<T> {
+export interface DataParams<T, F> {
   page: number;
   orderDirection?: 'asc' | 'desc';
   orderProperty?: keyof T;
-  filter?: Record<keyof T, T[keyof T]> | undefined;
+  filter?: F;
 }

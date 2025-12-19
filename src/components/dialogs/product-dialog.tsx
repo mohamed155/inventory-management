@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import moment from 'moment';
 import { Activity, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -70,14 +69,10 @@ function ProductDialog({
           productionDate: z.date(),
           expirationDate: z.date(),
         })
-        .refine(
-          (data) =>
-            moment(data.expirationDate).isAfter(moment(data.productionDate)),
-          {
-            message: t('Expiration date can not be before production date'),
-            path: ['expirationDate'],
-          },
-        ),
+        .refine((data) => data.expirationDate > data.productionDate, {
+          message: t('Expiration date can not be before production date'),
+          path: ['expirationDate'],
+        }),
     [t, status, product],
   );
 

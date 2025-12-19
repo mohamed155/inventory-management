@@ -5,7 +5,8 @@ import type {
   PaginationState,
   SortingState,
 } from '@tanstack/react-table';
-import { Edit, Plus, Trash2 } from 'lucide-react';
+import { endOfDay, startOfDay } from 'date-fns';
+import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
@@ -35,6 +36,44 @@ function Products() {
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [filtering, setFiltering] = useState<ColumnFiltersState>([]);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+
+  const filter = useMemo(() => {
+    const filterMap = new Map(filtering.map((f) => [f.id, f.value]));
+
+    const quantity = filterMap.get('quantity');
+    const productionDate = filterMap.get('productionDate');
+    const expirationDate = filterMap.get('expirationDate');
+    const name = filterMap.get('name');
+    const description = filterMap.get('description');
+
+    return {
+      quantity: quantity ? { equals: Number(quantity) } : undefined,
+      productionDate: productionDate
+        ? {
+            gte: startOfDay(new Date(productionDate as Date)),
+            lte: endOfDay(new Date(productionDate as Date)),
+          }
+        : undefined,
+      expirationDate: expirationDate
+        ? {
+            gte: startOfDay(new Date(expirationDate as Date)),
+            lte: endOfDay(new Date(expirationDate as Date)),
+          }
+        : undefined,
+      product:
+        name || description
+          ? {
+              name: name ? { contains: String(name) } : undefined,
+              description: description
+                ? {
+                    contains: String(description),
+                  }
+                : undefined,
+            }
+          : undefined,
+    };
+  }, [filtering]);
 
   const { data, refetch: refetchProducts } = useQuery({
     queryKey: ['products', pagination.pageIndex, sorting, filtering],
@@ -45,13 +84,7 @@ function Products() {
           sorting.length > 0 ? (sorting[0].id as keyof Product) : undefined,
         orderDirection:
           sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
-        filter:
-          filtering.length > 0
-            ? (filtering.reduce(
-                (acc, filter) => ({ ...acc, [filter.id]: filter.value }),
-                {},
-              ) as any)
-            : undefined,
+        filter,
       }),
   });
 
@@ -92,11 +125,17 @@ function Products() {
             {(info.getValue() as number) > 1 ? t('Units') : t('Unit')}
           </Badge>
         ),
+        meta: {
+          filterVariant: 'number',
+        },
       },
       {
         accessorKey: 'productionDate',
         header: () => t('Production Date'),
         cell: (info) => (info.getValue() as Date).toLocaleDateString('en-GB'),
+        meta: {
+          filterVariant: 'date',
+        },
       },
       {
         accessorKey: 'expirationDate',
@@ -125,11 +164,15 @@ function Products() {
             </span>
           );
         },
+        meta: {
+          filterVariant: 'date',
+        },
       },
       {
         accessorKey: 'id',
         header: () => t('Actions'),
         enableSorting: false,
+        enableColumnFilter: false,
         cell: (info) => (
           <div className="flex gap-2">
             <Button
@@ -185,18 +228,28 @@ function Products() {
       />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Products')}</h2>
-        <Button
-          className="bg-primary text-white"
-          onClick={() => setDialogOpen(true)}
-        >
-          <Plus size={30} />
-          {t('Add Product')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showFilters ? 'outline' : 'default'}
+            className="border-primary border-2"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? <FunnelX /> : <Funnel />}
+          </Button>
+          <Button
+            className="bg-primary text-white"
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus size={30} />
+            {t('Add Product')}
+          </Button>
+        </div>
       </div>
       <DataTable
         data={data?.data}
         total={data?.total || 0}
         columns={columns}
+        showFilters={showFilters}
         pagination={pagination}
         onPaginationChange={setPagination}
         sorting={sorting}

@@ -7,8 +7,8 @@ import type {
 } from '../generated/prisma/browser.ts';
 
 declare module '@tanstack/react-table' {
-  interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: 'text' | 'range' | 'select';
+  interface ColumnMeta<_TData extends RowData, _TValue> {
+    filterVariant?: 'text' | 'number' | 'date';
   }
 }
 
