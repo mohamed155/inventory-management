@@ -1,9 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type {
+  Customer,
   Product,
   ProductBatch,
   User,
 } from '../generated/prisma/client.ts';
+import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
+import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
+import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
 import type { DataParams } from './models/params.ts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -33,7 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('signIn', username, password),
 
   // products actions
-  getAllProductsPaginated: (params: DataParams<Product>) =>
+  getAllProductsPaginated: (params: DataParams<Product, ProductWhereInput>) =>
     ipcRenderer.invoke('getAllProductsPaginated', params),
   getAllProducts: () => ipcRenderer.invoke('getAllProducts'),
   getProductById: (id: string) => ipcRenderer.invoke('getProductById', id),
@@ -43,8 +47,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('updateProduct', id, product),
   deleteProduct: (id: string) => ipcRenderer.invoke('deleteProduct', id),
 
-  getAllProductBatchesPaginated: (params: DataParams<Product & ProductBatch>) =>
-    ipcRenderer.invoke('getAllProductBatchesPaginated', params),
+  getAllProductBatchesPaginated: (
+    params: DataParams<
+      Product & ProductBatch,
+      ProductBatchWhereInput & { product: ProductWhereInput }
+    >,
+  ) => ipcRenderer.invoke('getAllProductBatchesPaginated', params),
   getAllProductBatches: () => ipcRenderer.invoke('getAllProductBatches'),
   createProductBatch: (productBatch: Product & ProductBatch) =>
     ipcRenderer.invoke('createProductBatch', productBatch),
@@ -52,4 +60,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('updateProductBatch', id, productBatch),
   deleteProductBatch: (id: string) =>
     ipcRenderer.invoke('deleteProductBatch', id),
+
+  // customer actions
+  getAllCustomersPaginated: (
+    params: DataParams<Customer, CustomerWhereInput>,
+  ) => ipcRenderer.invoke('getAllCustomersPaginated', params),
+  getAllCustomers: () => ipcRenderer.invoke('getAllCustomers'),
+  getCustomerById: (id: string) => ipcRenderer.invoke('getCustomerById', id),
+  createCustomer: (customer: Customer) =>
+    ipcRenderer.invoke('createCustomer', customer),
+  updateCustomer: (id: string, customer: Customer) =>
+    ipcRenderer.invoke('updateCustomer', id, customer),
+  deleteCustomer: (id: string) => ipcRenderer.invoke('deleteCustomer', id),
 });

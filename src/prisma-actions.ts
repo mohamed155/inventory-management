@@ -1,7 +1,21 @@
 import { ipcMain } from 'electron';
-import type { PrismaClient, ProductBatch } from '../generated/prisma/client';
+import type {
+  Customer,
+  PrismaClient,
+  ProductBatch,
+} from '../generated/prisma/client';
 import type { Product, User } from '../generated/prisma/client.ts';
+import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
+import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
+import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
 import type { DataParams } from './models/params.ts';
+import {
+  createCustomer,
+  deleteCustomer,
+  getAllCustomers,
+  getAllCustomersPaginated,
+  updateCustomer,
+} from './prisma-actions/customer.actions.ts';
 import {
   createProduct,
   createProductBatch,
@@ -37,8 +51,10 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     signIn(prisma, username, password),
   );
 
-  ipcMain.handle('getAllProductsPaginated', (_, params: DataParams<Product>) =>
-    getAllProductsPaginated(prisma, params),
+  ipcMain.handle(
+    'getAllProductsPaginated',
+    (_, params: DataParams<Product, ProductWhereInput>) =>
+      getAllProductsPaginated(prisma, params),
   );
   ipcMain.handle('getAllProducts', () => getAllProducts(prisma));
   ipcMain.handle('getProductById', (_, id: string) =>
@@ -54,8 +70,13 @@ export const initPrismaActions = (prisma: PrismaClient) => {
 
   ipcMain.handle(
     'getAllProductBatchesPaginated',
-    (_, params: DataParams<Product & ProductBatch>) =>
-      getAllProductBatchesPaginated(prisma, params),
+    (
+      _,
+      params: DataParams<
+        Product & ProductBatch,
+        ProductBatchWhereInput & { product: ProductWhereInput }
+      >,
+    ) => getAllProductBatchesPaginated(prisma, params),
   );
   ipcMain.handle('getAllProductBatches', () => getAllProductBatches(prisma));
   ipcMain.handle('getProductBatch', (_, id: string) =>
@@ -73,5 +94,24 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('deleteProductBatch', (_, id: string) =>
     deleteProductBatch(prisma, id),
+  );
+
+  ipcMain.handle(
+    'getAllCustomersPaginated',
+    (_, params: DataParams<Customer, CustomerWhereInput>) =>
+      getAllCustomersPaginated(prisma, params),
+  );
+  ipcMain.handle('getAllCustomers', () => getAllCustomers(prisma));
+  ipcMain.handle('getCustomerById', (_, id: string) =>
+    getProductById(prisma, id),
+  );
+  ipcMain.handle('createCustomer', (_, customer: Customer) =>
+    createCustomer(prisma, customer),
+  );
+  ipcMain.handle('updateCustomer', (_, id: string, customer: Customer) =>
+    updateCustomer(prisma, id, customer),
+  );
+  ipcMain.handle('deleteCustomer', (_, id: string) =>
+    deleteCustomer(prisma, id),
   );
 };
