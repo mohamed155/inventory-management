@@ -1,6 +1,10 @@
 import type { DataParams } from '@/models/params.ts';
 import type { UserModel } from '@/models/user.ts';
-import type { Customer, User } from '../generated/prisma/browser.ts';
+import type { Customer, Provider, User } from '../generated/prisma/browser.ts';
+import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
+import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
+import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
+import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<_TData extends RowData, _TValue> {
@@ -31,7 +35,7 @@ declare global {
 
       // products actions
       getAllProductsPaginated: (
-        params: DataParams<Product>,
+        params: DataParams<Product, ProductWhereInput>,
       ) => Promise<{ data: Product[]; total: number }>;
       getAllProducts: () => Promise<Pick<Product, 'id' | 'name'>[]>;
       getProductById: (id: string) => Promise<Product | null>;
@@ -41,7 +45,10 @@ declare global {
 
       // product batches actions
       getAllProductBatchesPaginated: (
-        params: DataParams<Product & ProductBatch>,
+        params: DataParams<
+          Product & ProductBatch,
+          ProductBatchWhereInput & { product: ProductWhereInput }
+        >,
       ) => Promise<{ data: (Product & ProductBatch)[]; total: number }>;
       getAllProductBatches: () => Promise<Pick<Product & ProductBatch>[]>;
       getProductBatchById: (
@@ -56,13 +63,23 @@ declare global {
 
       // customer actions
       getAllCustomersPaginated: (
-        params: DataParams<Customer>,
+        params: DataParams<Customer, CustomerWhereInput>,
       ) => Promise<{ data: Customer[]; total: number }>;
       getAllCustomers: () => Promise<Pick<Customer, 'id' | 'name'>[]>;
       getCustomerById: (id: string) => Promise<Customer | null>;
       createCustomer: (customer: Customer) => Promise<Customer>;
       updateCustomer: (id: string, customer: Customer) => Promise<Customer>;
       deleteCustomer: (id: string) => Promise<Customer>;
+
+      // provider actions
+      getAllProvidersPaginated: (
+        params: DataParams<Provider, ProviderWhereInput>,
+      ) => Promise<{ data: Provider[]; total: number }>;
+      getAllProviders: () => Promise<Pick<Provider, 'id' | 'name'>[]>;
+      getProviderById: (id: string) => Promise<Provider | null>;
+      createProvider: (provider: Provider) => Promise<Provider>;
+      updateProvider: (id: string, provider: Provider) => Promise<Provider>;
+      deleteProvider: (id: string) => Promise<Provider>;
     };
   }
 }

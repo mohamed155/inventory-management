@@ -3,11 +3,13 @@ import type {
   Customer,
   PrismaClient,
   ProductBatch,
+  Provider,
 } from '../generated/prisma/client';
 import type { Product, User } from '../generated/prisma/client.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
 import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
+import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
 import type { DataParams } from './models/params.ts';
 import {
   createCustomer,
@@ -31,6 +33,13 @@ import {
   updateProductBatch,
 } from './prisma-actions/product.action.ts';
 import {
+  createProvider,
+  deleteProvider,
+  getAllProviders,
+  getAllProvidersPaginated,
+  updateProvider,
+} from './prisma-actions/provider.actions.ts';
+import {
   createUser,
   getAllUsers,
   getUserById,
@@ -40,6 +49,7 @@ import {
 } from './prisma-actions/users.action.ts';
 
 export const initPrismaActions = (prisma: PrismaClient) => {
+  // Users actions
   ipcMain.handle('getUsers', () => getAllUsers(prisma));
   ipcMain.handle('getUserById', (_, id) => getUserById(prisma, id));
   ipcMain.handle('getUserByUsername', (_, username) =>
@@ -51,6 +61,7 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     signIn(prisma, username, password),
   );
 
+  // Products actions
   ipcMain.handle(
     'getAllProductsPaginated',
     (_, params: DataParams<Product, ProductWhereInput>) =>
@@ -68,6 +79,7 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('deleteProduct', (_, id: string) => deleteProduct(prisma, id));
 
+  // Product Batches actions
   ipcMain.handle(
     'getAllProductBatchesPaginated',
     (
@@ -96,6 +108,7 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     deleteProductBatch(prisma, id),
   );
 
+  // Customers actions
   ipcMain.handle(
     'getAllCustomersPaginated',
     (_, params: DataParams<Customer, CustomerWhereInput>) =>
@@ -113,5 +126,25 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('deleteCustomer', (_, id: string) =>
     deleteCustomer(prisma, id),
+  );
+
+  // Providers actions
+  ipcMain.handle(
+    'getAllProvidersPaginated',
+    (_, params: DataParams<Provider, ProviderWhereInput>) =>
+      getAllProvidersPaginated(prisma, params),
+  );
+  ipcMain.handle('getAllProviders', () => getAllProviders(prisma));
+  ipcMain.handle('getProviderById', (_, id: string) =>
+    getProductById(prisma, id),
+  );
+  ipcMain.handle('createProvider', (_, provider: Provider) =>
+    createProvider(prisma, provider),
+  );
+  ipcMain.handle('updateProvider', (_, id: string, provider: Provider) =>
+    updateProvider(prisma, id, provider),
+  );
+  ipcMain.handle('deleteProvider', (_, id: string) =>
+    deleteProvider(prisma, id),
   );
 };

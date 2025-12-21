@@ -3,11 +3,13 @@ import type {
   Customer,
   Product,
   ProductBatch,
+  Provider,
   User,
 } from '../generated/prisma/client.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
 import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
+import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
 import type { DataParams } from './models/params.ts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -72,4 +74,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateCustomer: (id: string, customer: Customer) =>
     ipcRenderer.invoke('updateCustomer', id, customer),
   deleteCustomer: (id: string) => ipcRenderer.invoke('deleteCustomer', id),
+
+  // provider actions
+  getAllProvidersPaginated: (
+    params: DataParams<Provider, ProviderWhereInput>,
+  ) => ipcRenderer.invoke('getAllProvidersPaginated', params),
+  getAllProviders: () => ipcRenderer.invoke('getAllProviders'),
+  getProviderById: (id: string) => ipcRenderer.invoke('getProviderById', id),
+  createProvider: (provider: Provider) =>
+    ipcRenderer.invoke('createProvider', provider),
+  updateProvider: (id: string, provider: Provider) =>
+    ipcRenderer.invoke('updateProvider', id, provider),
+  deleteProvider: (id: string) => ipcRenderer.invoke('deleteProvider', id),
 });

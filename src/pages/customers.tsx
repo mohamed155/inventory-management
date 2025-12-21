@@ -149,7 +149,7 @@ function Customers() {
         onClose={handleDialogClose}
       />
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold pb-2">{t('Products')}</h2>
+        <h2 className="text-xl font-semibold pb-2">{t('Customers')}</h2>
         <div className="flex items-center gap-2">
           <Button
             variant={showFilters ? 'outline' : 'default'}
