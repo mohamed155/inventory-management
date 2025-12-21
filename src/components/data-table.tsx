@@ -190,7 +190,9 @@ function DataTableInner<T>({
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
-              aria-disabled={pagination.pageIndex === 0}
+              aria-disabled={
+                table.getPageCount() === 0 || pagination.pageIndex === 0
+              }
               content={t('Previous')}
               className="pagination-button"
               onClick={() => table.previousPage()}
@@ -218,7 +220,10 @@ function DataTableInner<T>({
           </Activity>
           <PaginationItem>
             <PaginationNext
-              aria-disabled={pagination.pageIndex === table.getPageCount() - 1}
+              aria-disabled={
+                table.getPageCount() === 0 ||
+                pagination.pageIndex === table.getPageCount() - 1
+              }
               content={t('Next')}
               className="pagination-button"
               onClick={() => table.nextPage()}

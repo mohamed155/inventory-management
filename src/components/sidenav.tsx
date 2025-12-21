@@ -18,22 +18,25 @@ import { logout } from '@/services/auth.ts';
 
 function MenuItem({
   name,
+  title,
   icon,
   selected,
   onClick,
 }: {
   name: string;
+  title: string;
   icon: React.ReactNode;
   selected?: boolean;
   onClick?: () => void;
 }) {
   return (
     <Button
+      id={name}
       className={`w-full shadow-none bg-white justify-start font-semibold flex px-3 py-2 hover:bg-primary/10 rounded-md text-primary text-sm align-center mb-1 cursor-pointer transition ${selected ? '!bg-primary !text-white' : ''}`}
       onClick={onClick}
     >
       <div className="mr-2 flex justify-center items-center">{icon}</div>
-      {name}
+      {title}
     </Button>
   );
 }
@@ -45,32 +48,38 @@ function Sidenav() {
   const menuItems = useMemo(
     () => [
       {
-        name: t('Dashboard'),
+        name: 'dashboard',
+        title: t('Dashboard'),
         icon: <LayoutDashboard size={18} />,
         onClick: () => navigate('/dashboard'),
       },
       {
-        name: t('Products'),
+        name: 'products',
+        title: t('Products'),
         icon: <Package size={18} />,
         onClick: () => navigate('/products'),
       },
       {
-        name: t('Purchases'),
+        name: 'purchases',
+        title: t('Purchases'),
         icon: <ShoppingCart size={18} />,
         onClick: () => navigate('/purchases'),
       },
       {
-        name: t('Sales'),
+        name: 'sales',
+        title: t('Sales'),
         icon: <DollarSign size={18} />,
         onClick: () => navigate('/sales'),
       },
       {
-        name: t('Customers'),
+        name: 'customers',
+        title: t('Customers'),
         icon: <Users size={18} />,
         onClick: () => navigate('/customers'),
       },
       {
-        name: t('Providers'),
+        name: 'providers',
+        title: t('Providers'),
         icon: <Truck size={18} />,
         onClick: () => navigate('/providers'),
       },
@@ -97,9 +106,10 @@ function Sidenav() {
       </div>
       <div>
         <MenuItem
-          name="Settings"
+          name="settings"
+          title={t('Settings')}
           icon={<Settings size={18} />}
-          selected={isItemSelected(t('settings'))}
+          selected={isItemSelected('settings')}
           onClick={() => navigate('/settings')}
         />
         <Button

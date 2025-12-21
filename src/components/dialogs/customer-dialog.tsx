@@ -124,7 +124,7 @@ function CustomerDialog({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Lsat Name')}</FieldLabel>
+                    <FieldLabel>{t('Last Name')}</FieldLabel>
                     <Input
                       {...field}
                       aria-invalid={fieldState.invalid}
