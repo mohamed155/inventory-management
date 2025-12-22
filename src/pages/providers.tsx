@@ -9,7 +9,7 @@ import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
-import ProviderDialog from '@/components/provider-dialog.tsx';
+import ProviderDialog from '@/components/dialogs/provider-dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
 import {

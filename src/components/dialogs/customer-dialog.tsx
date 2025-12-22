@@ -142,6 +142,7 @@ function CustomerDialog({
                   <FieldLabel>{t('Phone')}</FieldLabel>
                   <Input
                     {...field}
+                    type="tel"
                     aria-invalid={fieldState.invalid}
                     autoComplete="off"
                   />

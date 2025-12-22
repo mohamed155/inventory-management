@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
-import type { Provider } from '../../generated/prisma/browser.ts';
+import type { Provider } from '../../../generated/prisma/browser.ts';
 
 function ProviderDialog({
   provider,
@@ -123,6 +123,7 @@ function ProviderDialog({
                   <FieldLabel>{t('Phone')}</FieldLabel>
                   <Input
                     {...field}
+                    type="tel"
                     aria-invalid={fieldState.invalid}
                     autoComplete="off"
                   />
