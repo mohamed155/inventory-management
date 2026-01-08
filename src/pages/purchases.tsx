@@ -1,5 +1,210 @@
+import { useQuery } from '@tanstack/react-query';
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  PaginationState,
+  SortingState,
+} from '@tanstack/react-table';
+import { endOfDay, startOfDay } from 'date-fns';
+import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import DataTable from '@/components/data-table.tsx';
+import PurchaseDialog from '@/components/dialogs/purchase-dialog.tsx';
+import { Badge } from '@/components/ui/badge.tsx';
+import { Button } from '@/components/ui/button.tsx';
+import { useConfirm } from '@/context/confirm-context.tsx';
+import type { PurchaseFormData } from '@/models/purchase-form.ts';
+import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
+import { getAllPurchasesPaginated } from '@/services/purchases.ts';
+import type { Purchase } from '../../generated/prisma/browser.ts';
+import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.ts';
+
 function Purchases() {
-  return <div>Purchases</div>;
+  const { t } = useTranslation();
+  const { confirm } = useConfirm();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [filtering, setFiltering] = useState<ColumnFiltersState>([]);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+
+  const filter = useMemo(() => {
+    const filterMap = new Map(filtering.map((f) => [f.id, f.value]));
+
+    const quantity = filterMap.get('quantity');
+    const productionDate = filterMap.get('productionDate');
+    const expirationDate = filterMap.get('expirationDate');
+    const name = filterMap.get('name');
+    const description = filterMap.get('description');
+
+    return {
+      quantity: quantity ? { equals: Number(quantity) } : undefined,
+      productionDate: productionDate
+        ? {
+            gte: startOfDay(new Date(productionDate as string)),
+            lte: endOfDay(new Date(productionDate as string)),
+          }
+        : undefined,
+      expirationDate: expirationDate
+        ? {
+            gte: startOfDay(new Date(expirationDate as string)),
+            lte: endOfDay(new Date(expirationDate as string)),
+          }
+        : undefined,
+      product:
+        name || description
+          ? {
+              name: name ? { contains: String(name) } : undefined,
+              description: description
+                ? {
+                    contains: String(description),
+                  }
+                : undefined,
+            }
+          : undefined,
+    } as PurchaseWhereInput;
+  }, [filtering]);
+
+  const { data, refetch: refetchPurchases } = useQuery({
+    queryKey: [
+      'purchases',
+      pagination.pageIndex,
+      pagination.pageSize,
+      sorting,
+      filtering,
+    ],
+    queryFn: () =>
+      getAllPurchasesPaginated({
+        page: pagination.pageIndex + 1,
+        orderProperty:
+          sorting.length > 0 ? (sorting[0].id as keyof Purchase) : undefined,
+        orderDirection:
+          sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
+        filter,
+      }),
+    refetchOnWindowFocus: false,
+  });
+
+  const deletePurchase = useCallback(
+    async (id: string) => {
+      const confirmDelete = await confirm({
+        message: t('Are you sure to delete this record?'),
+        variant: 'destructive',
+      });
+      if (confirmDelete) {
+        deletePurchase(id).then(() => {
+          refetchPurchases();
+        });
+      }
+    },
+    [refetchPurchases, confirm, t],
+  );
+
+  const columns = useMemo<ColumnDef<PurchasesListResult>[]>(
+    () => [
+      {
+        accessorKey: 'date',
+        header: () => t('Date'),
+        cell: (info) => (info.getValue() as Date)?.toLocaleDateString('en-GB'),
+        meta: {
+          filterVariant: 'date',
+        },
+      },
+      {
+        accessorKey: 'providerName',
+        header: () => t('Provider'),
+      },
+      {
+        accessorKey: 'itemsCount',
+        header: () => t('Products'),
+        cell: (info) => `${info.getValue()} ${t('Products')}`,
+      },
+      { accessorKey: 'totalCost', header: () => `$ ${t('Total Cost')}` },
+      { accessorKey: 'paidAmount', header: () => `$ ${t('Paid')}` },
+      { accessorKey: 'remainingCost', header: () => `$ ${t('Remaining')}` },
+      {
+        id: 'status',
+        header: () => t('Status'),
+        cell: (info) => {
+          const { totalCost, paidAmount } = info.row.original;
+          return (
+            <Badge
+              variant={totalCost - paidAmount > 0 ? 'secondary' : 'default'}
+            >
+              {totalCost - paidAmount > 0 ? 'Partial' : 'Paid'}
+            </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: 'id',
+        header: () => t('Actions'),
+        enableSorting: false,
+        enableColumnFilter: false,
+        cell: (info) => (
+          <div className="flex gap-2">
+            <Button variant="outline" className="cursor-pointer">
+              <Edit className="text-primary" />
+            </Button>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => deletePurchase(info.getValue() as string)}
+            >
+              <Trash2 className="text-red-600" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [t, deletePurchase],
+  );
+
+  const handleDialogClose = (_purchase?: PurchaseFormData) => {
+    setDialogOpen(false);
+  };
+
+  return (
+    <div>
+      <PurchaseDialog open={dialogOpen} onClose={handleDialogClose} />
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold pb-2">{t('Purchases')}</h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showFilters ? 'outline' : 'default'}
+            className="border-primary border-2"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? <FunnelX /> : <Funnel />}
+          </Button>
+          <Button
+            className="bg-primary text-white"
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus size={30} />
+            {t('Add Purchase')}
+          </Button>
+        </div>
+      </div>
+      <DataTable
+        data={data?.data}
+        total={data?.total || 0}
+        columns={columns}
+        showFilters={showFilters}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        columnFilters={filtering}
+        onColumnFiltersChange={setFiltering}
+      />
+    </div>
+  );
 }
 
 export default Purchases;

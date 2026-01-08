@@ -10,7 +10,7 @@ import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
-import ProductDialog from '@/components/dialogs/product-dialog.tsx';
+import InventoryDialog from '@/components/dialogs/inventory-dialog.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
@@ -24,7 +24,7 @@ import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
 import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../../generated/prisma/models/ProductBatch.ts';
 
-function Products() {
+function Inventory() {
   const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -230,13 +230,13 @@ function Products() {
 
   return (
     <div>
-      <ProductDialog
+      <InventoryDialog
         open={dialogOpen}
         product={currentProduct}
         onClose={handleDialogClose}
       />
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold pb-2">{t('Products')}</h2>
+        <h2 className="text-xl font-semibold pb-2">{t('Inventory')}</h2>
         <div className="flex items-center gap-2">
           <Button
             variant={showFilters ? 'outline' : 'default'}
@@ -270,4 +270,4 @@ function Products() {
   );
 }
 
-export default Products;
+export default Inventory;

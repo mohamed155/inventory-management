@@ -1,15 +1,27 @@
 import { ipcMain } from 'electron';
+import type { PurchaseFormData } from '@/models/purchase-form.ts';
+import {
+  createPurchase,
+  deletePurchase,
+  getAllPurchaseItems,
+  getAllPurchases,
+  getAllPurchasesPaginated,
+  getPurchaseById,
+  updatePurchase,
+} from '@/prisma-actions/purchases.action.ts';
 import type {
   Customer,
   PrismaClient,
   ProductBatch,
   Provider,
+  Purchase,
 } from '../generated/prisma/client';
 import type { Product, User } from '../generated/prisma/client.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
 import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
 import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
+import type { PurchaseWhereInput } from '../generated/prisma/models/Purchase.ts';
 import type { DataParams } from './models/params.ts';
 import {
   createCustomer,
@@ -146,5 +158,28 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('deleteProvider', (_, id: string) =>
     deleteProvider(prisma, id),
+  );
+
+  // Purchases actions
+  ipcMain.handle(
+    'getAllPurchasesPaginated',
+    (_, params: DataParams<Purchase, PurchaseWhereInput>) =>
+      getAllPurchasesPaginated(prisma, params),
+  );
+  ipcMain.handle('getAllPurchases', (_) => getAllPurchases(prisma));
+  ipcMain.handle('getPurchaseById', (_, id: string) =>
+    getPurchaseById(prisma, id),
+  );
+  ipcMain.handle('createPurchase', (_, data: PurchaseFormData) =>
+    createPurchase(prisma, data),
+  );
+  ipcMain.handle('updatePurchase', (_, id: string, purchase: Purchase) =>
+    updatePurchase(prisma, id, purchase),
+  );
+  ipcMain.handle('deletePurchase', (_, id: string) =>
+    deletePurchase(prisma, id),
+  );
+  ipcMain.handle('getAllPurchaseItems', (_, purchaseId: string) =>
+    getAllPurchaseItems(prisma, purchaseId),
   );
 };

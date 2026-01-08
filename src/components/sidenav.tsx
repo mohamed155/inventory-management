@@ -54,10 +54,10 @@ function Sidenav() {
         onClick: () => navigate('/dashboard'),
       },
       {
-        name: 'products',
-        title: t('Products'),
+        name: 'inventory',
+        title: t('Inventory'),
         icon: <Package size={18} />,
-        onClick: () => navigate('/products'),
+        onClick: () => navigate('/inventory'),
       },
       {
         name: 'purchases',

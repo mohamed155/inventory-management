@@ -1,9 +1,9 @@
 import { defineConfig, env } from 'prisma/config';
 
 export default defineConfig({
-  schema: 'prisma-actions/schema.prisma-actions',
+  schema: 'prisma/schema.prisma',
   migrations: {
-    path: 'prisma-actions/migrations',
+    path: 'prisma/migrations',
   },
   engine: 'classic',
   datasource: {

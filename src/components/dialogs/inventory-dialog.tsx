@@ -34,7 +34,7 @@ import type {
   ProductBatch,
 } from '../../../generated/prisma/browser.ts';
 
-function ProductDialog({
+function InventoryDialog({
   product,
   open,
   onClose,
@@ -288,4 +288,4 @@ function ProductDialog({
     </Dialog>
   );
 }
-export default ProductDialog;
+export default InventoryDialog;

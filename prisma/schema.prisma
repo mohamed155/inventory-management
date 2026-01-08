@@ -2,8 +2,8 @@
 // Prisma Setup
 // ------------------------------
 generator client {
-  provider            = "prisma-actions-client"
-  output              = "../generated/prisma-actions"
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
   previewFeatures     = ["relationJoins"]
   importFileExtension = "ts"
 }
@@ -100,6 +100,7 @@ model Purchase {
   userId     String
   providerId String
   paidAmount Float
+  payDueDate DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -139,6 +140,7 @@ model Sale {
   userId     String
   customerId String
   paidAmount Float
+  payDueDate DateTime
   discount   Float    @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

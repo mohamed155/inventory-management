@@ -1,9 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type {
   Customer,
   Product,
   ProductBatch,
   Provider,
+  Purchase,
   User,
 } from '../generated/prisma/client.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
@@ -86,4 +88,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateProvider: (id: string, provider: Provider) =>
     ipcRenderer.invoke('updateProvider', id, provider),
   deleteProvider: (id: string) => ipcRenderer.invoke('deleteProvider', id),
+
+  // purchase actions
+  getAllPurchasesPaginated: (params: DataParams<Purchase, ProductWhereInput>) =>
+    ipcRenderer.invoke('getAllPurchasesPaginated', params),
+  getAllPurchases: () => ipcRenderer.invoke('getAllPurchases'),
+  getPurchaseById: (id: string) => ipcRenderer.invoke('getPurchaseById', id),
+  createPurchase: (body: PurchaseFormData) =>
+    ipcRenderer.invoke('createPurchase', body),
+  updatePurchase: (id: string, purchase: Purchase) =>
+    ipcRenderer.invoke('updatePurchase', id, purchase),
+  deletePurchase: (id: string) => ipcRenderer.invoke('deletePurchase', id),
+  getAllPurchaseItems: (purchaseId: string) =>
+    ipcRenderer.invoke('getAllPurchaseItems', purchaseId),
 });

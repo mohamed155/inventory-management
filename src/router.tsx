@@ -2,8 +2,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import Layout from '@/layout.tsx';
 import Customers from '@/pages/customers.tsx';
 import Dashboard from '@/pages/dashboard.tsx';
+import Inventory from '@/pages/inventory.tsx';
 import Login from '@/pages/login.tsx';
-import Products from '@/pages/products.tsx';
 import Providers from '@/pages/providers.tsx';
 import Purchases from '@/pages/purchases.tsx';
 import Sales from '@/pages/sales.tsx';
@@ -47,8 +47,8 @@ function Router() {
           element: <Dashboard />,
         },
         {
-          path: 'products',
-          element: <Products />,
+          path: 'inventory',
+          element: <Inventory />,
         },
         {
           path: 'purchases',
