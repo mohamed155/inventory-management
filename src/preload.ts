@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type {
   Customer,
   Product,
@@ -13,6 +12,7 @@ import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
 import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
 import type { DataParams } from './models/params.ts';
+import type { PurchaseFormData } from './models/purchase-form.ts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // properties

@@ -126,7 +126,7 @@ function PurchaseDialog({
     } else {
       form.unregister(['providerName', 'providerPhone', 'providerAddress']);
     }
-    for (let idx = 0; idx < form.getValues().products.length; idx) {
+    for (let idx = 0; idx < form.getValues().products.length; idx++) {
       if (productsStatuses[idx] === 'exist') {
         form.unregister(`products.${idx}.productName`);
       } else {
@@ -387,7 +387,6 @@ function PurchaseDialog({
                     </Field>
                   )}
                 />
-                4
               </Tabs>
             ))}
           </FieldGroup>

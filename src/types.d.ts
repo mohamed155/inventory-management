@@ -16,7 +16,8 @@ import type { PurchaseWhereInput } from '../generated/prisma/models/Purchase.ts'
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<_TData extends RowData, _TValue> {
-    filterVariant?: 'text' | 'number' | 'date';
+    filterVariant?: 'text' | 'number' | 'date' | 'select';
+    selectOptions?: string[];
   }
 }
 

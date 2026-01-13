@@ -15,3 +15,28 @@ export const getAllPurchasesPaginated = (
   const getAllPurchasesPaginated = window.electronAPI.getAllPurchasesPaginated;
   return getAllPurchasesPaginated(params);
 };
+
+export const getAllPurchases = () => {
+  const getAllPurchases = window.electronAPI.getAllPurchases;
+  return getAllPurchases();
+};
+
+export const getPurchaseById = (id: string) => {
+  const getPurchaseBtId = window.electronAPI.getPurchaseById;
+  return getPurchaseBtId(id);
+};
+
+export const createPurchase = (provider: Purchase) => {
+  const createPurchase = window.electronAPI.createPurchase;
+  return createPurchase(provider);
+};
+
+export const updatePurchase = (id: string, provider: Purchase) => {
+  const updatePurchase = window.electronAPI.updatePurchase;
+  return updatePurchase(id, provider);
+};
+
+export const deletePurchase = (id: string) => {
+  const deletePurchase = window.electronAPI.deletePurchase;
+  return deletePurchase(id);
+};

@@ -3,11 +3,18 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import DatePicker from '@/components/date-picker.tsx';
 import DebouncedInput from '@/components/debounced-input.tsx';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select.tsx';
 
 function TableColumnFilter<T>({ column }: { column: Column<T, unknown> }) {
   const { t } = useTranslation();
 
-  const { filterVariant } = column.columnDef.meta ?? {};
+  const { filterVariant, selectOptions } = column.columnDef.meta ?? {};
   const { setFilterValue } = column;
 
   const handleValueChange = useCallback(
@@ -27,6 +34,22 @@ function TableColumnFilter<T>({ column }: { column: Column<T, unknown> }) {
           onChange={handleValueChange}
           value={column.getFilterValue() as Date}
         />
+      );
+    case 'select':
+      return (
+        <Select>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {selectOptions?.length &&
+              selectOptions?.map((option: string) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
       );
     default:
       return (

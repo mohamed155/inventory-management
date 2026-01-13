@@ -1,14 +1,4 @@
 import { ipcMain } from 'electron';
-import type { PurchaseFormData } from '@/models/purchase-form.ts';
-import {
-  createPurchase,
-  deletePurchase,
-  getAllPurchaseItems,
-  getAllPurchases,
-  getAllPurchasesPaginated,
-  getPurchaseById,
-  updatePurchase,
-} from '@/prisma-actions/purchases.action.ts';
 import type {
   Customer,
   PrismaClient,
@@ -23,6 +13,7 @@ import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductB
 import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
 import type { PurchaseWhereInput } from '../generated/prisma/models/Purchase.ts';
 import type { DataParams } from './models/params.ts';
+import type { PurchaseFormData } from './models/purchase-form.ts';
 import {
   createCustomer,
   deleteCustomer,
@@ -51,6 +42,15 @@ import {
   getAllProvidersPaginated,
   updateProvider,
 } from './prisma-actions/provider.actions.ts';
+import {
+  createPurchase,
+  deletePurchase,
+  getAllPurchaseItems,
+  getAllPurchases,
+  getAllPurchasesPaginated,
+  getPurchaseById,
+  updatePurchase,
+} from './prisma-actions/purchases.action.ts';
 import {
   createUser,
   getAllUsers,

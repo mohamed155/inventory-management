@@ -16,7 +16,10 @@ import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
 import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
-import { getAllPurchasesPaginated } from '@/services/purchases.ts';
+import {
+  deletePurchase,
+  getAllPurchasesPaginated,
+} from '@/services/purchases.ts';
 import type { Purchase } from '../../generated/prisma/browser.ts';
 import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.ts';
 
@@ -36,39 +39,34 @@ function Purchases() {
   const filter = useMemo(() => {
     const filterMap = new Map(filtering.map((f) => [f.id, f.value]));
 
-    const quantity = filterMap.get('quantity');
-    const productionDate = filterMap.get('productionDate');
-    const expirationDate = filterMap.get('expirationDate');
-    const name = filterMap.get('name');
-    const description = filterMap.get('description');
+    const date = filterMap.get('date');
+    const providerName = filterMap.get('providerName');
+    const itemsCount = filterMap.get('itemsCount');
+    const totalCost = filterMap.get('totalCost');
+    const paidAmount = filterMap.get('paidAmount');
+    const remainingCost = filterMap.get('remainingCost');
+    const status = filterMap.get('status');
 
     return {
-      quantity: quantity ? { equals: Number(quantity) } : undefined,
-      productionDate: productionDate
+      date: date
         ? {
-            gte: startOfDay(new Date(productionDate as string)),
-            lte: endOfDay(new Date(productionDate as string)),
+            gte: startOfDay(new Date(date as string)),
+            lte: endOfDay(new Date(date as string)),
           }
         : undefined,
-      expirationDate: expirationDate
-        ? {
-            gte: startOfDay(new Date(expirationDate as string)),
-            lte: endOfDay(new Date(expirationDate as string)),
-          }
-        : undefined,
-      product:
-        name || description
-          ? {
-              name: name ? { contains: String(name) } : undefined,
-              description: description
-                ? {
-                    contains: String(description),
-                  }
-                : undefined,
-            }
-          : undefined,
+      providerName: providerName ? { contains: providerName } : undefined,
+      itemsCount: itemsCount ? { equals: Number(itemsCount) } : undefined,
+      totalCost: totalCost ? { equals: Number(totalCost) } : undefined,
+      paidAmount: paidAmount ? { equals: Number(paidAmount) } : undefined,
+      remainingCost: remainingCost
+        ? { equals: Number(remainingCost) }
+        : status === t('Partial')
+          ? { gt: 0 }
+          : status === t('Paid')
+            ? { eq: 0 }
+            : undefined,
     } as PurchaseWhereInput;
-  }, [filtering]);
+  }, [filtering, t]);
 
   const { data, refetch: refetchPurchases } = useQuery({
     queryKey: [
@@ -90,7 +88,7 @@ function Purchases() {
     refetchOnWindowFocus: false,
   });
 
-  const deletePurchase = useCallback(
+  const performDeletePurchase = useCallback(
     async (id: string) => {
       const confirmDelete = await confirm({
         message: t('Are you sure to delete this record?'),
@@ -124,9 +122,21 @@ function Purchases() {
         header: () => t('Products'),
         cell: (info) => `${info.getValue()} ${t('Products')}`,
       },
-      { accessorKey: 'totalCost', header: () => `$ ${t('Total Cost')}` },
-      { accessorKey: 'paidAmount', header: () => `$ ${t('Paid')}` },
-      { accessorKey: 'remainingCost', header: () => `$ ${t('Remaining')}` },
+      {
+        accessorKey: 'totalCost',
+        header: () => t('Total Cost'),
+        cell: (info) => `$ ${info.getValue()}`,
+      },
+      {
+        accessorKey: 'paidAmount',
+        header: () => t('Paid'),
+        cell: (info) => `$ ${info.getValue()}`,
+      },
+      {
+        accessorKey: 'remainingCost',
+        header: () => t('Remaining'),
+        cell: (info) => `$ ${info.getValue()}`,
+      },
       {
         id: 'status',
         header: () => t('Status'),
@@ -136,9 +146,13 @@ function Purchases() {
             <Badge
               variant={totalCost - paidAmount > 0 ? 'secondary' : 'default'}
             >
-              {totalCost - paidAmount > 0 ? 'Partial' : 'Paid'}
+              {totalCost - paidAmount > 0 ? t('Partial') : t('Paid')}
             </Badge>
           );
+        },
+        meta: {
+          filterVariant: 'select',
+          filterOptions: [t('all'), t('paid'), t('partial')],
         },
       },
       {
@@ -154,7 +168,7 @@ function Purchases() {
             <Button
               variant="outline"
               className="cursor-pointer"
-              onClick={() => deletePurchase(info.getValue() as string)}
+              onClick={() => performDeletePurchase(info.getValue() as string)}
             >
               <Trash2 className="text-red-600" />
             </Button>
@@ -162,7 +176,7 @@ function Purchases() {
         ),
       },
     ],
-    [t, deletePurchase],
+    [t, performDeletePurchase],
   );
 
   const handleDialogClose = (_purchase?: PurchaseFormData) => {

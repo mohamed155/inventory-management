@@ -1,7 +1,4 @@
 import type { PrismaClient } from '@prisma/client';
-import type { DataParams } from '@/models/params.ts';
-import type { PurchaseFormData } from '@/models/purchase-form.ts';
-import { intersectIds } from '@/util/intersect-ids.ts';
 import type {
   Product,
   ProductBatch,
@@ -11,6 +8,9 @@ import type {
   User,
 } from '../../generated/prisma/client.ts';
 import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.ts';
+import type { DataParams } from '../models/params.ts';
+import type { PurchaseFormData } from '../models/purchase-form.ts';
+import { intersectIds } from '../util/intersect-ids.ts';
 
 export const getAllPurchasesPaginated = async (
   prisma: PrismaClient,
