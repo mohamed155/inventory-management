@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { Activity, useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +31,7 @@ import { Input } from '@/components/ui/input.tsx';
 import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import { getAllProducts } from '@/services/products.ts';
 import { getAllProviders } from '@/services/providers.ts';
+import { useCurrentUserStore } from '@/store/user.store.ts';
 
 function PurchaseDialog({
   open,
@@ -40,13 +41,11 @@ function PurchaseDialog({
   onClose?: (purchase?: PurchaseFormData) => void;
 }) {
   const { t } = useTranslation();
+  const currentUser = useCurrentUserStore((state: any) => state.currentUser);
 
   const [providerStatus, setProviderStatus] = useState<'exist' | 'add'>(
     'exist',
   );
-  const [productsStatuses, setProductStatuses] = useState<('exist' | 'add')[]>([
-    'exist',
-  ]);
 
   const { data: providers } = useQuery({
     queryKey: ['providers'],
@@ -71,27 +70,21 @@ function PurchaseDialog({
               providerAddress: z.string(),
             }),
         products: z.array(
-          productsStatuses.length > 0
-            ? z.union(
-                productsStatuses.map((status) =>
-                  z.object({
-                    ...(status === 'exist'
-                      ? { productId: z.string() }
-                      : { productName: z.string() }),
-                    productionDate: z.date(),
-                    expirationDate: z.date(),
-                    quantity: z.number(),
-                    costPerUnit: z.number(),
-                  }),
-                ),
-              )
-            : z.any(),
+          z.object({
+            status: z.enum(['exist', 'add']),
+            id: z.string().optional(),
+            name: z.string().optional(),
+            productionDate: z.date(),
+            expirationDate: z.date(),
+            quantity: z.number(),
+            costPerUnit: z.number(),
+          }),
         ),
         paidAmount: z.number(),
         paymentDueDate: z.date(),
         purchaseDate: z.date(),
       }),
-    [t, providerStatus, productsStatuses],
+    [t, providerStatus],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -103,7 +96,7 @@ function PurchaseDialog({
       providerAddress: providerStatus === 'add' ? '' : undefined,
       products: [
         {
-          productName: '',
+          name: '',
           quantity: 0,
           costPerUnit: 0,
           productionDate: new Date(),
@@ -116,7 +109,11 @@ function PurchaseDialog({
     },
   });
 
-  const { fields: productFields } = useFieldArray({
+  const {
+    fields: productFields,
+    append: appendProduct,
+    remove: removeProduct,
+  } = useFieldArray({
     control: form.control,
     name: 'products',
   });
@@ -128,10 +125,10 @@ function PurchaseDialog({
       form.unregister(['providerName', 'providerPhone', 'providerAddress']);
     }
     for (let idx = 0; idx < form.getValues().products.length; idx++) {
-      if (productsStatuses[idx] === 'exist') {
-        form.unregister(`products.${idx}.productName`);
+      if (form.getValues().products[idx].status === 'exist') {
+        form.unregister(`products.${idx}.name`);
       } else {
-        form.unregister(`products.${idx}.productId`);
+        form.unregister(`products.${idx}.id`);
       }
     }
     form.reset({
@@ -141,7 +138,7 @@ function PurchaseDialog({
       providerAddress: providerStatus === 'add' ? '' : undefined,
       products: [
         {
-          productName: '',
+          name: '',
           quantity: 0,
           costPerUnit: 0,
           productionDate: new Date(),
@@ -152,11 +149,15 @@ function PurchaseDialog({
       paymentDueDate: new Date(),
       purchaseDate: new Date(),
     });
-  }, [providerStatus, form, productsStatuses]);
+  }, [providerStatus, form]);
 
   const onSubmit = async () => {
     if (onClose) {
-      onClose(form.getValues() as PurchaseFormData);
+      const result: PurchaseFormData = {
+        ...form.getValues(),
+        userId: currentUser?.id,
+      };
+      onClose(result);
     }
   };
 
@@ -167,142 +168,220 @@ function PurchaseDialog({
   };
 
   const addProduct = () => {
-    setProductStatuses((statuses) => [...statuses, 'exist']);
-  };
-
-  const removeProduct = (index: number) => {
-    setProductStatuses((statuses) => statuses.filter((_, i) => i !== index));
+    appendProduct({
+      status: 'exist',
+      name: '',
+      quantity: 0,
+      costPerUnit: 0,
+      productionDate: new Date(),
+      expirationDate: new Date(),
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={openChange}>
-      <form className="overflow-y-auto" onSubmit={form.handleSubmit(onSubmit)}>
-        <DialogContent>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <DialogContent className="grid max-h-[90vh] grid-rows-[auto_1fr_auto]">
           <DialogHeader>
             <DialogTitle>{t('Add Purchase')}</DialogTitle>
           </DialogHeader>
-          <Tabs
-            value={providerStatus}
-            onValueChange={(value: string) =>
-              setProviderStatus(value as 'exist' | 'add')
-            }
-          >
-            <TabsList className="w-full">
-              <TabsTrigger value="exist">{t('Exist provider')}</TabsTrigger>
-              <TabsTrigger value="add">{t('New provider')}</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <FieldGroup>
-            <Activity mode={providerStatus === 'add' ? 'visible' : 'hidden'}>
-              <Controller
-                name="providerName"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Provider Name')}</FieldLabel>
-                    <Input
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="off"
-                    />
-                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
-                      <FieldError errors={[fieldState.error]} />
-                    </Activity>
-                  </Field>
-                )}
-              />
-              <Controller
-                name="providerPhone"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Provider Phone')}</FieldLabel>
-                    <Input
-                      {...field}
-                      type="tel"
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="off"
-                    />
-                  </Field>
-                )}
-              />
-              <Controller
-                name="providerAddress"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Provider Address')}</FieldLabel>
-                    <Input
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="off"
-                    />
-                  </Field>
-                )}
-              />
-            </Activity>
-            <Activity mode={providerStatus === 'exist' ? 'visible' : 'hidden'}>
-              <Controller
-                name="providerId"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>{t('Choose Provider')}</FieldLabel>
-                    <Combobox
-                      {...field}
-                      list={providers || []}
-                      valueProp="id"
-                      labelProp="name"
-                    />
-                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
-                      <FieldError errors={[fieldState.error]} />
-                    </Activity>
-                  </Field>
-                )}
-              />
-            </Activity>
-            <div className="flex flex-col gap-2 mt-4">
-              <div className="flex justify-between items-center">
-                <h6>{t('Products')}</h6>
-                <Button onClick={addProduct}>
-                  <Plus size={30} />
-                  {t('Add Product')}
-                </Button>
-              </div>
-              {productFields.map((product, index) => (
-                <div
-                  key={product.id}
-                  className="p-3 border border-2 rounded-md"
-                >
-                  <Tabs
-                    value={productsStatuses[index] || 'exist'}
-                    onValueChange={(value: string) => {
-                      const newStatuses = [...productsStatuses];
-                      newStatuses[index] = value as 'exist' | 'add';
-                      setProductStatuses(newStatuses);
-                    }}
-                  >
-                    <TabsList className="w-full">
-                      <TabsTrigger value="exist">
-                        {t('Exist product')}
-                      </TabsTrigger>
-                      <TabsTrigger value="add">{t('New product')}</TabsTrigger>
-                    </TabsList>
-                    <Activity
-                      mode={
-                        productsStatuses[index] === 'add' ? 'visible' : 'hidden'
-                      }
+          <div className="overflow-y-auto">
+            <Tabs
+              value={providerStatus}
+              onValueChange={(value: string) =>
+                setProviderStatus(value as 'exist' | 'add')
+              }
+            >
+              <TabsList className="w-full">
+                <TabsTrigger value="exist">{t('Exist provider')}</TabsTrigger>
+                <TabsTrigger value="add">{t('New provider')}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <FieldGroup>
+              <Activity mode={providerStatus === 'add' ? 'visible' : 'hidden'}>
+                <Controller
+                  name="providerName"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Provider Name')}</FieldLabel>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="providerPhone"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Provider Phone')}</FieldLabel>
+                      <Input
+                        {...field}
+                        type="tel"
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="providerAddress"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Provider Address')}</FieldLabel>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                    </Field>
+                  )}
+                />
+              </Activity>
+              <Activity
+                mode={providerStatus === 'exist' ? 'visible' : 'hidden'}
+              >
+                <Controller
+                  name="providerId"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Choose Provider')}</FieldLabel>
+                      <Combobox
+                        {...field}
+                        list={providers || []}
+                        valueProp="id"
+                        labelProp="name"
+                      />
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+              </Activity>
+              <div className="flex flex-col gap-2 mt-4">
+                <div className="flex justify-between items-center">
+                  <h6>{t('Products')}</h6>
+                  <Button onClick={addProduct}>
+                    <Plus size={30} />
+                    {t('Add Product')}
+                  </Button>
+                </div>
+                {productFields.map((product, index) => (
+                  <div key={product.id} className="p-3 border-2 rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <h6>
+                        {t('Product')} {index + 1}
+                      </h6>
+                      <div>
+                        <Activity
+                          mode={
+                            productFields.length === 1 ? 'hidden' : 'visible'
+                          }
+                        >
+                          <Button
+                            variant="ghost"
+                            onClick={() => removeProduct(index)}
+                          >
+                            <X />
+                          </Button>
+                        </Activity>
+                      </div>
+                    </div>
+                    <Tabs
+                      value={product.status || 'exist'}
+                      onValueChange={(value: string) => {
+                        product.status = value as 'exist' | 'add';
+                      }}
                     >
+                      <TabsList className="w-full">
+                        <TabsTrigger value="exist">
+                          {t('Exist product')}
+                        </TabsTrigger>
+                        <TabsTrigger value="add">
+                          {t('New product')}
+                        </TabsTrigger>
+                      </TabsList>
+                      <Activity
+                        mode={product.status === 'add' ? 'visible' : 'hidden'}
+                      >
+                        <Controller
+                          name={`products.${index}.name` as const}
+                          control={form.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel>{t('Product Name')}</FieldLabel>
+                              <Input
+                                {...field}
+                                aria-invalid={fieldState.invalid}
+                                autoComplete="off"
+                              />
+                              <Activity
+                                mode={fieldState.invalid ? 'visible' : 'hidden'}
+                              >
+                                <FieldError errors={[fieldState.error]} />
+                              </Activity>
+                            </Field>
+                          )}
+                        />
+                      </Activity>
+                      <Activity
+                        mode={product.status === 'exist' ? 'visible' : 'hidden'}
+                      >
+                        <Controller
+                          name={`products.${index}.id` as const}
+                          control={form.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel>{t('Choose Product')}</FieldLabel>
+                              <Combobox
+                                {...field}
+                                list={products || []}
+                                valueProp="id"
+                                labelProp="name"
+                              />
+                              <Activity
+                                mode={fieldState.invalid ? 'visible' : 'hidden'}
+                              >
+                                <FieldError errors={[fieldState.error]} />
+                              </Activity>
+                            </Field>
+                          )}
+                        />
+                      </Activity>
                       <Controller
-                        name={`products.${index}.productName` as const}
+                        name={`products.${index}.quantity` as const}
                         control={form.control}
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>{t('Product Name')}</FieldLabel>
+                            <FieldLabel>{t('Quantity')}</FieldLabel>
                             <Input
                               {...field}
+                              onChange={(e) =>
+                                field.onChange({
+                                  ...e,
+                                  target: {
+                                    ...e.target,
+                                    value: Number(e.target.value),
+                                  },
+                                })
+                              }
                               aria-invalid={fieldState.invalid}
                               autoComplete="off"
+                              type="number"
                             />
                             <Activity
                               mode={fieldState.invalid ? 'visible' : 'hidden'}
@@ -312,112 +391,128 @@ function PurchaseDialog({
                           </Field>
                         )}
                       />
-                    </Activity>
-                    <Activity
-                      mode={
-                        productsStatuses[index] === 'exist'
-                          ? 'visible'
-                          : 'hidden'
-                      }
-                    >
-                      <Controller
-                        name={`products.${index}.productId` as const}
-                        control={form.control}
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>{t('Choose Product')}</FieldLabel>
-                            <Combobox
-                              {...field}
-                              list={products || []}
-                              valueProp="id"
-                              labelProp="name"
-                            />
-                            <Activity
-                              mode={fieldState.invalid ? 'visible' : 'hidden'}
-                            >
-                              <FieldError errors={[fieldState.error]} />
-                            </Activity>
-                          </Field>
-                        )}
-                      />
-                    </Activity>
-                    <Controller
-                      name={`products.${index}.quantity` as const}
-                      control={form.control}
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>{t('Quantity')}</FieldLabel>
-                          <Input
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange({
-                                ...e,
-                                target: {
-                                  ...e.target,
-                                  value: Number(e.target.value),
-                                },
-                              })
-                            }
-                            aria-invalid={fieldState.invalid}
-                            autoComplete="off"
-                            type="number"
-                          />
-                          <Activity
-                            mode={fieldState.invalid ? 'visible' : 'hidden'}
-                          >
-                            <FieldError errors={[fieldState.error]} />
-                          </Activity>
-                        </Field>
-                      )}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <Controller
-                        name={`products.${index}.productionDate` as const}
-                        control={form.control}
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>{t('Production Date')}</FieldLabel>
-                            <DatePicker
-                              {...field}
-                              onChange={(date) =>
-                                field.onChange({ target: { value: date } })
-                              }
-                            ></DatePicker>
-                            <Activity
-                              mode={fieldState.invalid ? 'visible' : 'hidden'}
-                            >
-                              <FieldError errors={[fieldState.error]} />
-                            </Activity>
-                          </Field>
-                        )}
-                      />
-                      <Controller
-                        name={`products.${index}.expirationDate` as const}
-                        control={form.control}
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>{t('Expiration Date')}</FieldLabel>
-                            <DatePicker
-                              {...field}
-                              onChange={(date) =>
-                                field.onChange({ target: { value: date } })
-                              }
-                              aria-invalid={fieldState.invalid}
-                            ></DatePicker>
-                            <Activity
-                              mode={fieldState.invalid ? 'visible' : 'hidden'}
-                            >
-                              <FieldError errors={[fieldState.error]} />
-                            </Activity>
-                          </Field>
-                        )}
-                      />
-                    </div>
-                  </Tabs>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Controller
+                          name={`products.${index}.productionDate` as const}
+                          control={form.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel>{t('Production Date')}</FieldLabel>
+                              <DatePicker
+                                {...field}
+                                onChange={(date) =>
+                                  field.onChange({ target: { value: date } })
+                                }
+                              ></DatePicker>
+                              <Activity
+                                mode={fieldState.invalid ? 'visible' : 'hidden'}
+                              >
+                                <FieldError errors={[fieldState.error]} />
+                              </Activity>
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          name={`products.${index}.expirationDate` as const}
+                          control={form.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel>{t('Expiration Date')}</FieldLabel>
+                              <DatePicker
+                                {...field}
+                                onChange={(date) =>
+                                  field.onChange({ target: { value: date } })
+                                }
+                                aria-invalid={fieldState.invalid}
+                              ></DatePicker>
+                              <Activity
+                                mode={fieldState.invalid ? 'visible' : 'hidden'}
+                              >
+                                <FieldError errors={[fieldState.error]} />
+                              </Activity>
+                            </Field>
+                          )}
+                        />
+                      </div>
+                    </Tabs>
+                  </div>
+                ))}
+                <div className="grid grid-cols-2 gap-4">
+                  <Controller
+                    name="paidAmount"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>{t('Paid Amount')}</FieldLabel>
+                        <Input
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange({
+                              ...e,
+                              target: {
+                                ...e.target,
+                                value: Number(e.target.value),
+                              },
+                            })
+                          }
+                          aria-invalid={fieldState.invalid}
+                          autoComplete="off"
+                          type="number"
+                        />
+                        <Activity
+                          mode={fieldState.invalid ? 'visible' : 'hidden'}
+                        >
+                          <FieldError errors={[fieldState.error]} />
+                        </Activity>
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    name="paymentDueDate"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>{t('Payment Due Date')}</FieldLabel>
+                        <DatePicker
+                          {...field}
+                          onChange={(date) =>
+                            field.onChange({ target: { value: date } })
+                          }
+                          aria-invalid={fieldState.invalid}
+                        ></DatePicker>
+                        <Activity
+                          mode={fieldState.invalid ? 'visible' : 'hidden'}
+                        >
+                          <FieldError errors={[fieldState.error]} />
+                        </Activity>
+                      </Field>
+                    )}
+                  />
                 </div>
-              ))}
-            </div>
-          </FieldGroup>
+                <Controller
+                  name="purchaseDate"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Purchase Date')}</FieldLabel>
+                      <DatePicker
+                        {...field}
+                        onChange={(date) =>
+                          field.onChange({ target: { value: date } })
+                        }
+                        aria-invalid={fieldState.invalid}
+                      ></DatePicker>
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+              </div>
+            </FieldGroup>
+          </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline" className="bg">

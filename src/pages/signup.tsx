@@ -54,16 +54,17 @@ function Signup() {
 
   const onSubmit = async () => {
     const user = form.getValues();
-    await setCurrentUser({
-      firstname: user.firstname,
-      lastname: user.lastname,
-      username: user.username,
-    });
-    await createUser({
+    const createdUser = await createUser({
       firstname: user.firstname,
       lastname: user.lastname,
       username: user.username,
       password: user.password,
+    });
+    await setCurrentUser({
+      id: createdUser.id,
+      firstname: createdUser.firstname,
+      lastname: createdUser.lastname,
+      username: createdUser.username,
     });
     window.location.href = '/';
   };

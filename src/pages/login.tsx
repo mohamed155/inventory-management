@@ -54,7 +54,9 @@ function Login() {
     const loginValue = form.getValues();
     const user = await signIn(loginValue.username, loginValue.password);
     if (user) {
+      console.log(user);
       await setCurrentUser({
+        id: user.id,
         firstname: user.firstname,
         lastname: user.lastname,
         username: user.username,
