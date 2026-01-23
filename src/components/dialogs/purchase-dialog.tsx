@@ -96,6 +96,7 @@ function PurchaseDialog({
       providerAddress: providerStatus === 'add' ? '' : undefined,
       products: [
         {
+          status: 'exist',
           name: '',
           quantity: 0,
           costPerUnit: 0,
@@ -138,6 +139,7 @@ function PurchaseDialog({
       providerAddress: providerStatus === 'add' ? '' : undefined,
       products: [
         {
+          status: 'exist',
           name: '',
           quantity: 0,
           costPerUnit: 0,
@@ -304,7 +306,10 @@ function PurchaseDialog({
                     <Tabs
                       value={product.status || 'exist'}
                       onValueChange={(value: string) => {
-                        product.status = value as 'exist' | 'add';
+                        form.setValue(
+                          `products.${index}.status`,
+                          value as 'exist' | 'add',
+                        );
                       }}
                     >
                       <TabsList className="w-full">
