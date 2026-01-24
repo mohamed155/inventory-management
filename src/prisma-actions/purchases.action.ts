@@ -223,19 +223,19 @@ export const createPurchase = async (
           productId: product.id,
           productionDate: product.productionDate,
           expirationDate: product.expirationDate,
-          quantity: 0,
+          quantity: product.quantity,
         },
       });
-    }
-
-    await prisma.productBatch.update({
-      where: { id: productBatch.id },
-      data: {
-        quantity: {
-          increment: product.quantity,
-        },
-      },
-    });
+    } else {
+			productBatch = await prisma.productBatch.update({
+				where: { id: productBatch.id },
+				data: {
+					quantity: {
+						increment: product.quantity,
+					},
+				},
+			});
+		}
 
     await prisma.purchaseItem.create({
       data: {
