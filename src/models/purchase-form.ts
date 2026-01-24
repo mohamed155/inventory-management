@@ -1,8 +1,8 @@
 export type PurchaseFormData = {
   userId: string;
   paidAmount: number;
-  paymentDueDate: Date;
-  purchaseDate: Date;
+  payDueDate: Date;
+  date: Date;
   providerId?: string;
   providerName?: string;
   providerPhone?: string;
@@ -11,7 +11,7 @@ export type PurchaseFormData = {
     id?: string;
     name?: string;
     quantity: number;
-    costPerUnit: number;
+    unitPrice: number;
     productionDate: Date;
     expirationDate: Date;
   }[];

@@ -1,4 +1,5 @@
 import type { DataParams } from '@/models/params.ts';
+import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import type { UserModel } from '@/models/user.ts';
 import type {
@@ -24,7 +25,7 @@ declare module '@tanstack/react-table' {
 declare global {
   interface Window {
     electronAPI: {
-			platform: () => Promise<'darwin' | 'win32' | 'linux'>;
+      platform: () => Promise<'darwin' | 'win32' | 'linux'>;
 
       // window properties
       isMaximized: () => Promise<boolean>;

@@ -17,6 +17,7 @@ import { useConfirm } from '@/context/confirm-context.tsx';
 import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import {
+  createPurchase,
   deletePurchase,
   getAllPurchasesPaginated,
 } from '@/services/purchases.ts';
@@ -179,7 +180,10 @@ function Purchases() {
     [t, performDeletePurchase],
   );
 
-  const handleDialogClose = (_purchase?: PurchaseFormData) => {
+  const handleDialogClose = (purchase?: PurchaseFormData) => {
+    if (purchase) {
+      createPurchase(purchase).then(() => refetchPurchases());
+    }
     setDialogOpen(false);
   };
 

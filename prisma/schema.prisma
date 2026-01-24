@@ -100,6 +100,7 @@ model Purchase {
   userId     String
   providerId String
   paidAmount Float
+  date       DateTime
   payDueDate DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -140,6 +141,7 @@ model Sale {
   userId     String
   customerId String
   paidAmount Float
+  date       DateTime
   payDueDate DateTime
   discount   Float    @default(0)
   createdAt  DateTime @default(now())

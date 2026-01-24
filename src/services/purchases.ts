@@ -1,4 +1,5 @@
 import type { DataParams } from '@/models/params.ts';
+import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { Purchase } from '../../generated/prisma/browser.ts';
 import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.ts';
 
@@ -26,7 +27,7 @@ export const getPurchaseById = (id: string) => {
   return getPurchaseBtId(id);
 };
 
-export const createPurchase = (provider: Purchase) => {
+export const createPurchase = (provider: PurchaseFormData) => {
   const createPurchase = window.electronAPI.createPurchase;
   return createPurchase(provider);
 };

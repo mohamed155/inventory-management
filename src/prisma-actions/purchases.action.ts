@@ -55,14 +55,14 @@ export const getAllPurchasesPaginated = async (
       user: true,
       provider: true,
       _count: { select: { items: true } },
-      _sum: { select: { buyPrice: true } },
+      _sum: { select: { unitPrice: true } },
     },
   });
 
   const totals: { purchaseId: string; totalCost: number }[] =
     await prisma.$queryRaw<{ purchaseId: string; totalCost: number }[]>`
 		SELECT purchaseId,
-					 SUM(buyPrice * quantity) as totalCost
+					 SUM(unitPrice * quantity) as totalCost
 		FROM PurchaseItem
 		GROUP BY purchaseId
 	`;
@@ -124,7 +124,7 @@ const getPurchaseIdsByTotalCost = async (
     { purchaseId: string; totalCost: number }[]
   >`
 		SELECT purchaseId,
-					 SUM(buyPrice * quantity) as totalCost
+					 SUM(unitPrice * quantity) as totalCost
 		FROM PurchaseItem
 		GROUP BY purchaseId
 		HAVING (${totalCost ?? 0} IS NULL OR totalCost = ${totalCost ?? 0})
@@ -143,7 +143,7 @@ const getPurchaseIdsByRemainingCost = async (
     { purchaseId: string; remainingCost: number }[]
   >`
 		SELECT p.id                                          as purchaseId,
-					 SUM(pi.buyPrice * pi.quantity) - p.paidAmount AS remainingCost
+					 SUM(pi.unitPrice * pi.quantity) - p.paidAmount AS remainingCost
 		FROM Purchase p
 					 JOIN PurchaseItem pi ON pi.purchaseId = p.id
 		WHERE (${remainingCost ?? null} IS NULL OR remainingCost = ${remainingCost ?? 0})
@@ -175,80 +175,82 @@ export const createPurchase = async (
   prisma: PrismaClient,
   body: PurchaseFormData,
 ) => {
-  let providerId: string;
-  if (body.providerId) {
-    providerId = body.providerId;
-  } else {
-    const newProvider = await prisma.provider.create({
-      data: {
-        name: body.providerName,
-        phone: body.providerPhone,
-        address: body.providerAddress,
-      },
-    });
-    providerId = newProvider.id;
-  }
-
-  const purchase = await prisma.purchase.create({
-    data: {
-      userId: body.userId,
-      paidAmount: body.paidAmount,
-      paymentDueDate: body.paymentDueDate,
-      purchaseDate: body.purchaseDate,
-      providerId,
-    },
-  });
-
-  for (const product of body.products) {
-    if (!product.id) {
-      const newProduct = await prisma.product.create({
+  return prisma.$transaction(async (tx: PrismaClient) => {
+    let providerId: string;
+    if (body.providerId) {
+      providerId = body.providerId;
+    } else {
+      const newProvider = await tx.provider.create({
         data: {
-          name: product.name || 'Unnamed Product',
+          name: body.providerName,
+          phone: body.providerPhone,
+          address: body.providerAddress,
         },
       });
-      product.id = newProduct.id;
+      providerId = newProvider.id;
     }
 
-    let productBatch = await prisma.productBatch.findFirst({
-      where: {
-        productId: product.id,
-        productionDate: product.productionDate,
-        expirationDate: product.expirationDate,
+    const purchase = await tx.purchase.create({
+      data: {
+        userId: body.userId,
+        paidAmount: body.paidAmount,
+        payDueDate: body.payDueDate,
+        date: body.date,
+        providerId,
       },
     });
 
-    if (!productBatch) {
-      productBatch = await prisma.productBatch.create({
-        data: {
+    for (const product of body.products) {
+      if (!product.id) {
+        const newProduct = await tx.product.create({
+          data: {
+            name: product.name || 'Unnamed Product',
+          },
+        });
+        product.id = newProduct.id;
+      }
+
+      let productBatch = await tx.productBatch.findFirst({
+        where: {
           productId: product.id,
           productionDate: product.productionDate,
           expirationDate: product.expirationDate,
-          quantity: product.quantity,
         },
       });
-    } else {
-			productBatch = await prisma.productBatch.update({
-				where: { id: productBatch.id },
-				data: {
-					quantity: {
-						increment: product.quantity,
-					},
-				},
-			});
-		}
 
-    await prisma.purchaseItem.create({
-      data: {
-        purchaseId: purchase.id,
-        productId: product.id,
-        productBatchId: productBatch.id,
-        quantity: product.quantity,
-        costPerUnit: product.costPerUnit,
-      },
-    });
-  }
+      if (!productBatch) {
+        productBatch = await tx.productBatch.create({
+          data: {
+            productId: product.id,
+            productionDate: product.productionDate,
+            expirationDate: product.expirationDate,
+            quantity: product.quantity,
+          },
+        });
+      } else {
+        productBatch = await tx.productBatch.update({
+          where: { id: productBatch.id },
+          data: {
+            quantity: {
+              increment: product.quantity,
+            },
+          },
+        });
+      }
 
-  return purchase;
+      await tx.purchaseItem.create({
+        data: {
+          purchaseId: purchase.id,
+          productId: product.id,
+          productBatchId: productBatch.id,
+          quantity: product.quantity,
+          unitPrice: product.unitPrice,
+        },
+      });
+    }
+
+    return purchase;
+  });
 };
 
 export const updatePurchase = (
