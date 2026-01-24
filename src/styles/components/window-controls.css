@@ -51,4 +51,20 @@
   .window-content {
     height: calc(100vh - 13 * var(--spacing));
   }
+
+	.window-linux {
+		@apply rounded-none;
+	}
+
+	.window-darwin {
+		@apply rounded-2xl;
+	}
+
+	.window-win32 {
+		@apply rounded-lg;
+
+		&.maximized {
+			@apply rounded-none;
+		}
+	}
 }
