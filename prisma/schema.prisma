@@ -121,7 +121,7 @@ model PurchaseItem {
   productId  String
   batchId    String
   quantity   Int
-  buyPrice   Float
+  unitPrice  Float
 
   purchase Purchase     @relation(fields: [purchaseId], references: [id])
   product  Product      @relation(fields: [productId], references: [id])
@@ -162,7 +162,7 @@ model SaleItem {
   productId String
   batchId   String // selling from a specific batch
   quantity  Int
-  sellPrice Float
+  unitPrice Float
 
   sale    Sale         @relation(fields: [saleId], references: [id])
   product Product      @relation(fields: [productId], references: [id])

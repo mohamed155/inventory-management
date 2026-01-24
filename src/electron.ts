@@ -64,6 +64,8 @@ const initWindow = async () => {
     });
 
     ipcMain.handle('is-maximized', () => window?.isMaximized());
+		console.log('Process platform:', process.platform);
+		ipcMain.handle('platform', () => process.platform);
 
     // window controls
     ipcMain.on('close-window', () => window?.close());

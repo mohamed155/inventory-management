@@ -24,6 +24,8 @@ declare module '@tanstack/react-table' {
 declare global {
   interface Window {
     electronAPI: {
+			platform: () => Promise<'darwin' | 'win32' | 'linux'>;
+
       // window properties
       isMaximized: () => Promise<boolean>;
       onWindowMaximized: (callback: (isMaximized: boolean) => void) => void;

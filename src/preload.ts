@@ -17,6 +17,7 @@ import type { PurchaseFormData } from './models/purchase-form.ts';
 contextBridge.exposeInMainWorld('electronAPI', {
   // properties
   isMaximized: () => ipcRenderer.invoke('is-maximized'),
+  platform: () => ipcRenderer.invoke('platform'),
 
   // callbacks
   onWindowMaximized: (callback: (isMaximized: boolean) => void) =>

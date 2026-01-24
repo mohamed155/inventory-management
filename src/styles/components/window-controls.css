@@ -18,7 +18,7 @@
 
       &::before {
         content: "";
-        @apply absolute -bottom-[28px] -left-[28px] w-13 h-13 bg-white rounded-full;
+        @apply absolute -bottom-7 -left-7 w-13 h-13 bg-white rounded-full;
       }
     }
 
@@ -27,23 +27,23 @@
 
       &::before {
         content: "";
-        @apply absolute -bottom-[28px] -right-[28px] w-13 h-13 bg-white rounded-full;
+        @apply absolute -bottom-7 -right-7 w-13 h-13 bg-white rounded-full;
       }
     }
 
     .control {
-      @apply !bg-white !w-6 !h-6 !rounded-full !text-primary;
+      @apply bg-white! w-6! h-6! rounded-full! text-primary!;
 
       &.minimize {
-        @apply hover:!bg-yellow-500 hover:!text-white;
+        @apply hover:bg-yellow-500! hover:text-white!;
       }
 
       &.maximize {
-        @apply hover:!bg-green-500 hover:!text-white;
+        @apply hover:bg-green-500! hover:text-white!;
       }
 
       &.close {
-        @apply hover:!bg-red-500 hover:!text-white;
+        @apply hover:bg-red-500! hover:text-white!;
       }
     }
   }
