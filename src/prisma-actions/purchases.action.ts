@@ -28,6 +28,7 @@ export const getAllPurchasesPaginated = async (
     }
   >,
 ) => {
+  console.log(filter);
   const [idsByItemsCount, idsByTotalCost, idsByRemainingCost] =
     await Promise.all([
       getPurchaseIdsByItemsCount(prisma, filter?.itemsCount),
@@ -44,7 +45,7 @@ export const getAllPurchasesPaginated = async (
   const purchases = await prisma.purchase.findMany({
     where: {
       AND: [
-        ...(filter as PurchaseWhereInput[]),
+        filter as PurchaseWhereInput[],
         ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
       ],
     },
@@ -55,7 +56,6 @@ export const getAllPurchasesPaginated = async (
       user: true,
       provider: true,
       _count: { select: { items: true } },
-      _sum: { select: { unitPrice: true } },
     },
   });
 
@@ -73,7 +73,6 @@ export const getAllPurchasesPaginated = async (
         user: User;
         provider: Provider;
         _count: { items: number };
-        _sum: { paidAmount: number };
       },
     ) => {
       const totalCost =
@@ -175,6 +174,7 @@ export const createPurchase = async (
   prisma: PrismaClient,
   body: PurchaseFormData,
 ) => {
+  console.log(body);
   return prisma.$transaction(async (tx: PrismaClient) => {
     let providerId: string;
     if (body.providerId) {
@@ -192,11 +192,11 @@ export const createPurchase = async (
 
     const purchase = await tx.purchase.create({
       data: {
-        userId: body.userId,
         paidAmount: body.paidAmount,
         payDueDate: body.payDueDate,
         date: body.date,
-        providerId,
+        user: { connect: { id: body.userId } },
+        provider: { connect: { id: providerId } },
       },
     });
 
@@ -240,11 +240,11 @@ export const createPurchase = async (
 
       await tx.purchaseItem.create({
         data: {
-          purchaseId: purchase.id,
-          productId: product.id,
-          productBatchId: productBatch.id,
           quantity: product.quantity,
           unitPrice: product.unitPrice,
+          purchase: { connect: { id: purchase.id } },
+          product: { connect: { id: product.id } },
+          batch: { connect: { id: productBatch.id } },
         },
       });
     }
