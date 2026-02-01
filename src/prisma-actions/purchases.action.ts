@@ -12,6 +12,43 @@ import type { DataParams } from '../models/params.ts';
 import type { PurchaseFormData } from '../models/purchase-form.ts';
 import { intersectIds } from '../util/intersect-ids.ts';
 
+type PurchaseOrderKey =
+  | keyof Purchase
+  | 'providerName'
+  | 'itemsCount'
+  | 'totalCost'
+  | 'remainingCost'
+  | 'purchasedBy'
+  | 'status';
+
+const buildPurchaseOrderBy = (
+  orderProperty?: PurchaseOrderKey,
+  orderDirection?: 'asc' | 'desc',
+) => {
+  if (!orderProperty || !orderDirection) return undefined;
+
+  switch (orderProperty) {
+    case 'providerName':
+      return { provider: { name: orderDirection } };
+
+    case 'purchasedBy':
+      return { user: { firstname: orderDirection } };
+
+    case 'itemsCount':
+      return { items: { _count: orderDirection } };
+
+    case 'totalCost':
+    case 'remainingCost':
+    case 'status':
+      return undefined;
+
+    default:
+      return {
+        [orderProperty]: orderDirection,
+      };
+  }
+};
+
 export const getAllPurchasesPaginated = async (
   prisma: PrismaClient,
   {
@@ -49,7 +86,10 @@ export const getAllPurchasesPaginated = async (
         ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
       ],
     },
-    orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
+    orderBy: buildPurchaseOrderBy(
+      orderProperty as PurchaseOrderKey,
+      orderDirection,
+    ),
     skip: (page - 1) * 10,
     take: 10,
     include: {
