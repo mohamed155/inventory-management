@@ -57,7 +57,10 @@ export const getAllPurchasesPaginated = async (
     orderProperty,
     filter,
   }: DataParams<
-    Purchase,
+    Purchase & {
+      totalCost?: number;
+      remainingCost?: number;
+    },
     PurchaseWhereInput & {
       itemsCount?: number;
       totalCost?: number;
@@ -79,19 +82,23 @@ export const getAllPurchasesPaginated = async (
     idsByRemainingCost,
   ]);
 
+  const where = {
+    AND: [
+      filter as PurchaseWhereInput,
+      ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
+    ],
+  } satisfies PurchaseWhereInput;
+
+  const isComputedSort =
+    orderProperty === 'totalCost' || orderProperty === 'remainingCost';
+
   const purchases = await prisma.purchase.findMany({
-    where: {
-      AND: [
-        filter as PurchaseWhereInput[],
-        ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
-      ],
-    },
-    orderBy: buildPurchaseOrderBy(
-      orderProperty as PurchaseOrderKey,
-      orderDirection,
-    ),
-    skip: (page - 1) * 10,
-    take: 10,
+    where,
+    orderBy: isComputedSort
+      ? undefined
+      : buildPurchaseOrderBy(orderProperty as PurchaseOrderKey, orderDirection),
+    skip: isComputedSort ? undefined : (page - 1) * 10,
+    take: isComputedSort ? undefined : 10,
     include: {
       user: true,
       provider: true,
@@ -107,7 +114,7 @@ export const getAllPurchasesPaginated = async (
 		GROUP BY purchaseId
 	`;
 
-  const data = purchases.map(
+  const dataUnpaged = purchases.map(
     (
       purchase: Purchase & {
         user: User;
@@ -117,6 +124,7 @@ export const getAllPurchasesPaginated = async (
     ) => {
       const totalCost =
         totals.find((t) => t.purchaseId === purchase.id)?.totalCost ?? 0;
+
       return {
         ...purchase,
         purchasedBy: `${purchase.user.firstname} ${purchase.user.lastname}`,
@@ -128,7 +136,23 @@ export const getAllPurchasesPaginated = async (
     },
   );
 
-  const total = (await prisma.purchase.count()) as number;
+  const data = isComputedSort
+    ? dataUnpaged
+        .sort(
+          (
+            a: { totalCost: number; remainingCost: number },
+            b: { totalCost: number; remainingCost: number },
+          ) => {
+            const key = orderProperty as 'totalCost' | 'remainingCost';
+            const dir = orderDirection === 'desc' ? -1 : 1;
+            return (a[key] - b[key]) * dir;
+          },
+        )
+        .slice((page - 1) * 10, page * 10)
+    : dataUnpaged;
+
+  const total = await prisma.purchase.count({ where });
+
   return { data, total };
 };
 
