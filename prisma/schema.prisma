@@ -1,6 +1,3 @@
-// ------------------------------
-// Prisma Setup
-// ------------------------------
 generator client {
   provider            = "prisma-client"
   output              = "../generated/prisma"
@@ -10,62 +7,45 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
 }
 
-// ------------------------------
-// User
-// ------------------------------
 model User {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   firstname String
   lastname  String
-  username  String   @unique
+  username  String     @unique
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   purchases Purchase[]
   sales     Sale[]
 }
 
-// ------------------------------
-// Product
-// ------------------------------
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id            String         @id @default(uuid())
+  name          String
+  description   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   batches       ProductBatch[]
   purchaseItems PurchaseItem[]
   saleItems     SaleItem[]
 }
 
-// ------------------------------
-// Product Batch (LOT)
-// ------------------------------
 model ProductBatch {
-  id             String   @id @default(uuid())
+  id             String         @id @default(uuid())
   productId      String
   productionDate DateTime
   expirationDate DateTime
   quantity       Int
-  createdAt      DateTime @default(now())
-
-  product Product @relation(fields: [productId], references: [id])
-
-  purchaseItems PurchaseItem[] // purchased into this batch
-  saleItems     SaleItem[] // sold from this batch
+  createdAt      DateTime       @default(now())
+  product        Product        @relation(fields: [productId], references: [id])
+  purchaseItems  PurchaseItem[]
+  saleItems      SaleItem[]
 
   @@index([productId])
 }
 
-// ------------------------------
-// Customer
-// ------------------------------
 model Customer {
   id        String   @id @default(uuid())
   firstname String
@@ -74,101 +54,80 @@ model Customer {
   address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  sales Sale[]
+  sales     Sale[]
 }
 
-// ------------------------------
-// Provider
-// ------------------------------
 model Provider {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
-  phone     String   @unique
+  phone     String     @unique
   address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   purchases Purchase[]
 }
 
-// ------------------------------
-// Purchase
-// ------------------------------
 model Purchase {
-  id         String   @id @default(uuid())
+  id         String         @id @default(uuid())
   userId     String
   providerId String
   paidAmount Float
   date       DateTime
   payDueDate DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user     User           @relation(fields: [userId], references: [id])
-  provider Provider       @relation(fields: [providerId], references: [id])
-  items    PurchaseItem[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  provider   Provider       @relation(fields: [providerId], references: [id])
+  user       User           @relation(fields: [userId], references: [id])
+  items      PurchaseItem[]
 
   @@index([userId])
   @@index([providerId])
 }
 
-// ------------------------------
-// Purchase Item
-// ------------------------------
 model PurchaseItem {
-  id         String @id @default(uuid())
+  id         String       @id @default(uuid())
   purchaseId String
   productId  String
   batchId    String
   quantity   Int
   unitPrice  Float
-
-  purchase Purchase     @relation(fields: [purchaseId], references: [id])
-  product  Product      @relation(fields: [productId], references: [id])
-  batch    ProductBatch @relation(fields: [batchId], references: [id])
+  batch      ProductBatch @relation(fields: [batchId], references: [id])
+  product    Product      @relation(fields: [productId], references: [id])
+  purchase   Purchase     @relation(fields: [purchaseId], references: [id])
 
   @@index([purchaseId])
   @@index([productId])
   @@index([batchId])
 }
 
-// ------------------------------
-// Sale
-// ------------------------------
 model Sale {
-  id         String   @id @default(uuid())
+  id         String     @id @default(uuid())
   userId     String
   customerId String
   paidAmount Float
   date       DateTime
   payDueDate DateTime
-  discount   Float    @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user     User       @relation(fields: [userId], references: [id])
-  customer Customer   @relation(fields: [customerId], references: [id])
-  items    SaleItem[]
+  discount   Float      @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+  items      SaleItem[]
 
   @@index([userId])
   @@index([customerId])
 }
 
-// ------------------------------
-// Sale Item
-// ------------------------------
 model SaleItem {
-  id        String @id @default(uuid())
+  id        String       @id @default(uuid())
   saleId    String
   productId String
-  batchId   String // selling from a specific batch
+  batchId   String
   quantity  Int
   unitPrice Float
-
-  sale    Sale         @relation(fields: [saleId], references: [id])
-  product Product      @relation(fields: [productId], references: [id])
-  batch   ProductBatch @relation(fields: [batchId], references: [id])
+  batch     ProductBatch @relation(fields: [batchId], references: [id])
+  product   Product      @relation(fields: [productId], references: [id])
+  sale      Sale         @relation(fields: [saleId], references: [id])
 
   @@index([saleId])
   @@index([productId])
