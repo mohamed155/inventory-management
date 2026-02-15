@@ -10,6 +10,7 @@ import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
+import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import PurchaseDialog from '@/components/dialogs/purchase-dialog.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
@@ -27,7 +28,9 @@ import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.
 function Purchases() {
   const { t } = useTranslation();
   const { confirm } = useConfirm();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState<boolean>(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState<boolean>(false);
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase>();
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -104,6 +107,11 @@ function Purchases() {
     [refetchPurchases, confirm, t],
   );
 
+  const openDetailsDialog = useCallback((purchase: Purchase) => {
+    setSelectedPurchase(purchase);
+    setDetailsDialogOpen(true);
+  }, []);
+
   const columns = useMemo<ColumnDef<PurchasesListResult>[]>(
     () => [
       {
@@ -163,6 +171,12 @@ function Purchases() {
         enableColumnFilter: false,
         cell: (info) => (
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => openDetailsDialog(info.row.original as Purchase)}
+            >
+              <span className="text-primary">{t('View')}</span>
+            </Button>
             <Button variant="outline" className="cursor-pointer">
               <Edit className="text-primary" />
             </Button>
@@ -177,19 +191,24 @@ function Purchases() {
         ),
       },
     ],
-    [t, performDeletePurchase],
+    [t, performDeletePurchase, openDetailsDialog],
   );
 
   const handleDialogClose = (purchase?: PurchaseFormData) => {
     if (purchase) {
       createPurchase(purchase).then(() => refetchPurchases());
     }
-    setDialogOpen(false);
+    setPurchaseDialogOpen(false);
   };
 
   return (
     <div>
-      <PurchaseDialog open={dialogOpen} onClose={handleDialogClose} />
+      <PurchaseDialog open={purchaseDialogOpen} onClose={handleDialogClose} />
+      <InvoiceDialog
+        open={detailsDialogOpen}
+        type="purchase"
+        data={selectedPurchase as Purchase}
+      />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Purchases')}</h2>
         <div className="flex items-center gap-2">
@@ -202,7 +221,7 @@ function Purchases() {
           </Button>
           <Button
             className="bg-primary text-white"
-            onClick={() => setDialogOpen(true)}
+            onClick={() => setPurchaseDialogOpen(true)}
           >
             <Plus size={30} />
             {t('Add Purchase')}
