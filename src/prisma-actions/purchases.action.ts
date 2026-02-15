@@ -68,7 +68,6 @@ export const getAllPurchasesPaginated = async (
     }
   >,
 ) => {
-  console.log(filter);
   const [idsByItemsCount, idsByTotalCost, idsByRemainingCost] =
     await Promise.all([
       getPurchaseIdsByItemsCount(prisma, filter?.itemsCount),
