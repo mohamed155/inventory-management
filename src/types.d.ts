@@ -3,11 +3,11 @@ import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import type { UserModel } from '@/models/user.ts';
 import type {
-  Customer,
-  Provider,
-  Purchase,
-  PurchaseItem,
-  User,
+	Customer, ProductBatch,
+	Provider,
+	Purchase,
+	PurchaseItem,
+	User,
 } from '../generated/prisma/browser.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
 import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
@@ -109,7 +109,7 @@ declare global {
       createPurchase: (purchase: PurchaseFormData) => Promise<Purchase>;
       updatePurchase: (id: string, purchase: Purchase) => Promise<Purchase>;
       deletePurchase: (id: string) => Promise<Purchase>;
-      getAllPurchaseItems: (purchaseId: string) => Promise<PurchaseItem[]>;
+      getAllPurchaseItems: (purchaseId: string) => Promise<(PurchaseItem & Product & ProductBatch)[]>;
     };
   }
 }

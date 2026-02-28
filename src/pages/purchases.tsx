@@ -207,7 +207,8 @@ function Purchases() {
       <InvoiceDialog
         open={detailsDialogOpen}
         type="purchase"
-        data={selectedPurchase as Purchase}
+        data={selectedPurchase as PurchasesListResult & {type: 'purchase'}}
+				close={() => setDetailsDialogOpen(false)}
       />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Purchases')}</h2>

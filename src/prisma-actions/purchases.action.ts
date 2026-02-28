@@ -1,3 +1,4 @@
+// @ts-ignore
 import type { PrismaClient } from '@prisma/client';
 import type {
   Product,
