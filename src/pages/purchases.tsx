@@ -20,7 +20,7 @@ import type {PurchasesListResult} from '@/models/purchases-list-result.ts';
 import {
 	createPurchase,
 	deletePurchase,
-	getAllPurchasesPaginated,
+	getAllPurchasesPaginated, updatePurchase,
 } from '@/services/purchases.ts';
 import type {Purchase} from '../../generated/prisma/browser.ts';
 import type {PurchaseWhereInput} from '../../generated/prisma/models/Purchase.ts';
@@ -118,6 +118,13 @@ function Purchases() {
 		setSelectedPurchase(purchase);
 		setUpdatePaymentOpen(true);
 	}, []);
+
+	const handleUpdatePayment = (data?: { remainingCost: number, payDueDate: Date }) => {
+		if (data && selectedPurchase) {
+			updatePurchase(selectedPurchase?.id, {...selectedPurchase, ...data}).then(() => refetchPurchases())
+		}
+		setUpdatePaymentOpen(false);
+	};
 
 	const columns = useMemo<ColumnDef<PurchasesListResult>[]>(
 		() => [
@@ -219,7 +226,10 @@ function Purchases() {
 					data={{...selectedPurchase, type: 'purchase'} as PurchasesListResult & { type: 'purchase' }}
 					close={() => setDetailsDialogOpen(false)}
 				/>
-				<UpdatePaymentDialog open={updatePaymentOpen} type='purchase' close={() => setUpdatePaymentOpen(false)}/>
+				<UpdatePaymentDialog
+					open={updatePaymentOpen} type='purchase'
+					data={{...selectedPurchase, type: 'purchase'} as PurchasesListResult & { type: 'purchase' }}
+					onClose={handleUpdatePayment}/>
 			</Activity>
 			<div className="flex justify-between items-center mb-4">
 				<h2 className="text-xl font-semibold pb-2">{t('Purchases')}</h2>

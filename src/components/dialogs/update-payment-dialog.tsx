@@ -17,7 +17,7 @@ type UpdatePaymentProps = {
 	open: boolean;
 	type: 'purchase' | 'sale';
 	data?: PaymentData;
-	close: () => void
+	onClose: (data?: {remainingCost: number, payDueDate: Date}) => void
 }
 
 function UpdatePaymentDialog(
@@ -25,7 +25,7 @@ function UpdatePaymentDialog(
 		open,
 		type,
 		data,
-		close
+		onClose
 	}: UpdatePaymentProps) {
 
 	const {t} = useTranslation();
@@ -34,8 +34,8 @@ function UpdatePaymentDialog(
 		() =>
 			z
 				.object({
-					paid: z.number().min(1, t('Paid can not be zero or less')),
-					paymentDueDate: z.date().min(new Date(), t('Payment due date can not be before today')),
+					remainingCost: z.number().min(1, t('Paid can not be zero or less')),
+					payDueDate: z.date().min(new Date(), t('Payment due date can not be before today')),
 				}),
 		[t],
 	);
@@ -43,20 +43,20 @@ function UpdatePaymentDialog(
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			paid: 0,
-			paymentDueDate: new Date()
+			remainingCost: data?.remainingCost,
+			payDueDate: data?.payDueDate
 		},
 	});
 
 	useEffect(() => {
 		form.reset({
-			paid: 0,
-			paymentDueDate: new Date()
+			remainingCost: data?.remainingCost,
+			payDueDate: data?.payDueDate
 		})
-	}, [form]);
+	}, [form, data]);
 
 	const onSubmit = async () => {
-
+		onClose(form.getValues());
 	}
 
 	if (data) {
@@ -74,7 +74,7 @@ function UpdatePaymentDialog(
 					<p>{`${t('Current Remaining')}: ${remainingCost}`}</p>
 					<FieldGroup>
 						<Controller
-							name="paid"
+							name="remainingCost"
 							control={form.control}
 							render={({field, fieldState}) => (
 								<Field data-invalid={fieldState.invalid}>
@@ -88,7 +88,7 @@ function UpdatePaymentDialog(
 							)}
 						/>
 						<Controller
-							name="paymentDueDate"
+							name="payDueDate"
 							control={form.control}
 							render={({field, fieldState}) => (
 								<Field data-invalid={fieldState.invalid}>

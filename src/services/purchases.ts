@@ -32,14 +32,14 @@ export const getAllPurchaseItems = (purchaseId: string) => {
 	return getAllPurchaseItems(purchaseId);
 }
 
-export const createPurchase = (provider: PurchaseFormData) => {
+export const createPurchase = (purchase: PurchaseFormData) => {
 	const createPurchase = window.electronAPI.createPurchase;
-	return createPurchase(provider);
+	return createPurchase(purchase);
 };
 
-export const updatePurchase = (id: string, provider: Purchase) => {
+export const updatePurchase = (id: string, purchase: Purchase) => {
 	const updatePurchase = window.electronAPI.updatePurchase;
-	return updatePurchase(id, provider);
+	return updatePurchase(id, purchase);
 };
 
 export const deletePurchase = (id: string) => {
