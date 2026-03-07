@@ -5,6 +5,7 @@ import type {
   ProductBatch,
   Provider,
   Purchase,
+  Sale,
 } from '../generated/prisma/client';
 import type { Product, User } from '../generated/prisma/client.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
@@ -12,8 +13,10 @@ import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
 import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
 import type { PurchaseWhereInput } from '../generated/prisma/models/Purchase.ts';
+import type { SaleWhereInput } from '../generated/prisma/models/Sale.ts';
 import type { DataParams } from './models/params.ts';
 import type { PurchaseFormData } from './models/purchase-form.ts';
+import type { SaleFormData } from './models/sales-form.ts';
 import {
   createCustomer,
   deleteCustomer,
@@ -51,6 +54,15 @@ import {
   getPurchaseById,
   updatePurchase,
 } from './prisma-actions/purchases.action.ts';
+import {
+  createSale,
+  deleteSale,
+  getAllSaleItems,
+  getAllSales,
+  getAllSalesPaginated,
+  getSaleById,
+  updateSale,
+} from './prisma-actions/sales.action.ts';
 import {
   createUser,
   getAllUsers,
@@ -181,5 +193,24 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('getAllPurchaseItems', (_, purchaseId: string) =>
     getAllPurchaseItems(prisma, purchaseId),
+  );
+
+  // Sales actions
+  ipcMain.handle(
+    'getAllSalesPaginated',
+    (_, params: DataParams<Sale, SaleWhereInput>) =>
+      getAllSalesPaginated(prisma, params),
+  );
+  ipcMain.handle('getAllSales', (_) => getAllSales(prisma));
+  ipcMain.handle('getSaleById', (_, id: string) => getSaleById(prisma, id));
+  ipcMain.handle('createSale', (_, data: SaleFormData) =>
+    createSale(prisma, data),
+  );
+  ipcMain.handle('updateSale', (_, id: string, sale: Sale) =>
+    updateSale(prisma, id, sale),
+  );
+  ipcMain.handle('deleteSale', (_, id: string) => deleteSale(prisma, id));
+  ipcMain.handle('getAllSaleItems', (_, saleId: string) =>
+    getAllSaleItems(prisma, saleId),
   );
 };
