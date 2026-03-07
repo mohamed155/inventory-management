@@ -212,7 +212,6 @@ function Purchases() {
 	const handleUpdatePayment = (data?: { remainingCost: number, payDueDate: Date }) => {
 		if (data && selectedPurchase) {
 			updatePurchase(selectedPurchase?.id, {
-				...selectedPurchase,
 				payDueDate: data.payDueDate,
 				paidAmount: selectedPurchase.paidAmount + data.remainingCost
 			}).then(() => refetchPurchases())

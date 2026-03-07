@@ -107,7 +107,7 @@ declare global {
       getAllPurchases: () => Promise<Pick<Purchase, 'id' | 'name'>[]>;
       getPurchaseById: (id: string) => Promise<Purchase | null>;
       createPurchase: (purchase: PurchaseFormData) => Promise<Purchase>;
-      updatePurchase: (id: string, purchase: Purchase) => Promise<Purchase>;
+      updatePurchase: (id: string, purchase: Partial<Purchase>) => Promise<Purchase>;
       deletePurchase: (id: string) => Promise<Purchase>;
       getAllPurchaseItems: (purchaseId: string) => Promise<(PurchaseItem & Product & ProductBatch)[]>;
     };

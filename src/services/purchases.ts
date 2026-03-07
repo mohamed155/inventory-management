@@ -37,7 +37,7 @@ export const createPurchase = (purchase: PurchaseFormData) => {
 	return createPurchase(purchase);
 };
 
-export const updatePurchase = (id: string, purchase: Purchase) => {
+export const updatePurchase = (id: string, purchase: Partial<Purchase>) => {
 	const updatePurchase = window.electronAPI.updatePurchase;
 	return updatePurchase(id, purchase);
 };
