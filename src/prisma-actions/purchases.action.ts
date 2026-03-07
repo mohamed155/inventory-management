@@ -342,7 +342,7 @@ export const getAllPurchaseItems = async (
     where: { purchaseId },
     include: {
       product: true,
-      productBatch: true,
+			batch: true,
     },
   });
 

@@ -7,7 +7,7 @@ import type {
 } from '@tanstack/react-table';
 import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import {Activity, useCallback, useMemo, useState} from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
@@ -204,12 +204,14 @@ function Purchases() {
   return (
     <div>
       <PurchaseDialog open={purchaseDialogOpen} onClose={handleDialogClose} />
-      <InvoiceDialog
-        open={detailsDialogOpen}
-        type="purchase"
-        data={selectedPurchase as PurchasesListResult & {type: 'purchase'}}
-				close={() => setDetailsDialogOpen(false)}
-      />
+			<Activity mode={!!selectedPurchase ? 'visible' : 'hidden'}>
+				<InvoiceDialog
+					open={detailsDialogOpen}
+					type="purchase"
+					data={{...selectedPurchase, type: 'purchase'} as PurchasesListResult & {type: 'purchase'}}
+					close={() => setDetailsDialogOpen(false)}
+				/>
+			</Activity>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Purchases')}</h2>
         <div className="flex items-center gap-2">
