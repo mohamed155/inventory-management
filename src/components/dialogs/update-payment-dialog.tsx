@@ -63,7 +63,7 @@ function UpdatePaymentDialog(
 		const {totalCost, paidAmount, remainingCost} = data;
 
 		return (
-			<Dialog open={open} onOpenChange={close}>
+			<Dialog open={open} onOpenChange={() => onClose()}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>{t('Update Payment')}</DialogTitle>

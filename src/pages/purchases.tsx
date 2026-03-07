@@ -12,6 +12,7 @@ import {useTranslation} from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import PurchaseDialog from '@/components/dialogs/purchase-dialog.tsx';
+import UpdatePaymentDialog from "@/components/dialogs/update-payment-dialog.tsx";
 import {Badge} from '@/components/ui/badge.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {useConfirm} from '@/context/confirm-context.tsx';
@@ -24,7 +25,6 @@ import {
 } from '@/services/purchases.ts';
 import type {Purchase} from '../../generated/prisma/browser.ts';
 import type {PurchaseWhereInput} from '../../generated/prisma/models/Purchase.ts';
-import UpdatePaymentDialog from "@/components/dialogs/update-payment-dialog.tsx";
 
 function Purchases() {
 	const {t} = useTranslation();
@@ -119,13 +119,6 @@ function Purchases() {
 		setUpdatePaymentOpen(true);
 	}, []);
 
-	const handleUpdatePayment = (data?: { remainingCost: number, payDueDate: Date }) => {
-		if (data && selectedPurchase) {
-			updatePurchase(selectedPurchase?.id, {...selectedPurchase, ...data}).then(() => refetchPurchases())
-		}
-		setUpdatePaymentOpen(false);
-	};
-
 	const columns = useMemo<ColumnDef<PurchasesListResult>[]>(
 		() => [
 			{
@@ -214,6 +207,13 @@ function Purchases() {
 			createPurchase(purchase).then(() => refetchPurchases());
 		}
 		setPurchaseDialogOpen(false);
+	};
+
+	const handleUpdatePayment = (data?: { remainingCost: number, payDueDate: Date }) => {
+		if (data && selectedPurchase) {
+			updatePurchase(selectedPurchase?.id, {...selectedPurchase, ...data}).then(() => refetchPurchases())
+		}
+		setUpdatePaymentOpen(false);
 	};
 
 	return (
