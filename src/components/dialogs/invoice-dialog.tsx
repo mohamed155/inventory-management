@@ -53,11 +53,11 @@ function InvoiceDialog(
 						</div>
 						<div>
 							<h6>{t('Date')}</h6>
-							<p>{data.date.toDateString()}</p>
+							<p>{data.date?.toDateString()}</p>
 						</div>
 						<div>
 							<h6>{t('Payment Due')}</h6>
-							<p>{data.payDueDate.toDateString()}</p>
+							<p>{data.payDueDate?.toDateString()}</p>
 						</div>
 						<div>
 							<h6>{t('Status')}</h6>
