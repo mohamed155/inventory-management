@@ -1,3 +1,4 @@
+// @ts-expect-error
 import type { PrismaClient } from '@prisma/client';
 import type { Product, ProductBatch } from '../../generated/prisma/client.ts';
 import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';

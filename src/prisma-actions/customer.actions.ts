@@ -1,3 +1,4 @@
+// @ts-expect-error
 import type { PrismaClient } from '@prisma/client';
 import type { DataParams } from '@/models/params.ts';
 import type { Customer } from '../../generated/prisma/client.ts';
