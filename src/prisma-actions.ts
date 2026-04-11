@@ -1,12 +1,4 @@
 import { ipcMain } from 'electron';
-import {
-	getAllOverduePayments,
-	getDueFromCustomers,
-	getDueToProviders,
-	getTotalProfit,
-	getTotalPurchasesAmount,
-	getTotalSalesAmount,
-} from '@/prisma-actions/dashboard.actions.ts';
 import type {
   Customer,
   PrismaClient,
@@ -32,6 +24,14 @@ import {
   getAllCustomersPaginated,
   updateCustomer,
 } from './prisma-actions/customer.actions.ts';
+import {
+  getAllOverduePayments,
+  getDueFromCustomers,
+  getDueToProviders,
+  getTotalProfit,
+  getTotalPurchasesAmount,
+  getTotalSalesAmount,
+} from './prisma-actions/dashboard.actions.ts';
 import {
   createProduct,
   createProductBatch,
@@ -93,7 +93,9 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     getDueFromCustomers(prisma),
   );
   ipcMain.handle('getDueToProviders', async () => getDueToProviders(prisma));
-  ipcMain.handle('getAllOverduePayments', async () => getAllOverduePayments(prisma));
+  ipcMain.handle('getAllOverduePayments', async () =>
+    getAllOverduePayments(prisma),
+  );
 
   // Users actions
   ipcMain.handle('getUsers', () => getAllUsers(prisma));

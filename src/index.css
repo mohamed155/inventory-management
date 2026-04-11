@@ -5,6 +5,10 @@
 /* components */
 @import "./styles/components/window-controls.css";
 @import "./styles/components/pagination.css";
+@import "./styles/components/panel.css";
+
+/* Utils */
+@import "./styles/utils/glass.css";
 
 @custom-variant dark (&:is(.dark *));
 
