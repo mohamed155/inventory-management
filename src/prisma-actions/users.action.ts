@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import type { User } from '../../generated/prisma/client.ts';
 
 export const getAllUsers = (prisma: PrismaClient) => {
