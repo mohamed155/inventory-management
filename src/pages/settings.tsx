@@ -1,5 +1,11 @@
+import Soon from '@/components/soon.tsx';
+
 function Settings() {
-  return <div>Settings</div>;
+  return (
+    <Soon>
+      <div>Settings</div>
+    </Soon>
+  );
 }
 
 export default Settings;

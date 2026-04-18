@@ -2,14 +2,14 @@ function DashboardCard({
   title,
   value,
   count,
-  icon,
-  color,
+  // icon,
+  // color,
 }: {
   title: string;
   value?: string | number;
   count?: number;
-  icon?: string;
-  color?: string;
+  // icon?: string;
+  // color?: string;
 }) {
   return (
     <div className="flex justify-between bg-white rounded-lg p-4 border border-solid border-1">
