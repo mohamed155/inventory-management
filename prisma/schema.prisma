@@ -1,8 +1,9 @@
 generator client {
   provider            = "prisma-client"
   output              = "../generated/prisma"
-  previewFeatures     = ["relationJoins"]
+  previewFeatures     = ["relationJoins", "driverAdapters"]
   importFileExtension = "ts"
+  engineType          = "wasm"
 }
 
 datasource db {
