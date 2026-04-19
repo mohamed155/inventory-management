@@ -1,3 +1,4 @@
+// @ts-expect-error
 import type { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import type { User } from '../../generated/prisma/client.ts';

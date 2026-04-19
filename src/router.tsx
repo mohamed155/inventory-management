@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createHashRouter, RouterProvider, redirect } from 'react-router';
 import Layout from '@/layout.tsx';
 import Customers from '@/pages/customers.tsx';
 import Dashboard from '@/pages/dashboard.tsx';
@@ -15,7 +15,7 @@ import { useCurrentUserStore } from '@/store/user.store.ts';
 function Router() {
   const currentUser = useCurrentUserStore((state: any) => state.currentUser);
 
-  const router = createBrowserRouter([
+  const router = createHashRouter([
     {
       path: 'signup',
       element: <Signup />,
@@ -26,22 +26,19 @@ function Router() {
     },
     {
       path: '/',
-      loader: async () => {
-        if (currentUser) {
-          if (window.location.pathname === '/') {
-            window.location.href = '/dashboard';
-          }
-        } else {
-          const usersCount = await getUsersCount();
-          if (usersCount) {
-            window.location.href = '/login';
-          } else {
-            window.location.href = '/signup';
-          }
-        }
-      },
       element: <Layout />,
       children: [
+        {
+          index: true,
+          loader: async () => {
+            if (currentUser) {
+              return redirect('/dashboard');
+            }
+            const usersCount = await getUsersCount();
+            return redirect(usersCount ? '/login' : '/signup');
+          },
+          element: null,
+        },
         {
           path: 'dashboard',
           element: <Dashboard />,

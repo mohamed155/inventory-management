@@ -61,7 +61,7 @@ function Login() {
         lastname: user.lastname,
         username: user.username,
       });
-      window.location.href = '/';
+      navigate('/');
     } else {
       toast('Invalid username or password');
     }

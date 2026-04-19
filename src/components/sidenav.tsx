@@ -88,7 +88,7 @@ function Sidenav() {
   );
 
   const isItemSelected = (name: string) => {
-    return window.location.pathname.includes(name.toLowerCase());
+    return window.location.hash.includes(name.toLowerCase());
   };
 
   return (

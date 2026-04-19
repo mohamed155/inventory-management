@@ -1,10 +1,10 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createClient } from '@libsql/client';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import * as Sentry from '@sentry/electron';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { PrismaClient } from '../generated/prisma/client.ts';
 import { initPrismaActions } from './prisma-actions.ts';
 
@@ -21,13 +21,10 @@ const isDev = !!process.env.ELECTRON_START_URL;
 
 const getDbUrl = (): string => {
   if (isDev) return 'file:./dev.db';
-  return `file:${join(app.getPath('userData'), 'app.db')}`;
+  return pathToFileURL(join(app.getPath('userData'), 'app.db')).href;
 };
 
-const getMigrationsDir = (): string => {
-  if (isDev) return join(__dirname, '../prisma/migrations');
-  return join(process.resourcesPath, 'prisma/migrations');
-};
+const getMigrationsDir = (): string => join(__dirname, '../prisma/migrations');
 
 const ensureDatabase = async (dbUrl: string): Promise<void> => {
   const client = createClient({ url: dbUrl });
@@ -69,16 +66,19 @@ const initWindow = async () => {
       frame: false,
       resizable: false,
       alwaysOnTop: true,
+      show: false,
     });
 
-    const splashPath = isDev
-      ? join(__dirname, 'splash.html')
-      : join(__dirname, '../dist/splash.html');
+    const splashPath = app.isPackaged
+      ? join(process.resourcesPath, 'splash.html')
+      : join(__dirname, 'splash.html');
     await splashScreen.loadFile(splashPath);
+    splashScreen.show();
 
     const preloadPath = isDev
       ? join(__dirname, 'preload.ts')
       : join(__dirname, 'preload.js');
+
     const window = new BrowserWindow({
       width: 1200,
       height: 800,
@@ -132,6 +132,7 @@ const initWindow = async () => {
     initPrismaActions(prisma);
   } catch (error) {
     console.error('Failed to initialize window:', error);
+    dialog.showErrorBox('Startup Error', String(error));
     app.exit(1);
   }
 };

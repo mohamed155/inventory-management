@@ -11,11 +11,13 @@ import {
   FieldLabel,
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
+import { useNavigate } from 'react-router';
 import { createUser } from '@/services/auth.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
 
 function Signup() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const setCurrentUser = useCurrentUserStore(
     (state: any) => state.setCurrentUser,
   );
@@ -66,7 +68,7 @@ function Signup() {
       lastname: createdUser.lastname,
       username: createdUser.username,
     });
-    window.location.href = '/';
+    navigate('/');
   };
 
   return (
