@@ -12,6 +12,7 @@
     "dev-electron": "wait-on http:localhost:5173 && cross-env ELECTRON_START_URL=http:localhost:5173 bunx --bun electron ./src/electron.ts",
     "build": "bun run db:generate && tsc -b && vite build && bunx esbuild src/electron.ts src/preload.ts --bundle --packages=external --platform=node --target=node22 --format=esm --outdir=dist-electron",
     "package": "bun run build && bunx electron-builder",
+    "publish": "bun run build && dotenv -e .env.local -- bunx electron-builder --publish always",
     "lint": "eslint .",
     "preview": "vite preview",
     "db:generate": "bunx --bun prisma generate",
@@ -51,7 +52,7 @@
     "publish": {
       "provider": "github",
       "owner": "mohamed155",
-      "repo": "https://github.com/mohamed155/inventory-management"
+      "repo": "inventory-management"
     }
   },
   "dependencies": {
@@ -68,7 +69,7 @@
     "@sentry/electron": "^7.11.0",
     "@sentry/react": "^10.49.0",
     "@tailwindcss/vite": "^4.2.2",
-    "@tanstack/react-query": "^5.99.1",
+    "@tanstack/react-query": "^5.99.2",
     "@tanstack/react-table": "^8.21.3",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -103,6 +104,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
+    "dotenv-cli": "^11.0.0",
     "electron": "^41.2.1",
     "electron-builder": "^26.9.0",
     "electron-reload": "^2.0.0-alpha.1",

@@ -5,6 +5,7 @@ import { createClient } from '@libsql/client';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import * as Sentry from '@sentry/electron';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import au from 'electron-updater';
 import { PrismaClient } from '../generated/prisma/client.ts';
 import { initPrismaActions } from './prisma-actions.ts';
 
@@ -137,4 +138,10 @@ const initWindow = async () => {
   }
 };
 
-app.whenReady().then(initWindow);
+app.whenReady().then(() => {
+  au.autoUpdater.checkForUpdatesAndNotify();
+  au.autoUpdater.on('update-downloaded', () => {
+    au.autoUpdater.quitAndInstall();
+  });
+  initWindow();
+});
