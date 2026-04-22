@@ -86,7 +86,9 @@ const initWindow = async () => {
       frame: false,
       show: false,
       webPreferences: {
-        nodeIntegration: true,
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false,
         preload: preloadPath,
       },
     });

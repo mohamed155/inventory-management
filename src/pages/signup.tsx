@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Activity, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import z from 'zod';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -11,7 +12,6 @@ import {
   FieldLabel,
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
-import { useNavigate } from 'react-router';
 import { createUser } from '@/services/auth.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
 
@@ -56,19 +56,32 @@ function Signup() {
 
   const onSubmit = async () => {
     const user = form.getValues();
-    const createdUser = await createUser({
+    await createUser({
       firstname: user.firstname,
       lastname: user.lastname,
       username: user.username,
       password: user.password,
-    });
-    await setCurrentUser({
-      id: createdUser.id,
-      firstname: createdUser.firstname,
-      lastname: createdUser.lastname,
-      username: createdUser.username,
-    });
-    navigate('/');
+    })
+      .catch((error: any) => {
+        if (error.message.indexOf('username') > 0) {
+          form.setError('username', {
+            type: 'manual',
+            message: t(
+              'Username is already taken, please user another username',
+            ),
+          });
+        }
+      })
+      .then((createdUser) => {
+        if (createdUser)
+          setCurrentUser({
+            id: createdUser.id,
+            firstname: createdUser.firstname,
+            lastname: createdUser.lastname,
+            username: createdUser.username,
+          });
+      })
+      .then(() => navigate('/'));
   };
 
   return (

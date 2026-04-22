@@ -12,65 +12,64 @@ import Signup from '@/pages/signup.tsx';
 import { getUsersCount } from '@/services/auth.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
 
+const router = createHashRouter([
+  {
+    path: 'signup',
+    element: <Signup />,
+  },
+  {
+    path: 'login',
+    element: <Login />,
+  },
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        loader: async () => {
+          const currentUser = useCurrentUserStore.getState().currentUser;
+          if (currentUser) {
+            return redirect('/dashboard');
+          }
+          const usersCount = await getUsersCount();
+          return redirect(usersCount ? '/login' : '/signup');
+        },
+        element: null,
+      },
+      {
+        path: 'dashboard',
+        element: <Dashboard />,
+      },
+      {
+        path: 'inventory',
+        element: <Inventory />,
+      },
+      {
+        path: 'purchases',
+        element: <Purchases />,
+      },
+      {
+        path: 'sales',
+        element: <Sales />,
+      },
+      {
+        path: 'customers',
+        element: <Customers />,
+      },
+      {
+        path: 'providers',
+        element: <Providers />,
+      },
+      {
+        path: 'settings',
+        element: <Settings />,
+      },
+    ],
+  },
+]);
+
 function Router() {
-  const currentUser = useCurrentUserStore((state: any) => state.currentUser);
-
-  const router = createHashRouter([
-    {
-      path: 'signup',
-      element: <Signup />,
-    },
-    {
-      path: 'login',
-      element: <Login />,
-    },
-    {
-      path: '/',
-      element: <Layout />,
-      children: [
-        {
-          index: true,
-          loader: async () => {
-            if (currentUser) {
-              return redirect('/dashboard');
-            }
-            const usersCount = await getUsersCount();
-            return redirect(usersCount ? '/login' : '/signup');
-          },
-          element: null,
-        },
-        {
-          path: 'dashboard',
-          element: <Dashboard />,
-        },
-        {
-          path: 'inventory',
-          element: <Inventory />,
-        },
-        {
-          path: 'purchases',
-          element: <Purchases />,
-        },
-        {
-          path: 'sales',
-          element: <Sales />,
-        },
-        {
-          path: 'customers',
-          element: <Customers />,
-        },
-        {
-          path: 'providers',
-          element: <Providers />,
-        },
-        {
-          path: 'settings',
-          element: <Settings />,
-        },
-      ],
-    },
-  ]);
-
   return <RouterProvider router={router} />;
 }
 

@@ -22,5 +22,5 @@ export const getUsersCount = async () => {
 
 export const logout = () => {
   localStorage.clear();
-  window.location.href = '/login';
+  window.location.hash = '/login';
 };
