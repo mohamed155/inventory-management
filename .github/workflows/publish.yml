@@ -1,0 +1,29 @@
+name: Publish to github
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Create .env.local
+        run: echo "GH_TOKEN=${{ secrets.GH_TOKEN }}" > .env.local
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: bun run publish
