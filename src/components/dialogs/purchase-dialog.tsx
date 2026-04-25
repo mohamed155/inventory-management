@@ -33,6 +33,9 @@ import { getAllProducts } from '@/services/products.ts';
 import { getAllProviders } from '@/services/providers.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
 
+const nextTenYears = new Date();
+nextTenYears.setFullYear(nextTenYears.getFullYear() + 10);
+
 function PurchaseDialog({
   open,
   onClose,
@@ -476,6 +479,7 @@ function PurchaseDialog({
                                     field.onChange({ target: { value: date } })
                                   }
                                   aria-invalid={fieldState.invalid}
+                                  maxDate={nextTenYears}
                                 ></DatePicker>
                                 <Activity
                                   mode={

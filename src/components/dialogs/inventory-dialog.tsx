@@ -34,6 +34,9 @@ import type {
   ProductBatch,
 } from '../../../generated/prisma/browser.ts';
 
+const nextTenYears = new Date();
+nextTenYears.setFullYear(nextTenYears.getFullYear() + 10);
+
 function InventoryDialog({
   product,
   open,
@@ -267,6 +270,7 @@ function InventoryDialog({
                       field.onChange({ target: { value: date } })
                     }
                     aria-invalid={fieldState.invalid}
+										maxDate={nextTenYears}
                   ></DatePicker>
                   <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
                     <FieldError errors={[fieldState.error]} />
