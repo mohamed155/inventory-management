@@ -27,4 +27,5 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DATABASE_URL: file:./prisma/dev.db
         run: bun run publish
