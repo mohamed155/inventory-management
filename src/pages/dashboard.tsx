@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import {
   CircleAlert,
   DollarSign,
@@ -8,9 +9,47 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import DashboardCard from '@/components/dashboard-card.tsx';
+import {
+  getAllOverduePayments,
+  getDueFromCustomers,
+  getDueToProviders,
+  getTotalProfit,
+  getTotalPurchasesAmount,
+  getTotalSalesAmount,
+} from '@/services/dashboard.ts';
 
 function Dashboard() {
   const { t } = useTranslation();
+
+  const { data: totalSales } = useQuery({
+    queryKey: ['totalSalesAmount'],
+    queryFn: getTotalSalesAmount,
+  });
+
+  const { data: totalPurchases } = useQuery({
+    queryKey: ['totalPurchasesAmount'],
+    queryFn: getTotalPurchasesAmount,
+  });
+
+  const { data: profit } = useQuery({
+    queryKey: ['totalProfit'],
+    queryFn: getTotalProfit,
+  });
+
+  const { data: dueFromCustomers } = useQuery({
+    queryKey: ['dueFromCustomers'],
+    queryFn: getDueFromCustomers,
+  });
+
+  const { data: dueToProviders } = useQuery({
+    queryKey: ['dueToProviders'],
+    queryFn: getDueToProviders,
+  });
+
+  const { data: overduePayments } = useQuery({
+    queryKey: ['allOverduePayments'],
+    queryFn: getAllOverduePayments,
+  });
 
   return (
     <div>
@@ -20,39 +59,39 @@ function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <DashboardCard
           title={t('Total sales')}
-          value={12345}
+          value={totalSales ?? 0}
           color="success"
           icon={<DollarSign />}
         />
         <DashboardCard
           title={t('Total Purchases')}
-          value={678}
+          value={totalPurchases ?? 0}
           color="info"
           icon={<ShoppingCart />}
         />
         <DashboardCard
           title={t('Profit')}
-          value={90}
+          value={profit ?? 0}
           color="error"
           icon={<TrendingUp />}
         />
         <DashboardCard
           title={t('Due from customers')}
-          value={45}
+          value={dueFromCustomers ?? 0}
           color="warning"
           icon={<Users />}
         />
         <DashboardCard
           title={t('Due to Providers')}
-          value={45}
+          value={dueToProviders ?? 0}
           color="warning"
           icon={<Truck />}
         />
         <DashboardCard
           title={t('Overdue payments')}
-          value={45}
+          value={overduePayments?.totalRemainingAmount ?? 0}
           color="error"
-          count={6}
+          count={overduePayments?.count ? Number(overduePayments.count) : undefined}
           icon={<CircleAlert />}
         />
       </div>
