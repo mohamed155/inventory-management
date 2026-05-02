@@ -1,0 +1,15 @@
+.circle-icon-success {
+  @apply bg-green-50 text-green-600;
+}
+
+.circle-icon-info {
+  @apply bg-blue-50 text-blue-600;
+}
+
+.circle-icon-warning {
+  @apply bg-yellow-50 text-yellow-600;
+}
+
+.circle-icon-error {
+  @apply bg-red-50 text-red-600;
+}

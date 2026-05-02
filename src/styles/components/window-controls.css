@@ -1,70 +1,68 @@
-@layer components {
-  .window-top-bar {
-    -webkit-app-region: drag;
+.window-top-bar {
+  -webkit-app-region: drag;
+}
+
+.window-controls {
+  -webkit-app-region: no-drag;
+
+  @apply w-30 h-9 absolute right-10 left-[unset] top-0 rtl:left-10 rtl:right-[unset] bg-primary flex flex-row items-center justify-evenly rounded-b-xl gap-2;
+
+  .before,
+  .after {
+    @apply absolute top-0 bg-primary w-7 h-6 overflow-hidden;
   }
 
-  .window-controls {
-    -webkit-app-region: no-drag;
+  .before {
+    @apply -left-6;
 
-    @apply w-30 h-9 absolute right-10 left-[unset] top-0 rtl:left-10 rtl:right-[unset] bg-primary flex flex-row items-center justify-evenly rounded-b-xl gap-2;
-
-    .before,
-    .after {
-      @apply absolute top-0 bg-primary w-7 h-6 overflow-hidden;
-    }
-
-    .before {
-      @apply -left-6;
-
-      &::before {
-        content: "";
-        @apply absolute -bottom-7 -left-7 w-13 h-13 bg-white rounded-full;
-      }
-    }
-
-    .after {
-      @apply -right-6;
-
-      &::before {
-        content: "";
-        @apply absolute -bottom-7 -right-7 w-13 h-13 bg-white rounded-full;
-      }
-    }
-
-    .control {
-      @apply bg-white! w-6! h-6! rounded-full! text-primary!;
-
-      &.minimize {
-        @apply hover:bg-yellow-500! hover:text-white!;
-      }
-
-      &.maximize {
-        @apply hover:bg-green-500! hover:text-white!;
-      }
-
-      &.close {
-        @apply hover:bg-red-500! hover:text-white!;
-      }
+    &::before {
+      content: "";
+      @apply absolute -bottom-7 -left-7 w-13 h-13 bg-white rounded-full;
     }
   }
 
-  .window-content {
-    height: calc(100vh - 13 * var(--spacing));
+  .after {
+    @apply -right-6;
+
+    &::before {
+      content: "";
+      @apply absolute -bottom-7 -right-7 w-13 h-13 bg-white rounded-full;
+    }
   }
 
-	.window-linux {
-		@apply rounded-none;
-	}
+  .control {
+    @apply bg-white! w-6! h-6! rounded-full! text-primary!;
 
-	.window-darwin {
-		@apply rounded-2xl;
-	}
+    &.minimize {
+      @apply hover:bg-yellow-500! hover:text-white!;
+    }
 
-	.window-win32 {
-		@apply rounded-lg;
+    &.maximize {
+      @apply hover:bg-green-500! hover:text-white!;
+    }
 
-		&.maximized {
-			@apply rounded-none;
-		}
-	}
+    &.close {
+      @apply hover:bg-red-500! hover:text-white!;
+    }
+  }
+}
+
+.window-content {
+  height: calc(100vh - 13 * var(--spacing));
+}
+
+.window-linux {
+  @apply rounded-none;
+}
+
+.window-darwin {
+  @apply rounded-2xl;
+}
+
+.window-win32 {
+  @apply rounded-md;
+
+  &.maximized {
+    @apply rounded-none;
+  }
 }
