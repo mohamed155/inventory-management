@@ -12,6 +12,7 @@ dist
 dist-electron
 dist-ssr
 *.local
+public
 
 # Editor directories and files
 .vscode/*
@@ -30,3 +31,6 @@ dist-ssr
 .env.local
 
 .ai
+.claude
+.mcp.json
+.agents

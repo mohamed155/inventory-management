@@ -91,10 +91,13 @@ function Dashboard() {
           title={t('Overdue payments')}
           value={overduePayments?.totalRemainingAmount ?? 0}
           color="error"
-          count={overduePayments?.count ? Number(overduePayments.count) : undefined}
+          count={
+            overduePayments?.count ? Number(overduePayments.count) : undefined
+          }
           icon={<CircleAlert />}
         />
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
     </div>
   );
 }
