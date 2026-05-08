@@ -1,3 +1,4 @@
+// @ts-nocheck
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
@@ -8,8 +9,8 @@ const LOCALES_DIR = path.join(__dirname, 'src', 'i18n', 'locales');
 const EN_FILE_PATH = path.join(LOCALES_DIR, 'en.ts');
 const AR_FILE_PATH = path.join(LOCALES_DIR, 'ar.ts');
 
-// Regex to find t('string') or t("string")
-const T_FUNCTION_REGEX = /\bt\(\s*(['"])(.+?)\1\s*\)/g;
+// Regex source — re-instantiated per file to avoid stale lastIndex
+const T_FUNCTION_REGEX_SOURCE = /\bt\(\s*(['"])(.+?)\1\s*\)/g;
 
 /**
  * Translates text using a shared Puppeteer page instance.
@@ -19,14 +20,12 @@ async function translateText(page, fromLang, toLang, text) {
   try {
     const url = `https://translate.google.com/?sl=${fromLang}&tl=${toLang}&text=${encodeURIComponent(text)}&op=translate`;
 
-    // Don't wait for network idle, domcontentloaded is faster and usually sufficient for the text box
     await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-    // Wait for the result container
     const selector = '.ryNqvb';
     try {
       await page.waitForSelector(selector, { timeout: 3000 });
-    } catch (e) {
+    } catch {
       console.warn(`⚠️  Timeout waiting for translation: "${text}"`);
       return `__TODO_${text}__`;
     }
@@ -36,109 +35,94 @@ async function translateText(page, fromLang, toLang, text) {
     console.log(`   ✓ Translated: "${text}" -> "${translatedText}"`);
     return translatedText;
   } catch (error) {
-    console.error(`❌ Failed to translate "${text}":`, error.message);
+    console.error(`❌ Failed to translate "${text}":`, error?.message ?? error);
     return `__TODO_${text}__`;
   }
 }
 
 /**
- * Recursively walk through a directory and return all file paths ending with .tsx
+ * Recursively walk through a directory and return all .tsx and .ts file paths.
  */
 function getTsxFiles(dir, fileList = []) {
   if (!fs.existsSync(dir)) return fileList;
 
-  const files = fs.readdirSync(dir);
-
-  files.forEach((file) => {
+  for (const file of fs.readdirSync(dir)) {
     const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-
-    if (stat.isDirectory()) {
+    if (fs.statSync(filePath).isDirectory()) {
       getTsxFiles(filePath, fileList);
-    } else {
-      if (file.endsWith('.tsx')) {
-        fileList.push(filePath);
-      }
+    } else if (file.endsWith('.tsx') || file.endsWith('.ts')) {
+      fileList.push(filePath);
     }
-  });
+  }
 
   return fileList;
 }
 
 /**
- * Extract keys from file content using regex
+ * Extract all t('...') keys from source files.
  */
 function extractKeys(files) {
   const keys = new Set();
 
-  files.forEach((filePath) => {
+  for (const filePath of files) {
     const content = fs.readFileSync(filePath, 'utf-8');
-    let match;
-
-    while ((match = T_FUNCTION_REGEX.exec(content)) !== null) {
+    // New regex instance per file to ensure lastIndex starts at 0
+    const regex = new RegExp(T_FUNCTION_REGEX_SOURCE.source, T_FUNCTION_REGEX_SOURCE.flags);
+    let match = regex.exec(content);
+    while (match !== null) {
       keys.add(match[2]);
+      match = regex.exec(content);
     }
-  });
+  }
 
   return Array.from(keys).sort();
 }
 
 /**
- * Helper to read existing TS file
+ * Read existing translations from a TS locale file.
+ * Handles escaped single quotes inside keys and values.
  */
 function readExistingTranslations(filePath) {
   if (!fs.existsSync(filePath)) return {};
 
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
-    const match = content.match(/export default\s*({[\s\S]*?});/);
-    if (match && match[1]) {
-      const entryRegex = /(['"]?)(.+?)\1\s*:\s*(['"])([\s\S]*?)\3,?/g;
-      const entries = {};
-      let entryMatch;
-      while ((entryMatch = entryRegex.exec(match[1])) !== null) {
-        entries[entryMatch[2]] = entryMatch[4];
-      }
-      return entries;
+    const entries = {};
+    // Matches: 'key': 'value', — supports \' escapes inside both key and value
+    const entryRegex = /^\s*'((?:[^'\\]|\\.)*)'\s*:\s*'((?:[^'\\]|\\.)*)',?\s*$/gm;
+    let m = entryRegex.exec(content);
+    while (m !== null) {
+      entries[m[1].replace(/\\'/g, "'")] = m[2].replace(/\\'/g, "'");
+      m = entryRegex.exec(content);
     }
-  } catch (e) {
+    return entries;
+  } catch {
     console.warn(`Could not parse existing ${filePath}, starting fresh.`);
   }
   return {};
 }
 
 /**
- * Generate file content
- * Now accepts the Puppeteer page object
+ * Generate file content, skipping keys already present in existingData.
  */
-async function generateFileContent(
-  keys,
-  existingData,
-  isArabic = false,
-  page = null,
-) {
+async function generateFileContent(keys, existingData, isArabic = false, page = null) {
   const lines = ['export default {'];
 
-  // Serial loop is intentional to avoid Google Translate rate limiting
   for (const key of keys) {
-    let value;
+    let value = '';
 
-    if (existingData[key]) {
+    if (key in existingData && !existingData[key].startsWith('__TODO_')) {
+      // Already translated — reuse as-is, no network call needed
       value = existingData[key];
+    } else if (isArabic && page) {
+      value = await translateText(page, 'en', 'ar', key);
     } else {
-      if (isArabic && page) {
-        // Only translate if it's Arabic and we have a browser page
-        value = await translateText(page, 'en', 'ar', key);
-      } else {
-        value = key;
-      }
+      value = key;
     }
 
+    const safeKey = key.replace(/'/g, "\\'");
     const safeValue = value.replace(/'/g, "\\'");
-
-    const safeKey = `'${key}'`;
-
-    lines.push(`  ${safeKey}: '${safeValue}',`);
+    lines.push(`  '${safeKey}': '${safeValue}',`);
   }
 
   lines.push('};\n');
@@ -151,7 +135,7 @@ async function generateFileContent(
   console.log('🔍 Scanning src folder for translations...');
 
   const files = getTsxFiles(SRC_DIR);
-  console.log(`📂 Found ${files.length} .tsx files.`);
+  console.log(`📂 Found ${files.length} .tsx/.ts files.`);
 
   const foundKeys = extractKeys(files);
   console.log(`🔑 Found ${foundKeys.length} unique translation keys.`);
@@ -163,38 +147,34 @@ async function generateFileContent(
   const existingEn = readExistingTranslations(EN_FILE_PATH);
   const existingAr = readExistingTranslations(AR_FILE_PATH);
 
-  // Launch Browser ONCE
-  console.log('🌐 Launching Puppeteer for translations...');
-  const browser = await puppeteer.launch({
-    headless: 'new', // "new" is the updated headless mode
-    args: ['--no-sandbox'],
-  });
-  const page = await browser.newPage();
+  const newArKeys = foundKeys.filter(
+    (k) => !(k in existingAr) || existingAr[k].startsWith('__TODO_'),
+  );
+  console.log(`🆕 ${newArKeys.length} Arabic key(s) need translation.`);
 
-  // 1. Generate English (No translation needed)
+  let browser = null;
+  let page = null;
+
+  if (newArKeys.length > 0) {
+    console.log('🌐 Launching Puppeteer for translations...');
+    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+    page = await browser.newPage();
+  } else {
+    console.log('✅ All keys already translated, skipping browser.');
+  }
+
   console.log('📝 Generating English file...');
-  const newEnContent = await generateFileContent(
-    foundKeys,
-    existingEn,
-    false,
-    null,
-  );
+  const newEnContent = await generateFileContent(foundKeys, existingEn, false, null);
 
-  // 2. Generate Arabic (With translation)
-  console.log('📝 Generating Arabic file (this may take time)...');
-  const newArContent = await generateFileContent(
-    foundKeys,
-    existingAr,
-    true,
-    page,
-  );
+  console.log('📝 Generating Arabic file...');
+  const newArContent = await generateFileContent(foundKeys, existingAr, true, page);
 
-  await browser.close();
+  if (browser) await browser.close();
 
   fs.writeFileSync(EN_FILE_PATH, newEnContent);
   fs.writeFileSync(AR_FILE_PATH, newArContent);
 
-  console.log(`✅ Successfully updated:`);
+  console.log('✅ Successfully updated:');
   console.log(`   - ${EN_FILE_PATH}`);
   console.log(`   - ${AR_FILE_PATH}`);
 })().catch((err) => {
