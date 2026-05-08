@@ -110,4 +110,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	getTotalPurchasesAmount: () => ipcRenderer.invoke('getTotalPurchasesAmount'),
 	getTotalSalesAmount: () => ipcRenderer.invoke('getTotalSalesAmount'),
 	getAllOverduePayments: () => ipcRenderer.invoke('getAllOverduePayments'),
+	getExpiringProducts: () => ipcRenderer.invoke('getExpiringProducts'),
+	getLowStockProducts: () => ipcRenderer.invoke('getLowStockProducts'),
+	getTopUpcomingPayingCustomers: () => ipcRenderer.invoke('getTopUpcomingPayingCustomers'),
+	getTopUpcomingPayingProviders: () => ipcRenderer.invoke('getTopUpcomingPayingProviders'),
 });

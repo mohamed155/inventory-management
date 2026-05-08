@@ -6,7 +6,7 @@ function Layout() {
     <div className="flex h-full w-full">
       <Sidenav />
       <div className="w-full">
-        <div className="p-5 bg-neutral-100 h-full w-full rounded-md">
+        <div className="p-5 bg-neutral-100 h-full w-full rounded-md overflow-y-auto">
           <Outlet />
         </div>
       </div>

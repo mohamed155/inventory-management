@@ -80,7 +80,7 @@ export const getAllOverduePayments = async (
 export const getExpiringProducts = async (
   prisma: PrismaClient,
 ): Promise<{ name: string; expirationDate: Date; quantity: number }[]> => {
-  return prisma.$queryRaw<
+  const result = await prisma.$queryRaw<
     { name: string; expirationDate: Date; quantity: number }[]
   >`
     SELECT p."name", pb."expirationDate", pb."quantity"
@@ -90,12 +90,15 @@ export const getExpiringProducts = async (
       AND pb."expirationDate" >= datetime('now')
     ORDER BY pb."expirationDate"
   `;
+  return result ?? [];
 };
 
 export const getLowStockProducts = async (
   prisma: PrismaClient,
 ): Promise<{ name: string; totalQuantity: number }[]> => {
-  return prisma.$queryRaw<{ name: string; totalQuantity: number }[]>`
+  const result = await prisma.$queryRaw<
+    { name: string; totalQuantity: number }[]
+  >`
     SELECT p."name", SUM(pb."quantity") as "totalQuantity"
     FROM "ProductBatch" pb
     JOIN "Product" p ON p."id" = pb."productId"
@@ -103,6 +106,7 @@ export const getLowStockProducts = async (
     HAVING SUM(pb."quantity") <= 10
     ORDER BY "totalQuantity"
   `;
+  return result ?? [];
 };
 
 export const getTopUpcomingPayingCustomers = async (
@@ -115,7 +119,7 @@ export const getTopUpcomingPayingCustomers = async (
     amountDue: number;
   }[]
 > => {
-  return prisma.$queryRaw<
+  const result = await prisma.$queryRaw<
     { name: string; phone: string; payDueDate: Date; amountDue: number }[]
   >`
     SELECT *
@@ -128,12 +132,12 @@ export const getTopUpcomingPayingCustomers = async (
               WHERE si."saleId" = s."id") - s."discount" - s."paidAmount" as "amountDue"
       FROM "Sale" s
       JOIN "Customer" c ON c."id" = s."customerId"
-      WHERE s."payDueDate" >= datetime('now')
     )
     WHERE "amountDue" > 0
     ORDER BY "payDueDate"
     LIMIT 5
   `;
+  return result ?? [];
 };
 
 export const getTopUpcomingPayingProviders = async (
@@ -146,7 +150,7 @@ export const getTopUpcomingPayingProviders = async (
     amountDue: number;
   }[]
 > => {
-  return prisma.$queryRaw<
+  const result = await prisma.$queryRaw<
     { name: string; phone: string; payDueDate: Date; amountDue: number }[]
   >`
     SELECT *
@@ -159,10 +163,10 @@ export const getTopUpcomingPayingProviders = async (
               WHERE pi."purchaseId" = pu."id") - pu."paidAmount" as "amountDue"
       FROM "Purchase" pu
       JOIN "Provider" p ON p."id" = pu."providerId"
-      WHERE pu."payDueDate" >= datetime('now')
     )
     WHERE "amountDue" > 0
     ORDER BY "payDueDate"
     LIMIT 5
   `;
+  return result ?? [];
 };

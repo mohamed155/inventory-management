@@ -10,9 +10,20 @@ import {
 import { useTranslation } from 'react-i18next';
 import DashboardCard from '@/components/dashboard-card.tsx';
 import {
+  Alert,
+  AlertBadge,
+  AlertDescription,
+  AlertSubtitle,
+  AlertTitle,
+} from '@/components/ui/alert';
+import {
   getAllOverduePayments,
   getDueFromCustomers,
   getDueToProviders,
+  getExpiringProducts,
+  getLowStockProducts,
+  getTopUpcomingPayingCustomers,
+  getTopUpcomingPayingProviders,
   getTotalProfit,
   getTotalPurchasesAmount,
   getTotalSalesAmount,
@@ -51,9 +62,29 @@ function Dashboard() {
     queryFn: getAllOverduePayments,
   });
 
+  const { data: expiringProducts } = useQuery({
+    queryKey: ['expiringProducts'],
+    queryFn: getExpiringProducts,
+  });
+
+  const { data: lowStockProducts } = useQuery({
+    queryKey: ['lowStockProducts'],
+    queryFn: getLowStockProducts,
+  });
+
+  const { data: topCustomers } = useQuery({
+    queryKey: ['topUpcomingPayingCustomers'],
+    queryFn: getTopUpcomingPayingCustomers,
+  });
+
+  const { data: topProviders } = useQuery({
+    queryKey: ['topUpcomingPayingProviders'],
+    queryFn: getTopUpcomingPayingProviders,
+  });
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold pb-2">{t('Dashboard')}</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -97,7 +128,128 @@ function Dashboard() {
           icon={<CircleAlert />}
         />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+          <h6 className="font-normal">{t('Products about to expire')}</h6>
+          {expiringProducts?.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {t('No products about to expire')}
+            </p>
+          )}
+          {expiringProducts?.map((product) => {
+            const daysLeft = Math.ceil(
+              (new Date(product.expirationDate).getTime() - Date.now()) /
+                (1000 * 60 * 60 * 24),
+            );
+            return (
+              <Alert
+                key={`${product.name}-${product.expirationDate}`}
+                className="bg-yellow-50 border-yellow-200"
+              >
+                <AlertTitle>{product.name}</AlertTitle>
+                <AlertDescription>
+                  {t('Expires')}:{' '}
+                  {new Date(product.expirationDate).toLocaleDateString()}
+                </AlertDescription>
+                <AlertBadge className="bg-yellow-100 border-yellow-200 text-black">
+                  {daysLeft} {daysLeft === 1 ? t('day') : t('days')} {t('left')}
+                </AlertBadge>
+              </Alert>
+            );
+          })}
+        </div>
+        <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+          <h6 className="font-normal">{t('Stock alerts')}</h6>
+          {lowStockProducts?.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {t('No stock alerts')}
+            </p>
+          )}
+          {lowStockProducts?.map((product) => {
+            const isOutOfStock = product.totalQuantity === 0;
+            return (
+              <Alert
+                key={product.name}
+                className={
+                  isOutOfStock
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-orange-50 border-orange-200'
+                }
+              >
+                <AlertTitle>{product.name}</AlertTitle>
+                <AlertDescription>
+                  {isOutOfStock ? t('Out of stock') : t('Low stock')}
+                </AlertDescription>
+                <AlertBadge
+                  className={
+                    isOutOfStock
+                      ? 'bg-red-100 border-red-200 text-black'
+                      : 'bg-orange-100 border-orange-200 text-black'
+                  }
+                >
+                  {product.totalQuantity} {t('units')}
+                </AlertBadge>
+              </Alert>
+            );
+          })}
+        </div>
+        <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+          <h6 className="font-normal">
+            <Users className="text-purple-500 inline-block me-2" />
+            {t('Top 5 customers about to pay')}
+          </h6>
+          {topCustomers?.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {t('No upcoming customer payments')}
+            </p>
+          )}
+          {topCustomers?.map((customer) => {
+            const isOverdue = new Date(customer.payDueDate) < new Date();
+            const dueLabel = `${t('Due')}: ${new Date(customer.payDueDate).toLocaleDateString()}${isOverdue ? ` (${t('Overdue')})` : ''}`;
+            return (
+              <Alert
+                key={`${customer.name}-${customer.payDueDate}`}
+                className="bg-red-50 border-red-200"
+              >
+                <AlertTitle>{customer.name}</AlertTitle>
+                <AlertSubtitle>{dueLabel}</AlertSubtitle>
+                <AlertDescription>{customer.phone}</AlertDescription>
+                <AlertBadge className="bg-red-100 border-red-200 text-black">
+                  ${customer.amountDue}
+                </AlertBadge>
+              </Alert>
+            );
+          })}
+        </div>
+        <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+          <h6 className="font-normal">
+            <Truck className="text-orange-500 inline-block me-2" />
+            {t('Top 5 Providers About to Get Paid')}
+          </h6>
+          {topProviders?.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {t('No upcoming provider payments')}
+            </p>
+          )}
+          {topProviders?.map((provider) => {
+            const isOverdue = new Date(provider.payDueDate) < new Date();
+            const dueLabel = `${t('Due')}: ${new Date(provider.payDueDate).toLocaleDateString()}${isOverdue ? ` (${t('Overdue')})` : ''}`;
+            return (
+              <Alert
+                key={`${provider.name}-${provider.payDueDate}`}
+                className="bg-red-50 border-red-200"
+              >
+                <AlertTitle>{provider.name}</AlertTitle>
+                <AlertSubtitle>{dueLabel}</AlertSubtitle>
+                <AlertDescription>{provider.phone}</AlertDescription>
+                <AlertBadge className="bg-red-100 border-red-200 text-black">
+                  ${provider.amountDue}
+                </AlertBadge>
+              </Alert>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
