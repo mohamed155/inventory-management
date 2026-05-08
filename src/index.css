@@ -9,6 +9,7 @@
 
 /* Utils */
 @import "./styles/utils/glass.css";
+@import "./styles/utils/circle-icons-variants.css";
 
 @custom-variant dark (&:is(.dark *));
 
