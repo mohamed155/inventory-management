@@ -33,6 +33,7 @@ export default {
   'Description': 'وصف',
   'Discount': 'تخفيض',
   'Due': 'حق',
+  'EGP': 'ج.م',
   'Due from customers': 'المستحقة من العملاء',
   'Due to Providers': 'بسبب مقدمي الخدمة',
   'Edit Customer': 'تحرير العميل',

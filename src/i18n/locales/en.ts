@@ -33,6 +33,7 @@ export default {
   'Description': 'Description',
   'Discount': 'Discount',
   'Due': 'Due',
+  'EGP': 'EGP',
   'Due from customers': 'Due from customers',
   'Due to Providers': 'Due to Providers',
   'Edit Customer': 'Edit Customer',

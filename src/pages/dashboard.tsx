@@ -215,7 +215,7 @@ function Dashboard() {
                 <AlertSubtitle>{dueLabel}</AlertSubtitle>
                 <AlertDescription>{customer.phone}</AlertDescription>
                 <AlertBadge className="bg-red-100 border-red-200 text-black">
-                  ${customer.amountDue}
+                  {t('EGP')} {customer.amountDue}
                 </AlertBadge>
               </Alert>
             );
@@ -243,7 +243,7 @@ function Dashboard() {
                 <AlertSubtitle>{dueLabel}</AlertSubtitle>
                 <AlertDescription>{provider.phone}</AlertDescription>
                 <AlertBadge className="bg-red-100 border-red-200 text-black">
-                  ${provider.amountDue}
+                  {t('EGP')} {provider.amountDue}
                 </AlertBadge>
               </Alert>
             );

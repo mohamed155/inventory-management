@@ -142,17 +142,17 @@ function Purchases() {
       {
         accessorKey: 'totalCost',
         header: () => t('Total Cost'),
-        cell: (info) => `$ ${info.getValue()}`,
+        cell: (info) => `${t('EGP')} ${info.getValue()}`,
       },
       {
         accessorKey: 'paidAmount',
         header: () => t('Paid'),
-        cell: (info) => `$ ${info.getValue()}`,
+        cell: (info) => `${t('EGP')} ${info.getValue()}`,
       },
       {
         accessorKey: 'remainingCost',
         header: () => t('Remaining'),
-        cell: (info) => `$ ${info.getValue()}`,
+        cell: (info) => `${t('EGP')} ${info.getValue()}`,
       },
       {
         id: 'status',
