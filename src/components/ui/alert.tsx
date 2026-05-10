@@ -8,7 +8,7 @@ const alertVariants = cva(
     'relative flex flex-wrap w-full items-start gap-x-3 gap-y-0.5',
     'rounded-lg border px-4 py-3 text-sm',
     '[&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current [&>svg]:shrink-0',
-    'has-[>[data-slot=alert-badge]]:pr-16',
+    'has-[>[data-slot=alert-badge]]:pe-16',
     'has-[>svg]:[&>[data-slot=alert-description]]:ms-7',
   ),
   {
@@ -91,7 +91,7 @@ function AlertBadge({
   return (
     <div
       data-slot="alert-badge"
-      className="absolute right-4 top-1/2 -translate-y-1/2"
+      className="absolute end-4 top-1/2 -translate-y-1/2"
     >
       <Badge variant={variant} className={className} {...props}>
         {children}

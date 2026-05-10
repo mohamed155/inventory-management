@@ -151,17 +151,17 @@ function Sales() {
       {
         accessorKey: 'totalCost',
         header: () => t('Total Cost'),
-        cell: (info) => `${t('EGP')} ${info.getValue()}`,
+        cell: (info) => `${info.getValue()} ${t('EGP')}`,
       },
       {
         accessorKey: 'paidAmount',
         header: () => t('Paid'),
-        cell: (info) => `${t('EGP')} ${info.getValue()}`,
+        cell: (info) => `${info.getValue()} ${t('EGP')}`,
       },
       {
         accessorKey: 'remainingCost',
         header: () => t('Remaining'),
-        cell: (info) => `${t('EGP')} ${info.getValue()}`,
+        cell: (info) => `${info.getValue()} ${t('EGP')}`,
       },
       {
         id: 'status',

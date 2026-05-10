@@ -20,7 +20,7 @@ function DashboardCard({
       <div>
         <h3 className="font-light text-gray-800 mb-2">{title}</h3>
         <p className="text-lg">
-          {t('EGP')} {value} {count ? `(${count})` : ''}
+          {value} {t('EGP')} {count ? `(${count})` : ''}
         </p>
       </div>
       <div className="flex justify-center items-center">
