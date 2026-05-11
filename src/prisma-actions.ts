@@ -30,11 +30,11 @@ import {
   getDueToProviders,
   getExpiringProducts,
   getLowStockProducts,
+  getTopUpcomingPayingCustomers,
+  getTopUpcomingPayingProviders,
   getTotalProfit,
   getTotalPurchasesAmount,
   getTotalSalesAmount,
-  getTopUpcomingPayingCustomers,
-  getTopUpcomingPayingProviders,
 } from './prisma-actions/dashboard.actions.ts';
 import {
   createProduct,
@@ -100,11 +100,11 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('getAllOverduePayments', async () =>
     getAllOverduePayments(prisma),
   );
-  ipcMain.handle('getExpiringProducts', async () =>
-    getExpiringProducts(prisma),
+  ipcMain.handle('getExpiringProducts', async (_, days?: number) =>
+    getExpiringProducts(prisma, days),
   );
-  ipcMain.handle('getLowStockProducts', async () =>
-    getLowStockProducts(prisma),
+  ipcMain.handle('getLowStockProducts', async (_, threshold?: number) =>
+    getLowStockProducts(prisma, threshold),
   );
   ipcMain.handle('getTopUpcomingPayingCustomers', async () =>
     getTopUpcomingPayingCustomers(prisma),

@@ -53,12 +53,14 @@ declare global {
         totalRemainingAmount: number;
         count: number;
       }>;
-      getExpiringProducts: () => Promise<
+      getExpiringProducts: (
+        days?: number,
+      ) => Promise<
         { name: string; expirationDate: string; quantity: number }[]
       >;
-      getLowStockProducts: () => Promise<
-        { name: string; totalQuantity: number }[]
-      >;
+      getLowStockProducts: (
+        threshold?: number,
+      ) => Promise<{ name: string; totalQuantity: number }[]>;
       getTopUpcomingPayingCustomers: () => Promise<
         { name: string; phone: string; payDueDate: string; amountDue: number }[]
       >;

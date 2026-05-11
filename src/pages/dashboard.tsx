@@ -8,6 +8,8 @@ import {
   Users,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useCurrentSettings } from '@/store/settings.store.ts';
+import { formatDate } from '@/lib/format-date.ts';
 import DashboardCard from '@/components/dashboard-card.tsx';
 import {
   Alert,
@@ -31,6 +33,10 @@ import {
 
 function Dashboard() {
   const { t } = useTranslation();
+  const expiryWarningDays = useCurrentSettings((s) => s.expiryWarningDays);
+  const lowStockThreshold = useCurrentSettings((s) => s.lowStockThreshold);
+  const currency = useCurrentSettings((s) => s.currency);
+  const dateFormat = useCurrentSettings((s) => s.dateFormat);
 
   const { data: totalSales } = useQuery({
     queryKey: ['totalSalesAmount'],
@@ -63,13 +69,13 @@ function Dashboard() {
   });
 
   const { data: expiringProducts } = useQuery({
-    queryKey: ['expiringProducts'],
-    queryFn: getExpiringProducts,
+    queryKey: ['expiringProducts', expiryWarningDays],
+    queryFn: () => getExpiringProducts(expiryWarningDays),
   });
 
   const { data: lowStockProducts } = useQuery({
-    queryKey: ['lowStockProducts'],
-    queryFn: getLowStockProducts,
+    queryKey: ['lowStockProducts', lowStockThreshold],
+    queryFn: () => getLowStockProducts(lowStockThreshold),
   });
 
   const { data: topCustomers } = useQuery({
@@ -149,7 +155,7 @@ function Dashboard() {
                 <AlertTitle>{product.name}</AlertTitle>
                 <AlertDescription>
                   {t('Expires')}:{' '}
-                  {new Date(product.expirationDate).toLocaleDateString()}
+                  {formatDate(product.expirationDate, dateFormat)}
                 </AlertDescription>
                 <AlertBadge className="bg-yellow-100 border-yellow-200 text-black">
                   {daysLeft} {daysLeft === 1 ? t('day') : t('days')} {t('left')}
@@ -205,7 +211,7 @@ function Dashboard() {
           )}
           {topCustomers?.map((customer) => {
             const isOverdue = new Date(customer.payDueDate) < new Date();
-            const dueLabel = `${t('Due')}: ${new Date(customer.payDueDate).toLocaleDateString()}${isOverdue ? ` (${t('Overdue')})` : ''}`;
+            const dueLabel = `${t('Due')}: ${formatDate(customer.payDueDate, dateFormat)}${isOverdue ? ` (${t('Overdue')})` : ''}`;
             return (
               <Alert
                 key={`${customer.name}-${customer.payDueDate}`}
@@ -215,7 +221,7 @@ function Dashboard() {
                 <AlertSubtitle>{dueLabel}</AlertSubtitle>
                 <AlertDescription>{customer.phone}</AlertDescription>
                 <AlertBadge className="bg-red-100 border-red-200 text-black">
-                  {customer.amountDue} {t('EGP')}
+                  {customer.amountDue} {t(currency)}
                 </AlertBadge>
               </Alert>
             );
@@ -233,7 +239,7 @@ function Dashboard() {
           )}
           {topProviders?.map((provider) => {
             const isOverdue = new Date(provider.payDueDate) < new Date();
-            const dueLabel = `${t('Due')}: ${new Date(provider.payDueDate).toLocaleDateString()}${isOverdue ? ` (${t('Overdue')})` : ''}`;
+            const dueLabel = `${t('Due')}: ${formatDate(provider.payDueDate, dateFormat)}${isOverdue ? ` (${t('Overdue')})` : ''}`;
             return (
               <Alert
                 key={`${provider.name}-${provider.payDueDate}`}
@@ -243,7 +249,7 @@ function Dashboard() {
                 <AlertSubtitle>{dueLabel}</AlertSubtitle>
                 <AlertDescription>{provider.phone}</AlertDescription>
                 <AlertBadge className="bg-red-100 border-red-200 text-black">
-                  {provider.amountDue} {t('EGP')}
+                  {provider.amountDue} {t(currency)}
                 </AlertBadge>
               </Alert>
             );

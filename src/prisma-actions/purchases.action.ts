@@ -118,7 +118,7 @@ export const getAllPurchasesPaginated = async (
     (
       purchase: Purchase & {
         user: User;
-        provider: Provider;
+        provider: Provider | null;
         _count: { items: number };
       },
     ) => {
@@ -128,7 +128,7 @@ export const getAllPurchasesPaginated = async (
       return {
         ...purchase,
         purchasedBy: `${purchase.user.firstname} ${purchase.user.lastname}`,
-        providerName: purchase.provider.name,
+        providerName: purchase.provider?.name ?? '',
         itemsCount: purchase._count.items,
         totalCost,
         remainingCost: totalCost - purchase.paidAmount,

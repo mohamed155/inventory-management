@@ -79,6 +79,7 @@ export const getAllOverduePayments = async (
 
 export const getExpiringProducts = async (
   prisma: PrismaClient,
+  days = 10,
 ): Promise<{ name: string; expirationDate: Date; quantity: number }[]> => {
   const result = await prisma.$queryRaw<
     { name: string; expirationDate: Date; quantity: number }[]
@@ -86,7 +87,7 @@ export const getExpiringProducts = async (
     SELECT p."name", pb."expirationDate", pb."quantity"
     FROM "ProductBatch" pb
     JOIN "Product" p ON p."id" = pb."productId"
-    WHERE pb."expirationDate" <= datetime('now', '+10 days')
+    WHERE pb."expirationDate" <= datetime('now', '+' || ${days} || ' days')
       AND pb."expirationDate" >= datetime('now')
     ORDER BY pb."expirationDate"
   `;
@@ -95,6 +96,7 @@ export const getExpiringProducts = async (
 
 export const getLowStockProducts = async (
   prisma: PrismaClient,
+  threshold = 10,
 ): Promise<{ name: string; totalQuantity: number }[]> => {
   const result = await prisma.$queryRaw<
     { name: string; totalQuantity: number }[]
@@ -103,7 +105,7 @@ export const getLowStockProducts = async (
     FROM "ProductBatch" pb
     JOIN "Product" p ON p."id" = pb."productId"
     GROUP BY p."id", p."name"
-    HAVING SUM(pb."quantity") <= 10
+    HAVING SUM(pb."quantity") <= ${threshold}
     ORDER BY "totalQuantity"
   `;
   return result ?? [];

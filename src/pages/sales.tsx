@@ -9,6 +9,8 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { Activity, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/format-date.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import SaleDialog from '@/components/dialogs/sale-dialog.tsx';
@@ -29,6 +31,8 @@ import type { SaleWhereInput } from '../../generated/prisma/models/Sale.ts';
 
 function Sales() {
   const { t } = useTranslation();
+  const currency = useCurrentSettings((s) => s.currency);
+  const dateFormat = useCurrentSettings((s) => s.dateFormat);
   const { confirm } = useConfirm();
   const [saleDialogOpen, setSaleDialogOpen] = useState<boolean>(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState<boolean>(false);
@@ -134,7 +138,7 @@ function Sales() {
       {
         accessorKey: 'date',
         header: () => t('Date'),
-        cell: (info) => (info.getValue() as Date)?.toLocaleDateString('en-GB'),
+        cell: (info) => formatDate(info.getValue() as Date, dateFormat),
         meta: {
           filterVariant: 'date',
         },
@@ -151,17 +155,17 @@ function Sales() {
       {
         accessorKey: 'totalCost',
         header: () => t('Total Cost'),
-        cell: (info) => `${info.getValue()} ${t('EGP')}`,
+        cell: (info) => `${info.getValue()} ${t(currency)}`,
       },
       {
         accessorKey: 'paidAmount',
         header: () => t('Paid'),
-        cell: (info) => `${info.getValue()} ${t('EGP')}`,
+        cell: (info) => `${info.getValue()} ${t(currency)}`,
       },
       {
         accessorKey: 'remainingCost',
         header: () => t('Remaining'),
-        cell: (info) => `${info.getValue()} ${t('EGP')}`,
+        cell: (info) => `${info.getValue()} ${t(currency)}`,
       },
       {
         id: 'status',
@@ -212,7 +216,7 @@ function Sales() {
         ),
       },
     ],
-    [t, performDeleteSale, openDetailsDialog, openUpdatePaymentDialog],
+    [t, currency, dateFormat, performDeleteSale, openDetailsDialog, openUpdatePaymentDialog],
   );
 
   const handleDialogClose = (sale?: SaleFormData) => {

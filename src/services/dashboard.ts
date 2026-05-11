@@ -16,11 +16,11 @@ export const getDueToProviders = () =>
 export const getAllOverduePayments = () =>
   window.electronAPI.getAllOverduePayments();
 
-export const getExpiringProducts = () =>
-  window.electronAPI.getExpiringProducts();
+export const getExpiringProducts = (days: number) =>
+  window.electronAPI.getExpiringProducts(days);
 
-export const getLowStockProducts = () =>
-  window.electronAPI.getLowStockProducts();
+export const getLowStockProducts = (threshold: number) =>
+  window.electronAPI.getLowStockProducts(threshold);
 
 export const getTopUpcomingPayingCustomers = () =>
   window.electronAPI.getTopUpcomingPayingCustomers();
