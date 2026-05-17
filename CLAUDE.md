@@ -3,7 +3,9 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 <!-- SPECKIT START -->
-Current feature plan: [specs/001-enhanced-settings/plan.md](specs/001-enhanced-settings/plan.md)
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+at `specs/001-unit-tests-all-features/plan.md`.
 <!-- SPECKIT END -->
 
 ## Commands
