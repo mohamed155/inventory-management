@@ -5,14 +5,17 @@ import type {
   ProductBatch,
   Provider,
   Purchase,
+  Sale,
   User,
 } from '../generated/prisma/client.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
 import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../generated/prisma/models/ProductBatch.ts';
 import type { ProviderWhereInput } from '../generated/prisma/models/Provider.ts';
+import type { SaleWhereInput } from '../generated/prisma/models/Sale.ts';
 import type { DataParams } from './models/params.ts';
 import type { PurchaseFormData } from './models/purchase-form.ts';
+import type { SaleFormData } from './models/sales-form.ts';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // properties
@@ -102,6 +105,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deletePurchase: (id: string) => ipcRenderer.invoke('deletePurchase', id),
   getAllPurchaseItems: (purchaseId: string) =>
     ipcRenderer.invoke('getAllPurchaseItems', purchaseId),
+
+  // sale actions
+  getAllSalesPaginated: (
+    params: DataParams<Sale, SaleWhereInput>,
+  ) => ipcRenderer.invoke('getAllSalesPaginated', params),
+  getAllSales: () => ipcRenderer.invoke('getAllSales'),
+  getSaleById: (id: string) => ipcRenderer.invoke('getSaleById', id),
+  createSale: (body: SaleFormData) => ipcRenderer.invoke('createSale', body),
+  updateSale: (id: string, sale: Partial<Sale>) =>
+    ipcRenderer.invoke('updateSale', id, sale),
+  deleteSale: (id: string) => ipcRenderer.invoke('deleteSale', id),
+  getAllSaleItems: (saleId: string) =>
+    ipcRenderer.invoke('getAllSaleItems', saleId),
 
   // dashboard actions
   getDueFromCustomers: () => ipcRenderer.invoke('getDueFromCustomers'),

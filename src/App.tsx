@@ -3,8 +3,8 @@ import i18n from 'i18next';
 import { useEffect } from 'react';
 import WindowFrame from '@/components/window-frame.tsx';
 import { ConfirmProvider } from '@/context/confirm-context.tsx';
-import Router from '@/router.tsx';
 import { applyPrimaryColor } from '@/lib/color-theme.ts';
+import Router from '@/router.tsx';
 import { useCurrentLang } from '@/store/lang.store.ts';
 import { useCurrentSettings } from '@/store/settings.store.ts';
 
