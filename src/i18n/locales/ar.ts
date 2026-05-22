@@ -102,6 +102,7 @@ export default {
   'Paid Amount:': 'المبلغ المدفوع:',
   'Paid can not be zero or less': 'لا يمكن أن يكون المدفوع صفراً أو أقل',
   'Partial': 'جزئي',
+  'Print': 'طباعة',
   'Password': 'كلمة المرور',
   'Password must be at least 8 characters': 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل',
   'Payment Due': 'الدفع مستحق',

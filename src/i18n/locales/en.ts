@@ -102,6 +102,7 @@ export default {
   'Paid Amount:': 'Paid Amount:',
   'Paid can not be zero or less': 'Paid can not be zero or less',
   'Partial': 'Partial',
+  'Print': 'Print',
   'Password': 'Password',
   'Password must be at least 8 characters': 'Password must be at least 8 characters',
   'Payment Due': 'Payment Due',
