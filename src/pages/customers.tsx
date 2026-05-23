@@ -5,10 +5,11 @@ import type {
   PaginationState,
   SortingState,
 } from '@tanstack/react-table';
-import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
+import { Edit, Eye, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
+import CustomerDetailsDialog from '@/components/dialogs/customer-details-dialog.tsx';
 import CustomerDialog from '@/components/dialogs/customer-dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
@@ -25,7 +26,9 @@ function Customers() {
   const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState<Customer>();
+  const [viewingCustomer, setViewingCustomer] = useState<Customer>();
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -76,6 +79,11 @@ function Customers() {
     setDialogOpen(true);
   }, []);
 
+  const viewCustomer = useCallback((customer: Customer) => {
+    setViewingCustomer(customer);
+    setDetailsOpen(true);
+  }, []);
+
   const handleDeleteCustomer = useCallback(
     async (id: string) => {
       const confirmDelete = await confirm({
@@ -97,6 +105,7 @@ function Customers() {
       { accessorKey: 'lastname', header: () => t('Last Name') },
       { accessorKey: 'phone', header: () => t('Phone') },
       { accessorKey: 'address', header: () => t('Address') },
+
       {
         accessorKey: 'id',
         header: () => t('Actions'),
@@ -104,6 +113,13 @@ function Customers() {
         enableColumnFilter: false,
         cell: (info) => (
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => viewCustomer(info.row.original as Customer)}
+            >
+              <Eye className="text-primary" />
+            </Button>
             <Button
               variant="outline"
               className="cursor-pointer"
@@ -122,7 +138,7 @@ function Customers() {
         ),
       },
     ],
-    [t, editCustomer, handleDeleteCustomer],
+    [t, viewCustomer, editCustomer, handleDeleteCustomer],
   );
 
   const handleDialogClose = (customer?: Partial<Customer>) => {
@@ -147,6 +163,14 @@ function Customers() {
         open={dialogOpen}
         customer={currentCustomer}
         onClose={handleDialogClose}
+      />
+      <CustomerDetailsDialog
+        open={detailsOpen}
+        customer={viewingCustomer}
+        close={() => {
+          setDetailsOpen(false);
+          setTimeout(() => setViewingCustomer(undefined), 250);
+        }}
       />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Customers')}</h2>

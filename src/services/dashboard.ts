@@ -27,3 +27,6 @@ export const getTopUpcomingPayingCustomers = () =>
 
 export const getTopUpcomingPayingProviders = () =>
   window.electronAPI.getTopUpcomingPayingProviders();
+
+export const getMonthlyChartData = () =>
+  window.electronAPI.getMonthlyChartData();

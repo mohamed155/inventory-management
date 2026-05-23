@@ -7,6 +7,18 @@ import {
   Truck,
   Users,
 } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { useCurrentSettings } from '@/store/settings.store.ts';
 import { formatDate } from '@/lib/format-date.ts';
@@ -24,6 +36,7 @@ import {
   getDueToProviders,
   getExpiringProducts,
   getLowStockProducts,
+  getMonthlyChartData,
   getTopUpcomingPayingCustomers,
   getTopUpcomingPayingProviders,
   getTotalProfit,
@@ -87,6 +100,19 @@ function Dashboard() {
     queryKey: ['topUpcomingPayingProviders'],
     queryFn: getTopUpcomingPayingProviders,
   });
+
+  const { data: monthlyChartData } = useQuery({
+    queryKey: ['monthlyChartData'],
+    queryFn: getMonthlyChartData,
+  });
+
+  const chartData = monthlyChartData?.map((item) => ({
+    ...item,
+    monthLabel: new Date(`${item.month}-01`).toLocaleDateString(undefined, {
+      month: 'short',
+      year: 'numeric',
+    }),
+  }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -256,6 +282,41 @@ function Dashboard() {
           })}
         </div>
       </div>
+
+      {chartData && chartData.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+            <h6 className="font-normal">{t('Monthly Trends')}</h6>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="monthLabel" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="sales" stroke="#8884d8" activeDot={{ r: 8 }} name={t('Sales')} />
+                <Line type="monotone" dataKey="purchases" stroke="#82ca9d" name={t('Purchases')} />
+                <Line type="monotone" dataKey="profit" stroke="#ff7300" name={t('Profit')} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+            <h6 className="font-normal">{t('Monthly Comparison')}</h6>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="monthLabel" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="sales" fill="#8884d8" name={t('Sales')} />
+                <Bar dataKey="purchases" fill="#82ca9d" name={t('Purchases')} />
+                <Bar dataKey="profit" fill="#ff7300" name={t('Profit')} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

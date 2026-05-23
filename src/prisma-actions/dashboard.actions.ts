@@ -142,6 +142,44 @@ export const getTopUpcomingPayingCustomers = async (
   return result ?? [];
 };
 
+export const getMonthlyChartData = async (
+  prisma: PrismaClient,
+): Promise<{ month: string; sales: number; purchases: number; profit: number }[]> => {
+  const salesData: { month: string; total: number }[] =
+    await prisma.$queryRaw<{ month: string; total: number }[]>`
+    SELECT strftime('%Y-%m', "date") as "month",
+           SUM("paidAmount" - "discount") as "total"
+    FROM "Sale"
+    GROUP BY strftime('%Y-%m', "date")
+    ORDER BY "month"
+  `;
+
+  const purchasesData: { month: string; total: number }[] =
+    await prisma.$queryRaw<{ month: string; total: number }[]>`
+    SELECT strftime('%Y-%m', "date") as "month",
+           SUM("paidAmount") as "total"
+    FROM "Purchase"
+    GROUP BY strftime('%Y-%m', "date")
+    ORDER BY "month"
+  `;
+
+  const monthSet = new Set([
+    ...salesData.map((r) => r.month),
+    ...purchasesData.map((r) => r.month),
+  ]);
+
+  const salesMap = new Map(salesData.map((r) => [r.month, Number(r.total)]));
+  const purchasesMap = new Map(purchasesData.map((r) => [r.month, Number(r.total)]));
+
+  return Array.from(monthSet)
+    .sort()
+    .map((month) => {
+      const sales = salesMap.get(month) ?? 0;
+      const purchases = purchasesMap.get(month) ?? 0;
+      return { month, sales, purchases, profit: sales - purchases };
+    });
+};
+
 export const getTopUpcomingPayingProviders = async (
   prisma: PrismaClient,
 ): Promise<

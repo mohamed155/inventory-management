@@ -146,6 +146,17 @@ declare global {
       getAllPurchaseItems: (
         purchaseId: string,
       ) => Promise<(PurchaseItem & Product & ProductBatch)[]>;
+      getPurchasesByProviderId: (providerId: string) => Promise<
+        {
+          id: string;
+          date: Date;
+          payDueDate: Date;
+          totalCost: number;
+          paidAmount: number;
+          remainingCost: number;
+          items: { name: string; quantity: number }[];
+        }[]
+      >;
 
       // sales actions
       getAllSalesPaginated: (
@@ -166,6 +177,20 @@ declare global {
       getAllSaleItems: (
         saleId: string,
       ) => Promise<(SaleItem & Product & ProductBatch)[]>;
+      getSalesByCustomerId: (customerId: string) => Promise<
+        {
+          id: string;
+          date: Date;
+          payDueDate: Date;
+          totalCost: number;
+          paidAmount: number;
+          remainingCost: number;
+          items: { name: string; quantity: number }[];
+        }[]
+      >;
+      getMonthlyChartData: () => Promise<
+        { month: string; sales: number; purchases: number; profit: number }[]
+      >;
     };
   }
 }

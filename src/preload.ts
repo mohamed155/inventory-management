@@ -105,6 +105,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deletePurchase: (id: string) => ipcRenderer.invoke('deletePurchase', id),
   getAllPurchaseItems: (purchaseId: string) =>
     ipcRenderer.invoke('getAllPurchaseItems', purchaseId),
+  getPurchasesByProviderId: (providerId: string) =>
+    ipcRenderer.invoke('getPurchasesByProviderId', providerId),
 
   // sale actions
   getAllSalesPaginated: (
@@ -118,6 +120,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteSale: (id: string) => ipcRenderer.invoke('deleteSale', id),
   getAllSaleItems: (saleId: string) =>
     ipcRenderer.invoke('getAllSaleItems', saleId),
+  getSalesByCustomerId: (customerId: string) =>
+    ipcRenderer.invoke('getSalesByCustomerId', customerId),
 
   // dashboard actions
   getDueFromCustomers: () => ipcRenderer.invoke('getDueFromCustomers'),
@@ -134,4 +138,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('getTopUpcomingPayingCustomers'),
   getTopUpcomingPayingProviders: () =>
     ipcRenderer.invoke('getTopUpcomingPayingProviders'),
+  getMonthlyChartData: () => ipcRenderer.invoke('getMonthlyChartData'),
 });

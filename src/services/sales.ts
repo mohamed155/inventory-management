@@ -32,6 +32,9 @@ export const getAllSaleItems = (saleId: string) => {
   return getAllSaleItems(saleId);
 };
 
+export const getSalesByCustomerId = (customerId: string) =>
+  window.electronAPI.getSalesByCustomerId(customerId);
+
 export const createSale = (sale: SaleFormData) => {
   const createSale = window.electronAPI.createSale;
   return createSale(sale);

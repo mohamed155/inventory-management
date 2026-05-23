@@ -5,10 +5,11 @@ import type {
   PaginationState,
   SortingState,
 } from '@tanstack/react-table';
-import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
+import { Edit, Eye, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTable from '@/components/data-table.tsx';
+import ProviderDetailsDialog from '@/components/dialogs/provider-details-dialog.tsx';
 import ProviderDialog from '@/components/dialogs/provider-dialog.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
@@ -25,7 +26,9 @@ function Providers() {
   const { t } = useTranslation();
   const { confirm } = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [currentProvider, setCurrentProvider] = useState<Provider>();
+  const [viewingProvider, setViewingProvider] = useState<Provider>();
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -74,6 +77,11 @@ function Providers() {
     setDialogOpen(true);
   }, []);
 
+  const viewProvider = useCallback((provider: Provider) => {
+    setViewingProvider(provider);
+    setDetailsOpen(true);
+  }, []);
+
   const handleDeleteProvider = useCallback(
     async (id: string) => {
       const confirmDelete = await confirm({
@@ -104,6 +112,13 @@ function Providers() {
             <Button
               variant="outline"
               className="cursor-pointer"
+              onClick={() => viewProvider(info.row.original as Provider)}
+            >
+              <Eye className="text-primary" />
+            </Button>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
               onClick={() => editProvider(info.row.original as Provider)}
             >
               <Edit className="text-primary" />
@@ -119,7 +134,7 @@ function Providers() {
         ),
       },
     ],
-    [t, editProvider, handleDeleteProvider],
+    [t, viewProvider, editProvider, handleDeleteProvider],
   );
 
   const handleDialogClose = (provider?: Partial<Provider>) => {
@@ -144,6 +159,14 @@ function Providers() {
         open={dialogOpen}
         provider={currentProvider}
         onClose={handleDialogClose}
+      />
+      <ProviderDetailsDialog
+        open={detailsOpen}
+        provider={viewingProvider}
+        close={() => {
+          setDetailsOpen(false);
+          setTimeout(() => setViewingProvider(undefined), 250);
+        }}
       />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold pb-2">{t('Providers')}</h2>

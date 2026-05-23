@@ -334,6 +334,39 @@ export const deletePurchase = (prisma: PrismaClient, id: string) => {
   });
 };
 
+export const getPurchasesByProviderId = async (
+  prisma: PrismaClient,
+  providerId: string,
+) => {
+  const purchases = await prisma.purchase.findMany({
+    where: { providerId },
+    include: { items: { include: { product: true } } },
+    orderBy: { date: 'desc' },
+  });
+
+  return purchases.map(
+    (purchase: Purchase & { items: (PurchaseItem & { product: Product })[] }) => {
+      const totalCost = purchase.items.reduce(
+        (sum, item) => sum + item.unitPrice * item.quantity,
+        0,
+      );
+      const remainingCost = totalCost - purchase.paidAmount;
+      return {
+        id: purchase.id,
+        date: purchase.date,
+        payDueDate: purchase.payDueDate,
+        totalCost,
+        paidAmount: purchase.paidAmount,
+        remainingCost,
+        items: purchase.items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+        })),
+      };
+    },
+  );
+};
+
 export const getAllPurchaseItems = async (
   prisma: PrismaClient,
   purchaseId: string,
