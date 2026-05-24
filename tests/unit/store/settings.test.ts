@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useCurrentSettings } from '../../../src/store/settings.store.ts'
+import { useCurrentSettings } from '@/store/settings.store.ts'
 
 const defaults = {
-  primaryColor: 'violet',
-  currency: 'EGP',
-  dateFormat: 'dd/MM/yyyy',
+  primaryColor: 'violet' as const,
+  currency: 'EGP' as const,
+  dateFormat: 'dd/MM/yyyy' as const,
   expiryWarningDays: 10,
   lowStockThreshold: 10,
 }
