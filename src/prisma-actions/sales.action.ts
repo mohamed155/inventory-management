@@ -323,6 +323,36 @@ export const deleteSale = (prisma: PrismaClient, id: string) => {
   });
 };
 
+export const getSalesByCustomerId = async (
+  prisma: PrismaClient,
+  customerId: string,
+) => {
+  const sales = await prisma.sale.findMany({
+    where: { customerId },
+    include: { items: { include: { product: true } } },
+    orderBy: { date: 'desc' },
+  });
+
+  return sales.map((sale: Sale & { items: (SaleItem & { product: Product })[] }) => {
+    const totalCost =
+      sale.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0) -
+      sale.discount;
+    const remainingCost = totalCost - sale.paidAmount;
+    return {
+      id: sale.id,
+      date: sale.date,
+      payDueDate: sale.payDueDate,
+      totalCost,
+      paidAmount: sale.paidAmount,
+      remainingCost,
+      items: sale.items.map((item) => ({
+        name: item.product.name,
+        quantity: item.quantity,
+      })),
+    };
+  });
+};
+
 export const getAllSaleItems = async (prisma: PrismaClient, saleId: string) => {
   const items = await prisma.saleItem.findMany({
     where: { saleId },

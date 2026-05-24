@@ -7,7 +7,21 @@ import {
   Truck,
   Users,
 } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { useCurrentSettings } from '@/store/settings.store.ts';
+import { formatDate } from '@/lib/format-date.ts';
 import DashboardCard from '@/components/dashboard-card.tsx';
 import {
   Alert,
@@ -22,6 +36,7 @@ import {
   getDueToProviders,
   getExpiringProducts,
   getLowStockProducts,
+  getMonthlyChartData,
   getTopUpcomingPayingCustomers,
   getTopUpcomingPayingProviders,
   getTotalProfit,
@@ -31,6 +46,10 @@ import {
 
 function Dashboard() {
   const { t } = useTranslation();
+  const expiryWarningDays = useCurrentSettings((s) => s.expiryWarningDays);
+  const lowStockThreshold = useCurrentSettings((s) => s.lowStockThreshold);
+  const currency = useCurrentSettings((s) => s.currency);
+  const dateFormat = useCurrentSettings((s) => s.dateFormat);
 
   const { data: totalSales } = useQuery({
     queryKey: ['totalSalesAmount'],
@@ -63,13 +82,13 @@ function Dashboard() {
   });
 
   const { data: expiringProducts } = useQuery({
-    queryKey: ['expiringProducts'],
-    queryFn: getExpiringProducts,
+    queryKey: ['expiringProducts', expiryWarningDays],
+    queryFn: () => getExpiringProducts(expiryWarningDays),
   });
 
   const { data: lowStockProducts } = useQuery({
-    queryKey: ['lowStockProducts'],
-    queryFn: getLowStockProducts,
+    queryKey: ['lowStockProducts', lowStockThreshold],
+    queryFn: () => getLowStockProducts(lowStockThreshold),
   });
 
   const { data: topCustomers } = useQuery({
@@ -81,6 +100,19 @@ function Dashboard() {
     queryKey: ['topUpcomingPayingProviders'],
     queryFn: getTopUpcomingPayingProviders,
   });
+
+  const { data: monthlyChartData } = useQuery({
+    queryKey: ['monthlyChartData'],
+    queryFn: getMonthlyChartData,
+  });
+
+  const chartData = monthlyChartData?.map((item) => ({
+    ...item,
+    monthLabel: new Date(`${item.month}-01`).toLocaleDateString(undefined, {
+      month: 'short',
+      year: 'numeric',
+    }),
+  }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -149,7 +181,7 @@ function Dashboard() {
                 <AlertTitle>{product.name}</AlertTitle>
                 <AlertDescription>
                   {t('Expires')}:{' '}
-                  {new Date(product.expirationDate).toLocaleDateString()}
+                  {formatDate(product.expirationDate, dateFormat)}
                 </AlertDescription>
                 <AlertBadge className="bg-yellow-100 border-yellow-200 text-black">
                   {daysLeft} {daysLeft === 1 ? t('day') : t('days')} {t('left')}
@@ -205,7 +237,7 @@ function Dashboard() {
           )}
           {topCustomers?.map((customer) => {
             const isOverdue = new Date(customer.payDueDate) < new Date();
-            const dueLabel = `${t('Due')}: ${new Date(customer.payDueDate).toLocaleDateString()}${isOverdue ? ` (${t('Overdue')})` : ''}`;
+            const dueLabel = `${t('Due')}: ${formatDate(customer.payDueDate, dateFormat)}${isOverdue ? ` (${t('Overdue')})` : ''}`;
             return (
               <Alert
                 key={`${customer.name}-${customer.payDueDate}`}
@@ -215,7 +247,7 @@ function Dashboard() {
                 <AlertSubtitle>{dueLabel}</AlertSubtitle>
                 <AlertDescription>{customer.phone}</AlertDescription>
                 <AlertBadge className="bg-red-100 border-red-200 text-black">
-                  ${customer.amountDue}
+                  {customer.amountDue} {t(currency)}
                 </AlertBadge>
               </Alert>
             );
@@ -233,7 +265,7 @@ function Dashboard() {
           )}
           {topProviders?.map((provider) => {
             const isOverdue = new Date(provider.payDueDate) < new Date();
-            const dueLabel = `${t('Due')}: ${new Date(provider.payDueDate).toLocaleDateString()}${isOverdue ? ` (${t('Overdue')})` : ''}`;
+            const dueLabel = `${t('Due')}: ${formatDate(provider.payDueDate, dateFormat)}${isOverdue ? ` (${t('Overdue')})` : ''}`;
             return (
               <Alert
                 key={`${provider.name}-${provider.payDueDate}`}
@@ -243,13 +275,48 @@ function Dashboard() {
                 <AlertSubtitle>{dueLabel}</AlertSubtitle>
                 <AlertDescription>{provider.phone}</AlertDescription>
                 <AlertBadge className="bg-red-100 border-red-200 text-black">
-                  ${provider.amountDue}
+                  {provider.amountDue} {t(currency)}
                 </AlertBadge>
               </Alert>
             );
           })}
         </div>
       </div>
+
+      {chartData && chartData.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+            <h6 className="font-normal">{t('Monthly Trends')}</h6>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="monthLabel" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="sales" stroke="#8884d8" activeDot={{ r: 8 }} name={t('Sales')} />
+                <Line type="monotone" dataKey="purchases" stroke="#82ca9d" name={t('Purchases')} />
+                <Line type="monotone" dataKey="profit" stroke="#ff7300" name={t('Profit')} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
+            <h6 className="font-normal">{t('Monthly Comparison')}</h6>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="monthLabel" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="sales" fill="#8884d8" name={t('Sales')} />
+                <Bar dataKey="purchases" fill="#82ca9d" name={t('Purchases')} />
+                <Bar dataKey="profit" fill="#ff7300" name={t('Profit')} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

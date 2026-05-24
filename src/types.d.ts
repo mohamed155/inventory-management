@@ -36,6 +36,8 @@ declare global {
       // window properties
       isMaximized: () => Promise<boolean>;
       onWindowMaximized: (callback: (isMaximized: boolean) => void) => void;
+      onUpdateDownloaded: (callback: () => void) => void;
+      installUpdate: () => void;
 
       // window actions
       closeWindow: () => void;
@@ -53,12 +55,14 @@ declare global {
         totalRemainingAmount: number;
         count: number;
       }>;
-      getExpiringProducts: () => Promise<
+      getExpiringProducts: (
+        days?: number,
+      ) => Promise<
         { name: string; expirationDate: string; quantity: number }[]
       >;
-      getLowStockProducts: () => Promise<
-        { name: string; totalQuantity: number }[]
-      >;
+      getLowStockProducts: (
+        threshold?: number,
+      ) => Promise<{ name: string; totalQuantity: number }[]>;
       getTopUpcomingPayingCustomers: () => Promise<
         { name: string; phone: string; payDueDate: string; amountDue: number }[]
       >;
@@ -144,6 +148,17 @@ declare global {
       getAllPurchaseItems: (
         purchaseId: string,
       ) => Promise<(PurchaseItem & Product & ProductBatch)[]>;
+      getPurchasesByProviderId: (providerId: string) => Promise<
+        {
+          id: string;
+          date: Date;
+          payDueDate: Date;
+          totalCost: number;
+          paidAmount: number;
+          remainingCost: number;
+          items: { name: string; quantity: number }[];
+        }[]
+      >;
 
       // sales actions
       getAllSalesPaginated: (
@@ -164,6 +179,20 @@ declare global {
       getAllSaleItems: (
         saleId: string,
       ) => Promise<(SaleItem & Product & ProductBatch)[]>;
+      getSalesByCustomerId: (customerId: string) => Promise<
+        {
+          id: string;
+          date: Date;
+          payDueDate: Date;
+          totalCost: number;
+          paidAmount: number;
+          remainingCost: number;
+          items: { name: string; quantity: number }[];
+        }[]
+      >;
+      getMonthlyChartData: () => Promise<
+        { month: string; sales: number; purchases: number; profit: number }[]
+      >;
     };
   }
 }

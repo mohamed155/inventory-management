@@ -30,11 +30,12 @@ import {
   getDueToProviders,
   getExpiringProducts,
   getLowStockProducts,
+  getMonthlyChartData,
+  getTopUpcomingPayingCustomers,
+  getTopUpcomingPayingProviders,
   getTotalProfit,
   getTotalPurchasesAmount,
   getTotalSalesAmount,
-  getTopUpcomingPayingCustomers,
-  getTopUpcomingPayingProviders,
 } from './prisma-actions/dashboard.actions.ts';
 import {
   createProduct,
@@ -64,6 +65,7 @@ import {
   getAllPurchases,
   getAllPurchasesPaginated,
   getPurchaseById,
+  getPurchasesByProviderId,
   updatePurchase,
 } from './prisma-actions/purchases.action.ts';
 import {
@@ -73,6 +75,7 @@ import {
   getAllSales,
   getAllSalesPaginated,
   getSaleById,
+  getSalesByCustomerId,
   updateSale,
 } from './prisma-actions/sales.action.ts';
 import {
@@ -100,17 +103,20 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('getAllOverduePayments', async () =>
     getAllOverduePayments(prisma),
   );
-  ipcMain.handle('getExpiringProducts', async () =>
-    getExpiringProducts(prisma),
+  ipcMain.handle('getExpiringProducts', async (_, days?: number) =>
+    getExpiringProducts(prisma, days),
   );
-  ipcMain.handle('getLowStockProducts', async () =>
-    getLowStockProducts(prisma),
+  ipcMain.handle('getLowStockProducts', async (_, threshold?: number) =>
+    getLowStockProducts(prisma, threshold),
   );
   ipcMain.handle('getTopUpcomingPayingCustomers', async () =>
     getTopUpcomingPayingCustomers(prisma),
   );
   ipcMain.handle('getTopUpcomingPayingProviders', async () =>
     getTopUpcomingPayingProviders(prisma),
+  );
+  ipcMain.handle('getMonthlyChartData', async () =>
+    getMonthlyChartData(prisma),
   );
 
   // Users actions
@@ -234,6 +240,9 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('getAllPurchaseItems', (_, purchaseId: string) =>
     getAllPurchaseItems(prisma, purchaseId),
   );
+  ipcMain.handle('getPurchasesByProviderId', (_, providerId: string) =>
+    getPurchasesByProviderId(prisma, providerId),
+  );
 
   // Sales actions
   ipcMain.handle(
@@ -252,5 +261,8 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('deleteSale', (_, id: string) => deleteSale(prisma, id));
   ipcMain.handle('getAllSaleItems', (_, saleId: string) =>
     getAllSaleItems(prisma, saleId),
+  );
+  ipcMain.handle('getSalesByCustomerId', (_, customerId: string) =>
+    getSalesByCustomerId(prisma, customerId),
   );
 };

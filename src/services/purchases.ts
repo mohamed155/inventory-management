@@ -30,7 +30,10 @@ export const getPurchaseById = (id: string) => {
 export const getAllPurchaseItems = (purchaseId: string) => {
 	const getAllPurchaseItems = window.electronAPI.getAllPurchaseItems;
 	return getAllPurchaseItems(purchaseId);
-}
+};
+
+export const getPurchasesByProviderId = (providerId: string) =>
+  window.electronAPI.getPurchasesByProviderId(providerId);
 
 export const createPurchase = (purchase: PurchaseFormData) => {
 	const createPurchase = window.electronAPI.createPurchase;

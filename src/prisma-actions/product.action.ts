@@ -105,7 +105,6 @@ export const getAllProductBatchesPaginated = async (
 
 export const getAllProductBatches = (prisma: PrismaClient) => {
   return prisma.productBatch.findMany({
-    relationLoadStrategy: 'join',
     include: {
       product: true,
     },
@@ -115,7 +114,6 @@ export const getAllProductBatches = (prisma: PrismaClient) => {
 export const getProductBatch = (prisma: PrismaClient, id: string) => {
   return prisma.productBatch.findUnique({
     where: { id },
-    relationLoadStrategy: 'join',
     include: {
       product: true,
     },

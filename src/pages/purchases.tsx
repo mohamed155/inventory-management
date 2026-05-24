@@ -9,6 +9,8 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { Activity, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/format-date.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import PurchaseDialog from '@/components/dialogs/purchase-dialog.tsx';
@@ -29,6 +31,8 @@ import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.
 
 function Purchases() {
   const { t } = useTranslation();
+  const currency = useCurrentSettings((s) => s.currency);
+  const dateFormat = useCurrentSettings((s) => s.dateFormat);
   const { confirm } = useConfirm();
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState<boolean>(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState<boolean>(false);
@@ -125,7 +129,7 @@ function Purchases() {
       {
         accessorKey: 'date',
         header: () => t('Date'),
-        cell: (info) => (info.getValue() as Date)?.toLocaleDateString('en-GB'),
+        cell: (info) => formatDate(info.getValue() as Date, dateFormat),
         meta: {
           filterVariant: 'date',
         },
@@ -142,17 +146,17 @@ function Purchases() {
       {
         accessorKey: 'totalCost',
         header: () => t('Total Cost'),
-        cell: (info) => `$ ${info.getValue()}`,
+        cell: (info) => `${info.getValue()} ${t(currency)}`,
       },
       {
         accessorKey: 'paidAmount',
         header: () => t('Paid'),
-        cell: (info) => `$ ${info.getValue()}`,
+        cell: (info) => `${info.getValue()} ${t(currency)}`,
       },
       {
         accessorKey: 'remainingCost',
         header: () => t('Remaining'),
-        cell: (info) => `$ ${info.getValue()}`,
+        cell: (info) => `${info.getValue()} ${t(currency)}`,
       },
       {
         id: 'status',
@@ -205,7 +209,7 @@ function Purchases() {
         ),
       },
     ],
-    [t, performDeletePurchase, openDetailsDialog, openUpdatePaymentDialog],
+    [t, currency, dateFormat, performDeletePurchase, openDetailsDialog, openUpdatePaymentDialog],
   );
 
   const handleDialogClose = (purchase?: PurchaseFormData) => {

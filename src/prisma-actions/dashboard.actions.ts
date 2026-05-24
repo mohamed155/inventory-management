@@ -79,6 +79,7 @@ export const getAllOverduePayments = async (
 
 export const getExpiringProducts = async (
   prisma: PrismaClient,
+  days = 10,
 ): Promise<{ name: string; expirationDate: Date; quantity: number }[]> => {
   const result = await prisma.$queryRaw<
     { name: string; expirationDate: Date; quantity: number }[]
@@ -86,7 +87,7 @@ export const getExpiringProducts = async (
     SELECT p."name", pb."expirationDate", pb."quantity"
     FROM "ProductBatch" pb
     JOIN "Product" p ON p."id" = pb."productId"
-    WHERE pb."expirationDate" <= datetime('now', '+10 days')
+    WHERE pb."expirationDate" <= datetime('now', '+' || ${days} || ' days')
       AND pb."expirationDate" >= datetime('now')
     ORDER BY pb."expirationDate"
   `;
@@ -95,6 +96,7 @@ export const getExpiringProducts = async (
 
 export const getLowStockProducts = async (
   prisma: PrismaClient,
+  threshold = 10,
 ): Promise<{ name: string; totalQuantity: number }[]> => {
   const result = await prisma.$queryRaw<
     { name: string; totalQuantity: number }[]
@@ -103,7 +105,7 @@ export const getLowStockProducts = async (
     FROM "ProductBatch" pb
     JOIN "Product" p ON p."id" = pb."productId"
     GROUP BY p."id", p."name"
-    HAVING SUM(pb."quantity") <= 10
+    HAVING SUM(pb."quantity") <= ${threshold}
     ORDER BY "totalQuantity"
   `;
   return result ?? [];
@@ -138,6 +140,44 @@ export const getTopUpcomingPayingCustomers = async (
     LIMIT 5
   `;
   return result ?? [];
+};
+
+export const getMonthlyChartData = async (
+  prisma: PrismaClient,
+): Promise<{ month: string; sales: number; purchases: number; profit: number }[]> => {
+  const salesData: { month: string; total: number }[] =
+    await prisma.$queryRaw<{ month: string; total: number }[]>`
+    SELECT strftime('%Y-%m', "date") as "month",
+           SUM("paidAmount" - "discount") as "total"
+    FROM "Sale"
+    GROUP BY strftime('%Y-%m', "date")
+    ORDER BY "month"
+  `;
+
+  const purchasesData: { month: string; total: number }[] =
+    await prisma.$queryRaw<{ month: string; total: number }[]>`
+    SELECT strftime('%Y-%m', "date") as "month",
+           SUM("paidAmount") as "total"
+    FROM "Purchase"
+    GROUP BY strftime('%Y-%m', "date")
+    ORDER BY "month"
+  `;
+
+  const monthSet = new Set([
+    ...salesData.map((r) => r.month),
+    ...purchasesData.map((r) => r.month),
+  ]);
+
+  const salesMap = new Map(salesData.map((r) => [r.month, Number(r.total)]));
+  const purchasesMap = new Map(purchasesData.map((r) => [r.month, Number(r.total)]));
+
+  return Array.from(monthSet)
+    .sort()
+    .map((month) => {
+      const sales = salesMap.get(month) ?? 0;
+      const purchases = purchasesMap.get(month) ?? 0;
+      return { month, sales, purchases, profit: sales - purchases };
+    });
 };
 
 export const getTopUpcomingPayingProviders = async (

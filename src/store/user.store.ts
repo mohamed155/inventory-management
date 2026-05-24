@@ -2,11 +2,16 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { create } from 'zustand/react';
 import type { CurrentUser } from '@/models/user.ts';
 
-export const useCurrentUserStore = create<{ currentUser: CurrentUser }>()(
+interface UserState {
+  currentUser: CurrentUser | null;
+  setCurrentUser: (user: CurrentUser) => void;
+}
+
+export const useCurrentUserStore = create<UserState>()(
   persist(
-    (set: (value: any) => void) => ({
+    (set) => ({
       currentUser: null,
-      setCurrentUser: (user: CurrentUser) => set({ currentUser: user }),
+      setCurrentUser: (user) => set({ currentUser: user }),
     }),
     {
       name: 'user',

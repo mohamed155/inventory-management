@@ -34,3 +34,9 @@ public
 .claude
 .mcp.json
 .agents
+
+# Test coverage output
+coverage/
+
+.specify
+specs

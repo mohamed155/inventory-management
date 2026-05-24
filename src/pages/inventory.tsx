@@ -9,6 +9,8 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/format-date.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 import DataTable from '@/components/data-table.tsx';
 import InventoryDialog from '@/components/dialogs/inventory-dialog.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
@@ -26,6 +28,7 @@ import type { ProductBatchWhereInput } from '../../generated/prisma/models/Produ
 
 function Inventory() {
   const { t } = useTranslation();
+  const dateFormat = useCurrentSettings((s) => s.dateFormat);
   const { confirm } = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<
@@ -141,7 +144,7 @@ function Inventory() {
       {
         accessorKey: 'productionDate',
         header: () => t('Production Date'),
-        cell: (info) => (info.getValue() as Date).toLocaleDateString('en-GB'),
+        cell: (info) => formatDate(info.getValue() as Date, dateFormat),
         meta: {
           filterVariant: 'date',
         },
@@ -167,7 +170,7 @@ function Inventory() {
                     : ''
               }
             >
-              {expireDate.toLocaleDateString('en-GB')}
+              {formatDate(expireDate, dateFormat)}
               {isExpiringSoon && ` (${daysUntilExpiry} ${t('days')})`}
               {isExpired && ` (${t('Expired')})`}
             </span>
@@ -204,7 +207,7 @@ function Inventory() {
         ),
       },
     ],
-    [t, editProduct, deleteProduct],
+    [t, dateFormat, editProduct, deleteProduct],
   );
 
   const handleDialogClose = (

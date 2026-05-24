@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 
 function DashboardCard({
   title,
@@ -13,12 +15,14 @@ function DashboardCard({
   icon?: ReactNode;
   color?: 'info' | 'success' | 'warning' | 'error';
 }) {
+  const { t } = useTranslation();
+  const currency = useCurrentSettings((s) => s.currency);
   return (
     <div className="flex justify-between bg-white rounded-lg p-4 border border-solid">
       <div>
         <h3 className="font-light text-gray-800 mb-2">{title}</h3>
         <p className="text-lg">
-          ${value} {count ? `(${count})` : ''}
+          {value} {t(currency)} {count ? `(${count})` : ''}
         </p>
       </div>
       <div className="flex justify-center items-center">

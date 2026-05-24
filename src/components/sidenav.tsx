@@ -9,7 +9,7 @@ import {
   Users,
 } from 'lucide-react';
 import type React from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button.tsx';
@@ -44,6 +44,11 @@ function MenuItem({
 function Sidenav() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [updateReady, setUpdateReady] = useState(false);
+
+  useEffect(() => {
+    window.electronAPI.onUpdateDownloaded(() => setUpdateReady(true));
+  }, []);
 
   const menuItems = useMemo(
     () => [
@@ -105,6 +110,20 @@ function Sidenav() {
         </div>
       </div>
       <div>
+        {updateReady && (
+          <div className="mb-2 p-3 bg-primary/10 rounded-md">
+            <p className="text-xs text-primary font-semibold mb-2">
+              {t('A new version available')}
+            </p>
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => window.electronAPI.installUpdate()}
+            >
+              {t('Update now')}
+            </Button>
+          </div>
+        )}
         <MenuItem
           name="settings"
           title={t('Settings')}
