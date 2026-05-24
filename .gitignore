@@ -35,6 +35,9 @@ public
 .mcp.json
 .agents
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Test coverage output
 coverage/
 
