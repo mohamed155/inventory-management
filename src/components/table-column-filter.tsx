@@ -18,7 +18,7 @@ function TableColumnFilter<T>({ column }: { column: Column<T, unknown> }) {
   const { setFilterValue } = column;
 
   const handleValueChange = useCallback(
-    (value: any) => {
+    (value: unknown) => {
       setFilterValue(value);
     },
     [setFilterValue],

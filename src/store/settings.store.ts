@@ -1,7 +1,13 @@
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { create } from 'zustand/react';
 
-export type ColorToken = 'violet' | 'blue' | 'green' | 'orange' | 'red' | 'zinc';
+export type ColorToken =
+  | 'violet'
+  | 'blue'
+  | 'green'
+  | 'orange'
+  | 'red'
+  | 'zinc';
 export type CurrencyCode = 'EGP' | 'USD' | 'EUR' | 'SAR' | 'AED' | 'GBP';
 export type DateFormatPattern = 'dd/MM/yyyy' | 'MM/dd/yyyy' | 'yyyy-MM-dd';
 

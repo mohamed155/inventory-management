@@ -1,51 +1,37 @@
-import type {DataParams} from '@/models/params.ts';
-import type {PurchaseFormData} from '@/models/purchase-form.ts';
-import type {Purchase} from '../../generated/prisma/browser.ts';
-import type {PurchaseWhereInput} from '../../generated/prisma/models/Purchase.ts';
+import { unwrap } from '@/lib/ipc.ts';
+import type { DataParams } from '@/models/params.ts';
+import type { PurchaseFormData } from '@/models/purchase-form.ts';
+import type { Purchase } from '../../generated/prisma/browser.ts';
+import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.ts';
 
 export const getAllPurchasesPaginated = (
-	params: DataParams<
-		Purchase,
-		PurchaseWhereInput & {
-		itemsCount?: number;
-		totalCost?: number;
-		remainingCost?: number;
-	}
-	>,
-) => {
-	const getAllPurchasesPaginated = window.electronAPI.getAllPurchasesPaginated;
-	return getAllPurchasesPaginated(params);
-};
+  params: DataParams<
+    Purchase,
+    PurchaseWhereInput & {
+      itemsCount?: number;
+      totalCost?: number;
+      remainingCost?: number;
+    }
+  >,
+) => window.electronAPI.getAllPurchasesPaginated(params).then(unwrap);
 
-export const getAllPurchases = () => {
-	const getAllPurchases = window.electronAPI.getAllPurchases;
-	return getAllPurchases();
-};
+export const getAllPurchases = () =>
+  window.electronAPI.getAllPurchases().then(unwrap);
 
-export const getPurchaseById = (id: string) => {
-	const getPurchaseBtId = window.electronAPI.getPurchaseById;
-	return getPurchaseBtId(id);
-};
+export const getPurchaseById = (id: string) =>
+  window.electronAPI.getPurchaseById(id).then(unwrap);
 
-export const getAllPurchaseItems = (purchaseId: string) => {
-	const getAllPurchaseItems = window.electronAPI.getAllPurchaseItems;
-	return getAllPurchaseItems(purchaseId);
-};
+export const getAllPurchaseItems = (purchaseId: string) =>
+  window.electronAPI.getAllPurchaseItems(purchaseId).then(unwrap);
 
 export const getPurchasesByProviderId = (providerId: string) =>
-  window.electronAPI.getPurchasesByProviderId(providerId);
+  window.electronAPI.getPurchasesByProviderId(providerId).then(unwrap);
 
-export const createPurchase = (purchase: PurchaseFormData) => {
-	const createPurchase = window.electronAPI.createPurchase;
-	return createPurchase(purchase);
-};
+export const createPurchase = (purchase: PurchaseFormData) =>
+  window.electronAPI.createPurchase(purchase).then(unwrap);
 
-export const updatePurchase = (id: string, purchase: Partial<Purchase>) => {
-	const updatePurchase = window.electronAPI.updatePurchase;
-	return updatePurchase(id, purchase);
-};
+export const updatePurchase = (id: string, purchase: Partial<Purchase>) =>
+  window.electronAPI.updatePurchase(id, purchase).then(unwrap);
 
-export const deletePurchase = (id: string) => {
-	const deletePurchase = window.electronAPI.deletePurchase;
-	return deletePurchase(id);
-};
+export const deletePurchase = (id: string) =>
+  window.electronAPI.deletePurchase(id).then(unwrap);

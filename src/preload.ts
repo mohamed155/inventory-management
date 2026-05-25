@@ -65,6 +65,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     >,
   ) => ipcRenderer.invoke('getAllProductBatchesPaginated', params),
   getAllProductBatches: () => ipcRenderer.invoke('getAllProductBatches'),
+  getProductBatchById: (id: string) =>
+    ipcRenderer.invoke('getProductBatch', id),
   createProductBatch: (productBatch: Product & ProductBatch) =>
     ipcRenderer.invoke('createProductBatch', productBatch),
   updateProductBatch: (id: string, productBatch: Product & ProductBatch) =>
@@ -112,9 +114,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('getPurchasesByProviderId', providerId),
 
   // sale actions
-  getAllSalesPaginated: (
-    params: DataParams<Sale, SaleWhereInput>,
-  ) => ipcRenderer.invoke('getAllSalesPaginated', params),
+  getAllSalesPaginated: (params: DataParams<Sale, SaleWhereInput>) =>
+    ipcRenderer.invoke('getAllSalesPaginated', params),
   getAllSales: () => ipcRenderer.invoke('getAllSales'),
   getSaleById: (id: string) => ipcRenderer.invoke('getSaleById', id),
   createSale: (body: SaleFormData) => ipcRenderer.invoke('createSale', body),

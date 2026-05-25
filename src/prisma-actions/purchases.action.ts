@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
 import type { PrismaClient } from '@prisma/client';
 import type {
   Product,
@@ -221,9 +221,9 @@ export const getAllPurchases = async (prisma: PrismaClient) => {
     include: { user: true, provider: true },
   });
   return purchases.map(
-    (purchase: Purchase & { user: User; provider: Provider }) => ({
+    (purchase: Purchase & { user: User; provider: Provider | null }) => ({
       id: purchase.id,
-      name: purchase.provider.name,
+      name: purchase.provider?.name ?? '',
     }),
   );
 };
@@ -238,7 +238,6 @@ export const createPurchase = async (
   prisma: PrismaClient,
   body: PurchaseFormData,
 ) => {
-  console.log(body);
   return prisma.$transaction(async (tx: PrismaClient) => {
     let providerId: string;
     if (body.providerId) {
@@ -328,10 +327,21 @@ export const updatePurchase = (
   });
 };
 
-export const deletePurchase = (prisma: PrismaClient, id: string) => {
-  return prisma.purchase.delete({
-    where: { id },
+export const deletePurchase = async (prisma: PrismaClient, id: string) => {
+  const items = await prisma.purchaseItem.findMany({
+    where: { purchaseId: id },
+    select: { batchId: true, quantity: true },
   });
+
+  return prisma.$transaction([
+    ...items.map((item: { batchId: string; quantity: number }) =>
+      prisma.productBatch.update({
+        where: { id: item.batchId },
+        data: { quantity: { increment: item.quantity } },
+      }),
+    ),
+    prisma.purchase.delete({ where: { id } }),
+  ]);
 };
 
 export const getPurchasesByProviderId = async (
@@ -345,7 +355,9 @@ export const getPurchasesByProviderId = async (
   });
 
   return purchases.map(
-    (purchase: Purchase & { items: (PurchaseItem & { product: Product })[] }) => {
+    (
+      purchase: Purchase & { items: (PurchaseItem & { product: Product })[] },
+    ) => {
       const totalCost = purchase.items.reduce(
         (sum, item) => sum + item.unitPrice * item.quantity,
         0,
@@ -375,18 +387,18 @@ export const getAllPurchaseItems = async (
     where: { purchaseId },
     include: {
       product: true,
-			batch: true,
+      batch: true,
     },
   });
 
   return items.map(
     (
       item: PurchaseItem & { product: Product } & {
-        productBatch: ProductBatch;
+        batch: ProductBatch;
       },
     ) => ({
       ...item.product,
-      ...item.productBatch,
+      ...item.batch,
       ...item,
     }),
   );

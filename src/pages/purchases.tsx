@@ -9,8 +9,6 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { Activity, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatDate } from '@/lib/format-date.ts';
-import { useCurrentSettings } from '@/store/settings.store.ts';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import PurchaseDialog from '@/components/dialogs/purchase-dialog.tsx';
@@ -18,6 +16,7 @@ import UpdatePaymentDialog from '@/components/dialogs/update-payment-dialog.tsx'
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
+import { formatDate } from '@/lib/format-date.ts';
 import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import {
@@ -26,6 +25,7 @@ import {
   getAllPurchasesPaginated,
   updatePurchase,
 } from '@/services/purchases.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 import type { Purchase } from '../../generated/prisma/browser.ts';
 import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.ts';
 
@@ -70,12 +70,10 @@ function Purchases() {
       totalCost: totalCost ? { equals: Number(totalCost) } : undefined,
       paidAmount: paidAmount ? { equals: Number(paidAmount) } : undefined,
       remainingCost: remainingCost
-        ? { equals: Number(remainingCost) }
-        : status === t('Partial')
-          ? { gt: 0 }
-          : status === t('Paid')
-            ? { eq: 0 }
-            : undefined,
+        ? Number(remainingCost)
+        : status === t('Paid')
+          ? 0
+          : undefined,
     } as PurchaseWhereInput;
   }, [filtering, t]);
 
@@ -173,7 +171,7 @@ function Purchases() {
         },
         meta: {
           filterVariant: 'select',
-          filterOptions: [t('all'), t('paid'), t('partial')],
+          filterOptions: [t('all'), t('Paid'), t('Partial')],
         },
       },
       {
@@ -209,7 +207,14 @@ function Purchases() {
         ),
       },
     ],
-    [t, currency, dateFormat, performDeletePurchase, openDetailsDialog, openUpdatePaymentDialog],
+    [
+      t,
+      currency,
+      dateFormat,
+      performDeletePurchase,
+      openDetailsDialog,
+      openUpdatePaymentDialog,
+    ],
   );
 
   const handleDialogClose = (purchase?: PurchaseFormData) => {

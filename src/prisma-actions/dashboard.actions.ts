@@ -1,4 +1,4 @@
-// @ts-expect-error
+// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
 import type { PrismaClient } from '@prisma/client';
 
 export const getTotalSalesAmount = async (prisma: PrismaClient) => {
@@ -144,9 +144,12 @@ export const getTopUpcomingPayingCustomers = async (
 
 export const getMonthlyChartData = async (
   prisma: PrismaClient,
-): Promise<{ month: string; sales: number; purchases: number; profit: number }[]> => {
-  const salesData: { month: string; total: number }[] =
-    await prisma.$queryRaw<{ month: string; total: number }[]>`
+): Promise<
+  { month: string; sales: number; purchases: number; profit: number }[]
+> => {
+  const salesData: { month: string; total: number }[] = await prisma.$queryRaw<
+    { month: string; total: number }[]
+  >`
     SELECT strftime('%Y-%m', "date") as "month",
            SUM("paidAmount" - "discount") as "total"
     FROM "Sale"
@@ -169,7 +172,9 @@ export const getMonthlyChartData = async (
   ]);
 
   const salesMap = new Map(salesData.map((r) => [r.month, Number(r.total)]));
-  const purchasesMap = new Map(purchasesData.map((r) => [r.month, Number(r.total)]));
+  const purchasesMap = new Map(
+    purchasesData.map((r) => [r.month, Number(r.total)]),
+  );
 
   return Array.from(monthSet)
     .sort()

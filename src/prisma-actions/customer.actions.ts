@@ -1,4 +1,4 @@
-// @ts-expect-error
+// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
 import type { PrismaClient } from '@prisma/client';
 import type { DataParams } from '@/models/params.ts';
 import type { Customer } from '../../generated/prisma/client.ts';

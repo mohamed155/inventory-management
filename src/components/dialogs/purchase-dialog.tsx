@@ -44,7 +44,7 @@ function PurchaseDialog({
   onClose?: (purchase?: PurchaseFormData) => void;
 }) {
   const { t } = useTranslation();
-  const currentUser = useCurrentUserStore((state: any) => state.currentUser);
+  const currentUser = useCurrentUserStore((state) => state.currentUser);
 
   const [providerStatus, setProviderStatus] = useState<'exist' | 'add'>(
     'exist',
@@ -73,15 +73,20 @@ function PurchaseDialog({
               providerAddress: z.string(),
             }),
         products: z.array(
-          z.object({
-            status: z.enum(['exist', 'add']),
-            id: z.string().optional(),
-            name: z.string().optional(),
-            productionDate: z.date(),
-            expirationDate: z.date(),
-            quantity: z.number(),
-            unitPrice: z.number(),
-          }),
+          z
+            .object({
+              status: z.enum(['exist', 'add']),
+              id: z.string().optional(),
+              name: z.string().optional(),
+              productionDate: z.date(),
+              expirationDate: z.date(),
+              quantity: z.number().min(1, t('Quantity must be at least 1')),
+              unitPrice: z.number().min(0, t('Unit price cannot be negative')),
+            })
+            .refine((data) => data.expirationDate > data.productionDate, {
+              message: t('Expiration date can not be before production date'),
+              path: ['expirationDate'],
+            }),
         ),
         paidAmount: z.number(),
         payDueDate: z.date(),
@@ -160,7 +165,7 @@ function PurchaseDialog({
     if (onClose) {
       const result: PurchaseFormData = {
         ...form.getValues(),
-        userId: currentUser?.id,
+        userId: currentUser!.id,
       };
       onClose(result);
     }

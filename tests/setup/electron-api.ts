@@ -1,8 +1,8 @@
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
-export function createMockElectronAPI(
-  overrides: Record<string, unknown> = {},
-) {
+const ok = <T>(data: T) => ({ success: true as const, data });
+
+export function createMockElectronAPI(overrides: Record<string, unknown> = {}) {
   return {
     platform: vi.fn().mockResolvedValue('win32'),
     isMaximized: vi.fn().mockResolvedValue(false),
@@ -12,83 +12,88 @@ export function createMockElectronAPI(
     minimizeWindow: vi.fn(),
     restoreWindow: vi.fn(),
     // dashboard
-    getDueFromCustomers: vi.fn().mockResolvedValue(0),
-    getDueToProviders: vi.fn().mockResolvedValue(0),
-    getTotalProfit: vi.fn().mockResolvedValue(0),
-    getTotalPurchasesAmount: vi.fn().mockResolvedValue(0),
-    getTotalSalesAmount: vi.fn().mockResolvedValue(0),
+    getDueFromCustomers: vi.fn().mockResolvedValue(ok(0)),
+    getDueToProviders: vi.fn().mockResolvedValue(ok(0)),
+    getTotalProfit: vi.fn().mockResolvedValue(ok(0)),
+    getTotalPurchasesAmount: vi.fn().mockResolvedValue(ok(0)),
+    getTotalSalesAmount: vi.fn().mockResolvedValue(ok(0)),
     getAllOverduePayments: vi
       .fn()
-      .mockResolvedValue({ totalRemainingAmount: 0, count: 0 }),
-    getExpiringProducts: vi.fn().mockResolvedValue([]),
-    getLowStockProducts: vi.fn().mockResolvedValue([]),
-    getTopUpcomingPayingCustomers: vi.fn().mockResolvedValue([]),
-    getTopUpcomingPayingProviders: vi.fn().mockResolvedValue([]),
+      .mockResolvedValue(ok({ totalRemainingAmount: 0, count: 0 })),
+    getExpiringProducts: vi.fn().mockResolvedValue(ok([])),
+    getLowStockProducts: vi.fn().mockResolvedValue(ok([])),
+    getTopUpcomingPayingCustomers: vi.fn().mockResolvedValue(ok([])),
+    getTopUpcomingPayingProviders: vi.fn().mockResolvedValue(ok([])),
+    getMonthlyChartData: vi.fn().mockResolvedValue(ok([])),
     // users
-    getUsers: vi.fn().mockResolvedValue([]),
-    getUserById: vi.fn().mockResolvedValue(null),
-    getUserByUsername: vi.fn().mockResolvedValue(null),
-    getUsersCount: vi.fn().mockResolvedValue(0),
-    createUser: vi.fn().mockResolvedValue({}),
-    signIn: vi.fn().mockResolvedValue(null),
+    getUsers: vi.fn().mockResolvedValue(ok([])),
+    getUserById: vi.fn().mockResolvedValue(ok(null)),
+    getUserByUsername: vi.fn().mockResolvedValue(ok(null)),
+    getUsersCount: vi.fn().mockResolvedValue(ok(0)),
+    createUser: vi.fn().mockResolvedValue(ok({})),
+    signIn: vi.fn().mockResolvedValue(ok(null)),
     // products
-    getAllProductsPaginated: vi.fn().mockResolvedValue({ data: [], total: 0 }),
-    getAllProducts: vi.fn().mockResolvedValue([]),
-    getProductById: vi.fn().mockResolvedValue(null),
-    createProduct: vi.fn().mockResolvedValue({}),
-    updateProduct: vi.fn().mockResolvedValue({}),
-    deleteProduct: vi.fn().mockResolvedValue({}),
+    getAllProductsPaginated: vi
+      .fn()
+      .mockResolvedValue(ok({ data: [], total: 0 })),
+    getAllProducts: vi.fn().mockResolvedValue(ok([])),
+    getProductById: vi.fn().mockResolvedValue(ok(null)),
+    createProduct: vi.fn().mockResolvedValue(ok({})),
+    updateProduct: vi.fn().mockResolvedValue(ok({})),
+    deleteProduct: vi.fn().mockResolvedValue(ok({})),
     // product batches
     getAllProductBatchesPaginated: vi
       .fn()
-      .mockResolvedValue({ data: [], total: 0 }),
-    getAllProductBatches: vi.fn().mockResolvedValue([]),
-    getProductBatchById: vi.fn().mockResolvedValue(null),
-    createProductBatch: vi.fn().mockResolvedValue({}),
-    updateProductBatch: vi.fn().mockResolvedValue({}),
-    deleteProductBatch: vi.fn().mockResolvedValue({}),
+      .mockResolvedValue(ok({ data: [], total: 0 })),
+    getAllProductBatches: vi.fn().mockResolvedValue(ok([])),
+    getProductBatchById: vi.fn().mockResolvedValue(ok(null)),
+    createProductBatch: vi.fn().mockResolvedValue(ok({})),
+    updateProductBatch: vi.fn().mockResolvedValue(ok({})),
+    deleteProductBatch: vi.fn().mockResolvedValue(ok({})),
     // customers
     getAllCustomersPaginated: vi
       .fn()
-      .mockResolvedValue({ data: [], total: 0 }),
-    getAllCustomers: vi.fn().mockResolvedValue([]),
-    getCustomerById: vi.fn().mockResolvedValue(null),
-    createCustomer: vi.fn().mockResolvedValue({}),
-    updateCustomer: vi.fn().mockResolvedValue({}),
-    deleteCustomer: vi.fn().mockResolvedValue({}),
+      .mockResolvedValue(ok({ data: [], total: 0 })),
+    getAllCustomers: vi.fn().mockResolvedValue(ok([])),
+    getCustomerById: vi.fn().mockResolvedValue(ok(null)),
+    createCustomer: vi.fn().mockResolvedValue(ok({})),
+    updateCustomer: vi.fn().mockResolvedValue(ok({})),
+    deleteCustomer: vi.fn().mockResolvedValue(ok({})),
     // providers
     getAllProvidersPaginated: vi
       .fn()
-      .mockResolvedValue({ data: [], total: 0 }),
-    getAllProviders: vi.fn().mockResolvedValue([]),
-    getProviderById: vi.fn().mockResolvedValue(null),
-    createProvider: vi.fn().mockResolvedValue({}),
-    updateProvider: vi.fn().mockResolvedValue({}),
-    deleteProvider: vi.fn().mockResolvedValue({}),
+      .mockResolvedValue(ok({ data: [], total: 0 })),
+    getAllProviders: vi.fn().mockResolvedValue(ok([])),
+    getProviderById: vi.fn().mockResolvedValue(ok(null)),
+    createProvider: vi.fn().mockResolvedValue(ok({})),
+    updateProvider: vi.fn().mockResolvedValue(ok({})),
+    deleteProvider: vi.fn().mockResolvedValue(ok({})),
     // purchases
     getAllPurchasesPaginated: vi
       .fn()
-      .mockResolvedValue({ data: [], total: 0 }),
-    getAllPurchases: vi.fn().mockResolvedValue([]),
-    getPurchaseById: vi.fn().mockResolvedValue(null),
-    createPurchase: vi.fn().mockResolvedValue({}),
-    updatePurchase: vi.fn().mockResolvedValue({}),
-    deletePurchase: vi.fn().mockResolvedValue({}),
-    getAllPurchaseItems: vi.fn().mockResolvedValue([]),
+      .mockResolvedValue(ok({ data: [], total: 0 })),
+    getAllPurchases: vi.fn().mockResolvedValue(ok([])),
+    getPurchaseById: vi.fn().mockResolvedValue(ok(null)),
+    createPurchase: vi.fn().mockResolvedValue(ok({})),
+    updatePurchase: vi.fn().mockResolvedValue(ok({})),
+    deletePurchase: vi.fn().mockResolvedValue(ok({})),
+    getAllPurchaseItems: vi.fn().mockResolvedValue(ok([])),
+    getPurchasesByProviderId: vi.fn().mockResolvedValue(ok([])),
     // sales
-    getAllSalesPaginated: vi.fn().mockResolvedValue({ data: [], total: 0 }),
-    getAllSales: vi.fn().mockResolvedValue([]),
-    getSaleById: vi.fn().mockResolvedValue(null),
-    createSale: vi.fn().mockResolvedValue({}),
-    updateSale: vi.fn().mockResolvedValue({}),
-    deleteSale: vi.fn().mockResolvedValue({}),
-    getAllSaleItems: vi.fn().mockResolvedValue([]),
+    getAllSalesPaginated: vi.fn().mockResolvedValue(ok({ data: [], total: 0 })),
+    getAllSales: vi.fn().mockResolvedValue(ok([])),
+    getSaleById: vi.fn().mockResolvedValue(ok(null)),
+    createSale: vi.fn().mockResolvedValue(ok({})),
+    updateSale: vi.fn().mockResolvedValue(ok({})),
+    deleteSale: vi.fn().mockResolvedValue(ok({})),
+    getAllSaleItems: vi.fn().mockResolvedValue(ok([])),
+    getSalesByCustomerId: vi.fn().mockResolvedValue(ok([])),
     ...overrides,
-  }
+  };
 }
 
 export function stubElectronAPI(overrides: Record<string, unknown> = {}) {
-  const mock = createMockElectronAPI(overrides)
-  vi.stubGlobal('window', { electronAPI: mock })
-  return mock
+  const mock = createMockElectronAPI(overrides);
+  vi.stubGlobal('window', { electronAPI: mock });
+  return mock;
 }

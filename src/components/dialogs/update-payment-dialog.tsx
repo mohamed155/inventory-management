@@ -41,13 +41,18 @@ function UpdatePaymentDialog({
 }: UpdatePaymentProps) {
   const { t } = useTranslation();
 
+  const currentPaidAmount = Number(data?.paidAmount ?? 0);
+
   const formSchema = useMemo(
     () =>
       z.object({
-        remainingCost: z.number().min(1, t('Paid can not be zero or less')),
+        remainingCost: z
+          .number()
+          .min(1, t('Paid can not be zero or less'))
+          .min(currentPaidAmount, t('Cannot reduce payment already made')),
         payDueDate: z.date(),
       }),
-    [t],
+    [t, currentPaidAmount],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({

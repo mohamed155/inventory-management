@@ -9,19 +9,19 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatDate } from '@/lib/format-date.ts';
-import { useCurrentSettings } from '@/store/settings.store.ts';
 import DataTable from '@/components/data-table.tsx';
 import InventoryDialog from '@/components/dialogs/inventory-dialog.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
+import { formatDate } from '@/lib/format-date.ts';
 import {
   createProductBatch,
   deleteProductBatch,
   getAllProductBatchesPaginated,
   updateProductBatch,
 } from '@/services/products.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 import type { Product, ProductBatch } from '../../generated/prisma/browser.ts';
 import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';
 import type { ProductBatchWhereInput } from '../../generated/prisma/models/ProductBatch.ts';

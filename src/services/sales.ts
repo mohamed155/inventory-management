@@ -1,3 +1,4 @@
+import { unwrap } from '@/lib/ipc.ts';
 import type { DataParams } from '@/models/params.ts';
 import type { SaleFormData } from '@/models/sales-form.ts';
 import type { Sale } from '../../generated/prisma/browser.ts';
@@ -12,40 +13,24 @@ export const getAllSalesPaginated = (
       remainingCost?: number;
     }
   >,
-) => {
-  const getAllSalesPaginated = window.electronAPI.getAllSalesPaginated;
-  return getAllSalesPaginated(params);
-};
+) => window.electronAPI.getAllSalesPaginated(params).then(unwrap);
 
-export const getAllSales = () => {
-  const getAllSales = window.electronAPI.getAllSales;
-  return getAllSales();
-};
+export const getAllSales = () => window.electronAPI.getAllSales().then(unwrap);
 
-export const getSaleById = (id: string) => {
-  const getSaleById = window.electronAPI.getSaleById;
-  return getSaleById(id);
-};
+export const getSaleById = (id: string) =>
+  window.electronAPI.getSaleById(id).then(unwrap);
 
-export const getAllSaleItems = (saleId: string) => {
-  const getAllSaleItems = window.electronAPI.getAllSaleItems;
-  return getAllSaleItems(saleId);
-};
+export const getAllSaleItems = (saleId: string) =>
+  window.electronAPI.getAllSaleItems(saleId).then(unwrap);
 
 export const getSalesByCustomerId = (customerId: string) =>
-  window.electronAPI.getSalesByCustomerId(customerId);
+  window.electronAPI.getSalesByCustomerId(customerId).then(unwrap);
 
-export const createSale = (sale: SaleFormData) => {
-  const createSale = window.electronAPI.createSale;
-  return createSale(sale);
-};
+export const createSale = (sale: SaleFormData) =>
+  window.electronAPI.createSale(sale).then(unwrap);
 
-export const updateSale = (id: string, sale: Partial<Sale>) => {
-  const updateSale = window.electronAPI.updateSale;
-  return updateSale(id, sale);
-};
+export const updateSale = (id: string, sale: Partial<Sale>) =>
+  window.electronAPI.updateSale(id, sale).then(unwrap);
 
-export const deleteSale = (id: string) => {
-  const deleteSale = window.electronAPI.deleteSale;
-  return deleteSale(id);
-};
+export const deleteSale = (id: string) =>
+  window.electronAPI.deleteSale(id).then(unwrap);

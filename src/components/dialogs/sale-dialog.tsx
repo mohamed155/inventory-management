@@ -41,7 +41,7 @@ function SaleDialog({
   onClose?: (sale?: SaleFormData) => void;
 }) {
   const { t } = useTranslation();
-  const currentUser = useCurrentUserStore((state: any) => state.currentUser);
+  const currentUser = useCurrentUserStore((state) => state.currentUser);
 
   const [customerStatus, setCustomerStatus] = useState<'exist' | 'add'>(
     'exist',
@@ -50,7 +50,7 @@ function SaleDialog({
   const { data: customers } = useQuery({
     queryKey: ['customers'],
     queryFn: () =>
-      getAllCustomers().then((customers: any[]) =>
+      getAllCustomers().then((customers) =>
         customers.map((c) => ({ ...c, name: `${c.firstname} ${c.lastname}` })),
       ),
   });
@@ -90,7 +90,10 @@ function SaleDialog({
           }),
         ),
         paidAmount: z.number(),
-        discount: z.number().optional(),
+        discount: z
+          .number()
+          .min(0, t('Discount cannot be negative'))
+          .optional(),
         payDueDate: z.date(),
         date: z.date(),
       }),
@@ -155,9 +158,19 @@ function SaleDialog({
 
   const onSubmit = async () => {
     if (onClose) {
+      const values = form.getValues();
+      const totalCost =
+        values.products.reduce((sum, p) => sum + p.unitPrice * p.quantity, 0) -
+        (values.discount ?? 0);
+      if (values.paidAmount > totalCost) {
+        form.setError('paidAmount', {
+          message: t('Paid amount cannot exceed total'),
+        });
+        return;
+      }
       const result: SaleFormData = {
-        ...form.getValues(),
-        userId: currentUser?.id,
+        ...values,
+        userId: currentUser!.id,
       };
       onClose(result);
     }
@@ -179,8 +192,8 @@ function SaleDialog({
 
   const getProductStock = (productId: string) => {
     const batches =
-      productBatches?.filter((b: any) => b.productId === productId) || [];
-    return batches.reduce((sum: number, b: any) => sum + (b.quantity || 0), 0);
+      productBatches?.filter((b) => b.productId === productId) || [];
+    return batches.reduce((sum: number, b) => sum + (b.quantity || 0), 0);
   };
 
   return (

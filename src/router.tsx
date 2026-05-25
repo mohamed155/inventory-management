@@ -24,6 +24,13 @@ const router = createHashRouter([
   {
     path: '/',
     element: <Layout />,
+    loader: () => {
+      const currentUser = useCurrentUserStore.getState().currentUser;
+      if (!currentUser) {
+        return redirect('/login');
+      }
+      return null;
+    },
     children: [
       {
         index: true,

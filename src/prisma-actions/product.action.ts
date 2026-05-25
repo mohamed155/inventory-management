@@ -1,4 +1,4 @@
-// @ts-expect-error
+// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
 import type { PrismaClient } from '@prisma/client';
 import type { Product, ProductBatch } from '../../generated/prisma/client.ts';
 import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';
@@ -165,22 +165,25 @@ export const updateProductBatch = async (
   id: string,
   productBatch: Product & ProductBatch,
 ) => {
-  await prisma.product.update({
-    where: { id: productBatch.productId },
-    data: {
-      name: productBatch.name,
-      description: productBatch.description,
-    },
-  });
+  const [, updatedBatch] = await prisma.$transaction([
+    prisma.product.update({
+      where: { id: productBatch.productId },
+      data: {
+        name: productBatch.name,
+        description: productBatch.description,
+      },
+    }),
+    prisma.productBatch.update({
+      where: { id },
+      data: {
+        quantity: productBatch.quantity,
+        productionDate: productBatch.productionDate,
+        expirationDate: productBatch.expirationDate,
+      },
+    }),
+  ]);
 
-  return prisma.productBatch.update({
-    where: { id },
-    data: {
-      quantity: productBatch.quantity,
-      productionDate: productBatch.productionDate,
-      expirationDate: productBatch.expirationDate,
-    },
-  });
+  return updatedBatch;
 };
 
 export const deleteProductBatch = (prisma: PrismaClient, id: string) => {
