@@ -50,17 +50,21 @@ function Login() {
 
   const onSubmit = async () => {
     const loginValue = form.getValues();
-    const user = await signIn(loginValue.username, loginValue.password);
-    if (user) {
-      await setCurrentUser({
-        id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        username: user.username,
-      });
-      navigate('/');
-    } else {
-      toast('Invalid username or password');
+    try {
+      const user = await signIn(loginValue.username, loginValue.password);
+      if (user) {
+        await setCurrentUser({
+          id: user.id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          username: user.username,
+        });
+        navigate('/');
+      } else {
+        toast(t('Invalid username or password'));
+      }
+    } catch {
+      toast(t('Invalid username or password'));
     }
   };
 

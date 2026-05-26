@@ -81,16 +81,19 @@ function PurchaseDialog({
               productionDate: z.date(),
               expirationDate: z.date(),
               quantity: z.number().min(1, t('Quantity must be at least 1')),
-              unitPrice: z.number().min(0, t('Unit price cannot be negative')),
+              unitPrice: z.number().min(0, t('Unit Price must be positive')),
             })
             .refine((data) => data.expirationDate > data.productionDate, {
               message: t('Expiration date can not be before production date'),
               path: ['expirationDate'],
             }),
         ),
-        paidAmount: z.number(),
+        paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
         payDueDate: z.date(),
         date: z.date(),
+      }).refine((data) => data.payDueDate >= data.date, {
+        message: t('Payment due date cannot be before the transaction date'),
+        path: ['payDueDate'],
       }),
     [t, providerStatus],
   );

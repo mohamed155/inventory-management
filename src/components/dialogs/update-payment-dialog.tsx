@@ -42,6 +42,7 @@ function UpdatePaymentDialog({
   const { t } = useTranslation();
 
   const currentPaidAmount = Number(data?.paidAmount ?? 0);
+  const totalCost = Number(data?.totalCost ?? 0);
 
   const formSchema = useMemo(
     () =>
@@ -49,10 +50,11 @@ function UpdatePaymentDialog({
         remainingCost: z
           .number()
           .min(1, t('Paid can not be zero or less'))
-          .min(currentPaidAmount, t('Cannot reduce payment already made')),
+          .min(currentPaidAmount, t('Cannot reduce payment already made'))
+          .max(totalCost, t('New paid amount cannot exceed total cost')),
         payDueDate: z.date(),
       }),
-    [t, currentPaidAmount],
+    [t, currentPaidAmount, totalCost],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({

@@ -89,13 +89,16 @@ function SaleDialog({
             unitPrice: z.number().min(0, t('Unit Price must be positive')),
           }),
         ),
-        paidAmount: z.number(),
+        paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
         discount: z
           .number()
           .min(0, t('Discount cannot be negative'))
           .optional(),
         payDueDate: z.date(),
         date: z.date(),
+      }).refine((data) => data.payDueDate >= data.date, {
+        message: t('Payment due date cannot be before the transaction date'),
+        path: ['payDueDate'],
       }),
     [t, customerStatus],
   );

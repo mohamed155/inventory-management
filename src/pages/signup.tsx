@@ -72,7 +72,7 @@ function Signup() {
       if (error instanceof Error && error.message.includes('username')) {
         form.setError('username', {
           type: 'manual',
-          message: t('Username is already taken, please user another username'),
+          message: t('Username is already taken, please use another username'),
         });
       }
     }
