@@ -46,6 +46,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getUsersCount: () => ipcRenderer.invoke('getUsersCount'),
   signIn: (username: string, password: string) =>
     ipcRenderer.invoke('signIn', username, password),
+  updateUser: (id: string, data: Partial<User>) =>
+    ipcRenderer.invoke('updateUser', id, data),
+  deleteUser: (id: string) => ipcRenderer.invoke('deleteUser', id),
 
   // products actions
   getAllProductsPaginated: (params: DataParams<Product, ProductWhereInput>) =>

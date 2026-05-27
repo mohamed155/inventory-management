@@ -85,6 +85,11 @@ declare global {
       getUserByUsername: (username: string) => Promise<IpcResponse<User | null>>;
       getUsersCount: () => Promise<IpcResponse<number>>;
       createUser: (user: UserModel) => Promise<IpcResponse<User>>;
+      updateUser: (
+        id: string,
+        data: Partial<UserModel>,
+      ) => Promise<IpcResponse<User>>;
+      deleteUser: (id: string) => Promise<IpcResponse<User>>;
       signIn: (
         username: string,
         password: string,

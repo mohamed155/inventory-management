@@ -60,12 +60,14 @@ function Signup() {
         lastname: user.lastname,
         username: user.username,
         password: user.password,
+        role: 'admin',
       });
       setCurrentUser({
         id: createdUser.id,
         firstname: createdUser.firstname,
         lastname: createdUser.lastname,
         username: createdUser.username,
+        role: createdUser.role,
       });
       navigate('/');
     } catch (error) {

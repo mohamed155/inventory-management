@@ -83,11 +83,13 @@ import {
 } from './prisma-actions/sales.action.ts';
 import {
   createUser,
+  deleteUser,
   getAllUsers,
   getUserById,
   getUserByUsername,
   getUsersCount,
   signIn,
+  updateUser,
 } from './prisma-actions/users.action.ts';
 
 export const initPrismaActions = (prisma: PrismaClient) => {
@@ -136,6 +138,12 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('signIn', (_, username, password) =>
     ok(() => signIn(prisma, username, password)),
+  );
+  ipcMain.handle('updateUser', (_, id: string, data: Partial<User>) =>
+    ok(() => updateUser(prisma, id, data)),
+  );
+  ipcMain.handle('deleteUser', (_, id: string) =>
+    ok(() => deleteUser(prisma, id)),
   );
 
   // Products actions

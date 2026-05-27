@@ -2,6 +2,7 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColorSwatch } from '@/components/color-swatch.tsx';
+import UserManagement from '@/components/settings/user-management/user-management.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input.tsx';
@@ -18,6 +19,7 @@ import {
   type DateFormatPattern,
   useCurrentSettings,
 } from '@/store/settings.store.ts';
+import { useCurrentUserStore } from '@/store/user.store.ts';
 
 const CURRENCIES: CurrencyCode[] = ['EGP', 'USD', 'EUR', 'SAR', 'AED', 'GBP'];
 const DATE_FORMATS: { value: DateFormatPattern; label: string }[] = [
@@ -28,6 +30,7 @@ const DATE_FORMATS: { value: DateFormatPattern; label: string }[] = [
 
 function Settings() {
   const { t } = useTranslation();
+  const currentUser = useCurrentUserStore((s) => s.currentUser);
 
   const currentLang = useCurrentLang((s) => s.lang);
   const setCurrentLang = useCurrentLang((s) => s.setLang);
@@ -182,6 +185,8 @@ function Settings() {
           </Field>
         </div>
       </div>
+
+      {currentUser?.role === 'admin' && <UserManagement />}
     </div>
   );
 }

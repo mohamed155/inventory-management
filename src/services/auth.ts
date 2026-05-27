@@ -8,6 +8,14 @@ export const signIn = (username: string, password: string) =>
 export const createUser = (user: UserModel) =>
   window.electronAPI.createUser(user).then(unwrap);
 
+export const getUsers = () => window.electronAPI.getUsers().then(unwrap);
+
+export const updateUser = (id: string, data: Partial<UserModel>) =>
+  window.electronAPI.updateUser(id, data).then(unwrap);
+
+export const deleteUser = (id: string) =>
+  window.electronAPI.deleteUser(id).then(unwrap);
+
 export const getUserByUsername = (username: string) =>
   window.electronAPI.getUserByUsername(username).then(unwrap);
 

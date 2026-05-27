@@ -58,6 +58,7 @@ function Login() {
           firstname: user.firstname,
           lastname: user.lastname,
           username: user.username,
+          role: user.role,
         });
         navigate('/');
       } else {
