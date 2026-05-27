@@ -171,7 +171,7 @@ function Purchases() {
         },
         meta: {
           filterVariant: 'select',
-          filterOptions: [t('all'), t('Paid'), t('Partial')],
+          selectOptions: [t('all'), t('Paid'), t('Partial')],
         },
       },
       {

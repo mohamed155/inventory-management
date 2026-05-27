@@ -62,39 +62,41 @@ function PurchaseDialog({
 
   const formSchema = useMemo(
     () =>
-      z.object({
-        ...(providerStatus === 'exist'
-          ? {
-              providerId: z.string().min(1, t('Provider is required')),
-            }
-          : {
-              providerName: z.string().min(1, t('Provider Name is required')),
-              providerPhone: z.string(),
-              providerAddress: z.string(),
-            }),
-        products: z.array(
-          z
-            .object({
-              status: z.enum(['exist', 'add']),
-              id: z.string().optional(),
-              name: z.string().optional(),
-              productionDate: z.date(),
-              expirationDate: z.date(),
-              quantity: z.number().min(1, t('Quantity must be at least 1')),
-              unitPrice: z.number().min(0, t('Unit Price must be positive')),
-            })
-            .refine((data) => data.expirationDate > data.productionDate, {
-              message: t('Expiration date can not be before production date'),
-              path: ['expirationDate'],
-            }),
-        ),
-        paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
-        payDueDate: z.date(),
-        date: z.date(),
-      }).refine((data) => data.payDueDate >= data.date, {
-        message: t('Payment due date cannot be before the transaction date'),
-        path: ['payDueDate'],
-      }),
+      z
+        .object({
+          ...(providerStatus === 'exist'
+            ? {
+                providerId: z.string().min(1, t('Provider is required')),
+              }
+            : {
+                providerName: z.string().min(1, t('Provider Name is required')),
+                providerPhone: z.string(),
+                providerAddress: z.string(),
+              }),
+          products: z.array(
+            z
+              .object({
+                status: z.enum(['exist', 'add']),
+                id: z.string().optional(),
+                name: z.string().optional(),
+                productionDate: z.date(),
+                expirationDate: z.date(),
+                quantity: z.number().min(1, t('Quantity must be at least 1')),
+                unitPrice: z.number().min(0, t('Unit Price must be positive')),
+              })
+              .refine((data) => data.expirationDate > data.productionDate, {
+                message: t('Expiration date can not be before production date'),
+                path: ['expirationDate'],
+              }),
+          ),
+          paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
+          payDueDate: z.date(),
+          date: z.date(),
+        })
+        .refine((data) => data.payDueDate >= data.date, {
+          message: t('Payment due date cannot be before the transaction date'),
+          path: ['payDueDate'],
+        }),
     [t, providerStatus],
   );
 

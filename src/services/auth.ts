@@ -24,6 +24,6 @@ export const getUsersCount = () =>
 
 export const logout = () => {
   useCurrentUserStore.setState({ currentUser: null });
-  localStorage.clear();
+  localStorage.removeItem('user');
   window.location.hash = '/login';
 };

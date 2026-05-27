@@ -27,7 +27,13 @@ export const createUser = async (prisma: PrismaClient, user: User) => {
   const hashedPassword = await bcrypt.hash(user.password, 10);
 
   return prisma.user.create({
-    data: { ...user, password: hashedPassword },
+    data: {
+      firstname: user.firstname,
+      lastname: user.lastname,
+      username: user.username,
+      role: user.role,
+      password: hashedPassword,
+    },
   });
 };
 
@@ -50,9 +56,12 @@ export const updateUser = async (
   data: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>,
 ) => {
   if (data.role && data.role !== 'admin') {
-    const adminCount = await prisma.user.count({ where: { role: 'admin' } });
-    if (adminCount <= 1) {
-      throw new Error('Cannot remove the last admin');
+    const currentUser = await prisma.user.findUnique({ where: { id } });
+    if (currentUser?.role === 'admin') {
+      const adminCount = await prisma.user.count({ where: { role: 'admin' } });
+      if (adminCount <= 1) {
+        throw new Error('Cannot remove the last admin');
+      }
     }
   }
   const updateData: typeof data = { ...data };

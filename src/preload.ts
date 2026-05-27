@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // prisma-actions actions
   createUser: (user: User) => ipcRenderer.invoke('createUser', user),
   getUsers: () => ipcRenderer.invoke('getUsers'),
-  getUserById: (id: number) => ipcRenderer.invoke('getUserById', id),
+  getUserById: (id: string) => ipcRenderer.invoke('getUserById', id),
   getUserByUsername: (username: string) =>
     ipcRenderer.invoke('getUserByUsername', username),
   getUsersCount: () => ipcRenderer.invoke('getUsersCount'),

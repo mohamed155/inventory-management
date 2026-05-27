@@ -15,8 +15,8 @@ import {
 import { useConfirm } from '@/context/confirm-context.tsx';
 import { deleteUser, getUsers } from '@/services/auth.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
-import UserFormDialog from './user-form-dialog.tsx';
 import type { User } from '../../../../generated/prisma/browser.ts';
+import UserFormDialog from './user-form-dialog.tsx';
 
 function UserList() {
   const { t } = useTranslation();
@@ -62,11 +62,19 @@ function UserList() {
       <Table className="rounded-md overflow-hidden">
         <TableHeader>
           <TableRow className="bg-primary hover:bg-primary">
-            <TableHead className="text-white h-[30px]">{t('First name')}</TableHead>
-            <TableHead className="text-white h-[30px]">{t('Last name')}</TableHead>
-            <TableHead className="text-white h-[30px]">{t('Username')}</TableHead>
-            <TableHead className="text-white h-[30px]">{t('Role')}</TableHead>
-            <TableHead className="text-white h-[30px]">{t('Actions')}</TableHead>
+            <TableHead className="text-white h-7.5">
+              {t('First name')}
+            </TableHead>
+            <TableHead className="text-white h-7.5">
+              {t('Last name')}
+            </TableHead>
+            <TableHead className="text-white h-7.5">
+              {t('Username')}
+            </TableHead>
+            <TableHead className="text-white h-7.5">{t('Role')}</TableHead>
+            <TableHead className="text-white h-7.5">
+              {t('Actions')}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

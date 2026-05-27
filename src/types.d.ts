@@ -58,19 +58,31 @@ declare global {
       getExpiringProducts: (
         days?: number,
       ) => Promise<
-        IpcResponse<{ name: string; expirationDate: string; quantity: number }[]>
+        IpcResponse<
+          { name: string; expirationDate: string; quantity: number }[]
+        >
       >;
       getLowStockProducts: (
         threshold?: number,
       ) => Promise<IpcResponse<{ name: string; totalQuantity: number }[]>>;
       getTopUpcomingPayingCustomers: () => Promise<
         IpcResponse<
-          { name: string; phone: string; payDueDate: string; amountDue: number }[]
+          {
+            name: string;
+            phone: string;
+            payDueDate: string;
+            amountDue: number;
+          }[]
         >
       >;
       getTopUpcomingPayingProviders: () => Promise<
         IpcResponse<
-          { name: string; phone: string; payDueDate: string; amountDue: number }[]
+          {
+            name: string;
+            phone: string;
+            payDueDate: string;
+            amountDue: number;
+          }[]
         >
       >;
       getMonthlyChartData: () => Promise<
@@ -82,7 +94,9 @@ declare global {
       // users actions
       getUsers: () => Promise<IpcResponse<User[]>>;
       getUserById: (id: string) => Promise<IpcResponse<User | null>>;
-      getUserByUsername: (username: string) => Promise<IpcResponse<User | null>>;
+      getUserByUsername: (
+        username: string,
+      ) => Promise<IpcResponse<User | null>>;
       getUsersCount: () => Promise<IpcResponse<number>>;
       createUser: (user: UserModel) => Promise<IpcResponse<User>>;
       updateUser: (
@@ -99,7 +113,9 @@ declare global {
       getAllProductsPaginated: (
         params: DataParams<Product, ProductWhereInput>,
       ) => Promise<IpcResponse<{ data: Product[]; total: number }>>;
-      getAllProducts: () => Promise<IpcResponse<Pick<Product, 'id' | 'name'>[]>>;
+      getAllProducts: () => Promise<
+        IpcResponse<Pick<Product, 'id' | 'name'>[]>
+      >;
       getProductById: (id: string) => Promise<IpcResponse<Product | null>>;
       createProduct: (product: Product) => Promise<IpcResponse<Product>>;
       updateProduct: (
@@ -175,7 +191,9 @@ declare global {
           }
         >,
       ) => Promise<IpcResponse<{ data: PurchasesListResult[]; total: number }>>;
-      getAllPurchases: () => Promise<IpcResponse<Pick<Purchase, 'id' | 'name'>[]>>;
+      getAllPurchases: () => Promise<
+        IpcResponse<Pick<Purchase, 'id' | 'name'>[]>
+      >;
       getPurchaseById: (id: string) => Promise<IpcResponse<Purchase | null>>;
       createPurchase: (
         purchase: PurchaseFormData,

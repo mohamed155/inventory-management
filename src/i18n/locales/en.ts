@@ -34,6 +34,8 @@ export default {
   Date: 'Date',
   Description: 'Description',
   Discount: 'Discount',
+  'Discount cannot be negative': 'Discount cannot be negative',
+  'Paid amount cannot exceed total': 'Paid amount cannot exceed total',
   Due: 'Due',
   'Due from customers': 'Due from customers',
   'Due to Providers': 'Due to Providers',
@@ -92,7 +94,8 @@ export default {
   'New customer': 'New customer',
   'New product': 'New product',
   'New provider': 'New provider',
-  'New paid amount cannot exceed total cost': 'New paid amount cannot exceed total cost',
+  'New paid amount cannot exceed total cost':
+    'New paid amount cannot exceed total cost',
   Next: 'Next',
   'No products about to expire': 'No products about to expire',
   'No results found': 'No results found',
@@ -207,5 +210,6 @@ export default {
   'User deleted successfully': 'User deleted successfully',
   'Cannot delete the last admin': 'Cannot delete the last admin',
   'Cannot remove the last admin': 'Cannot remove the last admin',
-  'New Password (leave blank to keep current)': 'New Password (leave blank to keep current)',
+  'New Password (leave blank to keep current)':
+    'New Password (leave blank to keep current)',
 };

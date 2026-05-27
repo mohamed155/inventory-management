@@ -67,39 +67,41 @@ function SaleDialog({
 
   const formSchema = useMemo(
     () =>
-      z.object({
-        ...(customerStatus === 'exist'
-          ? {
-              customerId: z.string().min(1, t('Customer is required')),
-            }
-          : {
-              customerFirstname: z
-                .string()
-                .min(1, t('Customer First Name is required')),
-              customerLastname: z
-                .string()
-                .min(1, t('Customer Last Name is required')),
-              customerPhone: z.string(),
-              customerAddress: z.string(),
+      z
+        .object({
+          ...(customerStatus === 'exist'
+            ? {
+                customerId: z.string().min(1, t('Customer is required')),
+              }
+            : {
+                customerFirstname: z
+                  .string()
+                  .min(1, t('Customer First Name is required')),
+                customerLastname: z
+                  .string()
+                  .min(1, t('Customer Last Name is required')),
+                customerPhone: z.string(),
+                customerAddress: z.string(),
+              }),
+          products: z.array(
+            z.object({
+              id: z.string().min(1, t('Product is required')),
+              quantity: z.number().min(1, t('Quantity must be at least 1')),
+              unitPrice: z.number().min(0, t('Unit Price must be positive')),
             }),
-        products: z.array(
-          z.object({
-            id: z.string().min(1, t('Product is required')),
-            quantity: z.number().min(1, t('Quantity must be at least 1')),
-            unitPrice: z.number().min(0, t('Unit Price must be positive')),
-          }),
-        ),
-        paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
-        discount: z
-          .number()
-          .min(0, t('Discount cannot be negative'))
-          .optional(),
-        payDueDate: z.date(),
-        date: z.date(),
-      }).refine((data) => data.payDueDate >= data.date, {
-        message: t('Payment due date cannot be before the transaction date'),
-        path: ['payDueDate'],
-      }),
+          ),
+          paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
+          discount: z
+            .number()
+            .min(0, t('Discount cannot be negative'))
+            .optional(),
+          payDueDate: z.date(),
+          date: z.date(),
+        })
+        .refine((data) => data.payDueDate >= data.date, {
+          message: t('Payment due date cannot be before the transaction date'),
+          path: ['payDueDate'],
+        }),
     [t, customerStatus],
   );
 

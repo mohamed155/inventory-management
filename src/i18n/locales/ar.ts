@@ -33,6 +33,9 @@ export default {
   Date: 'التاريخ',
   Description: 'الوصف',
   Discount: 'خصم',
+  'Discount cannot be negative': 'لا يمكن أن يكون الخصم سالبًا',
+  'Paid amount cannot exceed total':
+    'لا يمكن أن يتجاوز المبلغ المدفوع الإجمالي',
   Due: 'مستحق',
   'Due from customers': 'مستحقات العملاء',
   'Due to Providers': 'مستحقات الموردين',
@@ -91,7 +94,8 @@ export default {
   'New customer': 'عميل جديد',
   'New product': 'منتج جديد',
   'New provider': 'مورد جديد',
-  'New paid amount cannot exceed total cost': 'لا يمكن أن يتجاوز المبلغ المدفوع الجديد التكلفة الإجمالية',
+  'New paid amount cannot exceed total cost':
+    'لا يمكن أن يتجاوز المبلغ المدفوع الجديد التكلفة الإجمالية',
   Next: 'التالي',
   'No products about to expire': 'لا توجد منتجات على وشك الانتهاء',
   'No results found': 'لا توجد نتائج',
@@ -205,5 +209,6 @@ export default {
   'User deleted successfully': 'تم حذف المستخدم بنجاح',
   'Cannot delete the last admin': 'لا يمكن حذف آخر مشرف',
   'Cannot remove the last admin': 'لا يمكن إزالة آخر مشرف',
-  'New Password (leave blank to keep current)': 'كلمة مرور جديدة (اتركها فارغة للإبقاء على الحالية)',
+  'New Password (leave blank to keep current)':
+    'كلمة مرور جديدة (اتركها فارغة للإبقاء على الحالية)',
 };

@@ -27,8 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.tsx';
-import { createUser, updateUser } from '@/services/auth.ts';
 import type { UserRole } from '@/models/user.ts';
+import { createUser, updateUser } from '@/services/auth.ts';
 import type { User } from '../../../../generated/prisma/browser.ts';
 
 type UserFormDialogProps = {
@@ -38,7 +38,12 @@ type UserFormDialogProps = {
   user?: User;
 };
 
-function UserFormDialog({ open, onClose, onSuccess, user }: UserFormDialogProps) {
+function UserFormDialog({
+  open,
+  onClose,
+  onSuccess,
+  user,
+}: UserFormDialogProps) {
   const { t } = useTranslation();
   const isEdit = !!user;
 
@@ -49,7 +54,10 @@ function UserFormDialog({ open, onClose, onSuccess, user }: UserFormDialogProps)
         lastname: z.string().min(1, t('Last name is required')),
         username: z.string().min(1, t('Username is required')),
         password: isEdit
-          ? z.string().min(8, t('Password must be at least 8 characters')).or(z.literal(''))
+          ? z
+              .string()
+              .min(8, t('Password must be at least 8 characters'))
+              .or(z.literal(''))
           : z.string().min(8, t('Password must be at least 8 characters')),
         role: z.enum(['admin', 'assistant']),
       }),
@@ -189,7 +197,9 @@ function UserFormDialog({ open, onClose, onSuccess, user }: UserFormDialogProps)
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>
-                    {isEdit ? t('New Password (leave blank to keep current)') : t('Password')}
+                    {isEdit
+                      ? t('New Password (leave blank to keep current)')
+                      : t('Password')}
                   </FieldLabel>
                   <Input
                     {...field}
@@ -215,7 +225,9 @@ function UserFormDialog({ open, onClose, onSuccess, user }: UserFormDialogProps)
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">{t('Admin')}</SelectItem>
-                      <SelectItem value="assistant">{t('Assistant')}</SelectItem>
+                      <SelectItem value="assistant">
+                        {t('Assistant')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>

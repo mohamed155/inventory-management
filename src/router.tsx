@@ -16,10 +16,32 @@ const router = createHashRouter([
   {
     path: 'signup',
     element: <Signup />,
+    loader: async () => {
+      const currentUser = useCurrentUserStore.getState().currentUser;
+      if (currentUser) {
+        return redirect('/dashboard');
+      }
+      const usersCount = await getUsersCount();
+      if (usersCount > 0) {
+        return redirect('/login');
+      }
+      return null;
+    },
   },
   {
     path: 'login',
     element: <Login />,
+    loader: async () => {
+      const currentUser = useCurrentUserStore.getState().currentUser;
+      if (currentUser) {
+        return redirect('/dashboard');
+      }
+      const usersCount = await getUsersCount();
+      if (usersCount === 0) {
+        return redirect('/signup');
+      }
+      return null;
+    },
   },
   {
     path: '/',
