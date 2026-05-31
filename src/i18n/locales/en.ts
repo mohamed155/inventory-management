@@ -212,4 +212,19 @@ export default {
   'Cannot remove the last admin': 'Cannot remove the last admin',
   'New Password (leave blank to keep current)':
     'New Password (leave blank to keep current)',
+  'Manage Inventories': 'Manage Inventories',
+  'New Inventory Name': 'New Inventory Name',
+  'Inventory Name is required': 'Inventory Name is required',
+  'Add Inventory': 'Add Inventory',
+  'Cannot delete the last inventory': 'Cannot delete the last inventory',
+  'Select Inventory': 'Select Inventory',
+  'Manage': 'Manage',
+  'Delete Inventory': 'Delete Inventory',
+  'Are you sure you want to delete this inventory and all its data?':
+    'Are you sure you want to delete this inventory and all its data?',
+  'Edit Inventory Name': 'Edit Inventory Name',
+  'Rename Inventory': 'Rename Inventory',
+  'Failed to rename inventory': 'Failed to rename inventory',
+  'Failed to add inventory': 'Failed to add inventory',
+  'Failed to delete inventory': 'Failed to delete inventory',
 };

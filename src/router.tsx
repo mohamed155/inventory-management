@@ -10,6 +10,8 @@ import Sales from '@/pages/sales.tsx';
 import Settings from '@/pages/settings.tsx';
 import Signup from '@/pages/signup.tsx';
 import { getUsersCount } from '@/services/auth.ts';
+import { createInventory, getAllInventories } from '@/services/inventory.ts';
+import { useInventoryStore } from '@/store/inventory.store.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
 
 const router = createHashRouter([
@@ -46,11 +48,22 @@ const router = createHashRouter([
   {
     path: '/',
     element: <Layout />,
-    loader: () => {
+    loader: async () => {
       const currentUser = useCurrentUserStore.getState().currentUser;
       if (!currentUser) {
         return redirect('/login');
       }
+
+      const inventories = await getAllInventories();
+      const { activeInventoryId, setActiveInventoryId } = useInventoryStore.getState();
+
+      if (inventories.length === 0) {
+        const created = await createInventory('المخزن الرئيسي');
+        setActiveInventoryId(created.id);
+      } else if (!activeInventoryId || !inventories.some((inv) => inv.id === activeInventoryId)) {
+        setActiveInventoryId(inventories[0].id);
+      }
+
       return null;
     },
     children: [

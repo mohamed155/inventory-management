@@ -1,5 +1,6 @@
 import { unwrap } from '@/lib/ipc.ts';
 import type { UserModel } from '@/models/user.ts';
+import { useInventoryStore } from '@/store/inventory.store.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
 
 export const signIn = (username: string, password: string) =>
@@ -24,6 +25,7 @@ export const getUsersCount = () =>
 
 export const logout = () => {
   useCurrentUserStore.setState({ currentUser: null });
+  useInventoryStore.getState().clear();
   localStorage.removeItem('user');
   window.location.hash = '/login';
 };

@@ -52,6 +52,7 @@ const buildPurchaseOrderBy = (
 
 export const getAllPurchasesPaginated = async (
   prisma: PrismaClient,
+  inventoryId: string,
   {
     page,
     orderDirection,
@@ -84,6 +85,7 @@ export const getAllPurchasesPaginated = async (
 
   const where = {
     AND: [
+      { inventoryId },
       filter as PurchaseWhereInput,
       ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
     ],
@@ -216,8 +218,12 @@ const getPurchaseIdsByRemainingCost = async (
   return rows.map((r: PurchaseItem) => r.purchaseId);
 };
 
-export const getAllPurchases = async (prisma: PrismaClient) => {
+export const getAllPurchases = async (
+  prisma: PrismaClient,
+  inventoryId: string,
+) => {
   const purchases = await prisma.purchase.findMany({
+    where: { inventoryId },
     include: { user: true, provider: true },
   });
   return purchases.map(
@@ -236,6 +242,7 @@ export const getPurchaseById = (prisma: PrismaClient, id: string) => {
 
 export const createPurchase = async (
   prisma: PrismaClient,
+  inventoryId: string,
   body: PurchaseFormData,
 ) => {
   return prisma.$transaction(async (tx: PrismaClient) => {
@@ -248,6 +255,7 @@ export const createPurchase = async (
           name: body.providerName,
           phone: body.providerPhone,
           address: body.providerAddress,
+          inventoryId,
         },
       });
       providerId = newProvider.id;
@@ -258,6 +266,7 @@ export const createPurchase = async (
         paidAmount: body.paidAmount,
         payDueDate: body.payDueDate,
         date: body.date,
+        inventoryId,
         user: { connect: { id: body.userId } },
         provider: { connect: { id: providerId } },
       },
@@ -268,6 +277,7 @@ export const createPurchase = async (
         const newProduct = await tx.product.create({
           data: {
             name: product.name || 'Unnamed Product',
+            inventoryId,
           },
         });
         product.id = newProduct.id;
@@ -346,10 +356,11 @@ export const deletePurchase = async (prisma: PrismaClient, id: string) => {
 
 export const getPurchasesByProviderId = async (
   prisma: PrismaClient,
+  inventoryId: string,
   providerId: string,
 ) => {
   const purchases = await prisma.purchase.findMany({
-    where: { providerId },
+    where: { providerId, inventoryId },
     include: { items: { include: { product: true } } },
     orderBy: { date: 'desc' },
   });

@@ -37,6 +37,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   restoreWindow: () => ipcRenderer.send('restore-window'),
 
+  // inventory actions
+  getAllInventories: () => ipcRenderer.invoke('getAllInventories'),
+  getInventoryById: (id: string) => ipcRenderer.invoke('getInventoryById', id),
+  getInventoriesCount: () => ipcRenderer.invoke('getInventoriesCount'),
+  createInventory: (name: string) => ipcRenderer.invoke('createInventory', name),
+  updateInventory: (id: string, name: string) => ipcRenderer.invoke('updateInventory', id, name),
+  deleteInventory: (id: string) => ipcRenderer.invoke('deleteInventory', id),
+
   // prisma-actions actions
   createUser: (user: User) => ipcRenderer.invoke('createUser', user),
   getUsers: () => ipcRenderer.invoke('getUsers'),
@@ -51,27 +59,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteUser: (id: string) => ipcRenderer.invoke('deleteUser', id),
 
   // products actions
-  getAllProductsPaginated: (params: DataParams<Product, ProductWhereInput>) =>
-    ipcRenderer.invoke('getAllProductsPaginated', params),
-  getAllProducts: () => ipcRenderer.invoke('getAllProducts'),
+  getAllProductsPaginated: (inventoryId: string, params: DataParams<Product, ProductWhereInput>) =>
+    ipcRenderer.invoke('getAllProductsPaginated', inventoryId, params),
+  getAllProducts: (inventoryId: string) => ipcRenderer.invoke('getAllProducts', inventoryId),
   getProductById: (id: string) => ipcRenderer.invoke('getProductById', id),
-  createProduct: (product: Product) =>
-    ipcRenderer.invoke('createProduct', product),
+  createProduct: (inventoryId: string, product: Product) =>
+    ipcRenderer.invoke('createProduct', inventoryId, product),
   updateProduct: (id: string, product: Product) =>
     ipcRenderer.invoke('updateProduct', id, product),
   deleteProduct: (id: string) => ipcRenderer.invoke('deleteProduct', id),
 
   getAllProductBatchesPaginated: (
+    inventoryId: string,
     params: DataParams<
       Product & ProductBatch,
       ProductBatchWhereInput & { product: ProductWhereInput }
     >,
-  ) => ipcRenderer.invoke('getAllProductBatchesPaginated', params),
-  getAllProductBatches: () => ipcRenderer.invoke('getAllProductBatches'),
+  ) => ipcRenderer.invoke('getAllProductBatchesPaginated', inventoryId, params),
+  getAllProductBatches: (inventoryId: string) => ipcRenderer.invoke('getAllProductBatches', inventoryId),
   getProductBatchById: (id: string) =>
     ipcRenderer.invoke('getProductBatch', id),
-  createProductBatch: (productBatch: Product & ProductBatch) =>
-    ipcRenderer.invoke('createProductBatch', productBatch),
+  createProductBatch: (inventoryId: string, productBatch: Product & ProductBatch) =>
+    ipcRenderer.invoke('createProductBatch', inventoryId, productBatch),
   updateProductBatch: (id: string, productBatch: Product & ProductBatch) =>
     ipcRenderer.invoke('updateProductBatch', id, productBatch),
   deleteProductBatch: (id: string) =>
@@ -79,71 +88,73 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // customer actions
   getAllCustomersPaginated: (
+    inventoryId: string,
     params: DataParams<Customer, CustomerWhereInput>,
-  ) => ipcRenderer.invoke('getAllCustomersPaginated', params),
-  getAllCustomers: () => ipcRenderer.invoke('getAllCustomers'),
+  ) => ipcRenderer.invoke('getAllCustomersPaginated', inventoryId, params),
+  getAllCustomers: (inventoryId: string) => ipcRenderer.invoke('getAllCustomers', inventoryId),
   getCustomerById: (id: string) => ipcRenderer.invoke('getCustomerById', id),
-  createCustomer: (customer: Customer) =>
-    ipcRenderer.invoke('createCustomer', customer),
+  createCustomer: (inventoryId: string, customer: Customer) =>
+    ipcRenderer.invoke('createCustomer', inventoryId, customer),
   updateCustomer: (id: string, customer: Customer) =>
     ipcRenderer.invoke('updateCustomer', id, customer),
   deleteCustomer: (id: string) => ipcRenderer.invoke('deleteCustomer', id),
 
   // provider actions
   getAllProvidersPaginated: (
+    inventoryId: string,
     params: DataParams<Provider, ProviderWhereInput>,
-  ) => ipcRenderer.invoke('getAllProvidersPaginated', params),
-  getAllProviders: () => ipcRenderer.invoke('getAllProviders'),
+  ) => ipcRenderer.invoke('getAllProvidersPaginated', inventoryId, params),
+  getAllProviders: (inventoryId: string) => ipcRenderer.invoke('getAllProviders', inventoryId),
   getProviderById: (id: string) => ipcRenderer.invoke('getProviderById', id),
-  createProvider: (provider: Provider) =>
-    ipcRenderer.invoke('createProvider', provider),
+  createProvider: (inventoryId: string, provider: Provider) =>
+    ipcRenderer.invoke('createProvider', inventoryId, provider),
   updateProvider: (id: string, provider: Provider) =>
     ipcRenderer.invoke('updateProvider', id, provider),
   deleteProvider: (id: string) => ipcRenderer.invoke('deleteProvider', id),
 
   // purchase actions
-  getAllPurchasesPaginated: (params: DataParams<Purchase, ProductWhereInput>) =>
-    ipcRenderer.invoke('getAllPurchasesPaginated', params),
-  getAllPurchases: () => ipcRenderer.invoke('getAllPurchases'),
+  getAllPurchasesPaginated: (inventoryId: string, params: DataParams<Purchase, ProductWhereInput>) =>
+    ipcRenderer.invoke('getAllPurchasesPaginated', inventoryId, params),
+  getAllPurchases: (inventoryId: string) => ipcRenderer.invoke('getAllPurchases', inventoryId),
   getPurchaseById: (id: string) => ipcRenderer.invoke('getPurchaseById', id),
-  createPurchase: (body: PurchaseFormData) =>
-    ipcRenderer.invoke('createPurchase', body),
+  createPurchase: (inventoryId: string, body: PurchaseFormData) =>
+    ipcRenderer.invoke('createPurchase', inventoryId, body),
   updatePurchase: (id: string, purchase: Purchase) =>
     ipcRenderer.invoke('updatePurchase', id, purchase),
   deletePurchase: (id: string) => ipcRenderer.invoke('deletePurchase', id),
   getAllPurchaseItems: (purchaseId: string) =>
     ipcRenderer.invoke('getAllPurchaseItems', purchaseId),
-  getPurchasesByProviderId: (providerId: string) =>
-    ipcRenderer.invoke('getPurchasesByProviderId', providerId),
+  getPurchasesByProviderId: (inventoryId: string, providerId: string) =>
+    ipcRenderer.invoke('getPurchasesByProviderId', inventoryId, providerId),
 
   // sale actions
-  getAllSalesPaginated: (params: DataParams<Sale, SaleWhereInput>) =>
-    ipcRenderer.invoke('getAllSalesPaginated', params),
-  getAllSales: () => ipcRenderer.invoke('getAllSales'),
+  getAllSalesPaginated: (inventoryId: string, params: DataParams<Sale, SaleWhereInput>) =>
+    ipcRenderer.invoke('getAllSalesPaginated', inventoryId, params),
+  getAllSales: (inventoryId: string) => ipcRenderer.invoke('getAllSales', inventoryId),
   getSaleById: (id: string) => ipcRenderer.invoke('getSaleById', id),
-  createSale: (body: SaleFormData) => ipcRenderer.invoke('createSale', body),
+  createSale: (inventoryId: string, body: SaleFormData) => ipcRenderer.invoke('createSale', inventoryId, body),
   updateSale: (id: string, sale: Partial<Sale>) =>
     ipcRenderer.invoke('updateSale', id, sale),
   deleteSale: (id: string) => ipcRenderer.invoke('deleteSale', id),
   getAllSaleItems: (saleId: string) =>
     ipcRenderer.invoke('getAllSaleItems', saleId),
-  getSalesByCustomerId: (customerId: string) =>
-    ipcRenderer.invoke('getSalesByCustomerId', customerId),
+  getSalesByCustomerId: (inventoryId: string, customerId: string) =>
+    ipcRenderer.invoke('getSalesByCustomerId', inventoryId, customerId),
 
   // dashboard actions
-  getDueFromCustomers: () => ipcRenderer.invoke('getDueFromCustomers'),
-  getDueToProviders: () => ipcRenderer.invoke('getDueToProviders'),
-  getTotalProfit: () => ipcRenderer.invoke('getTotalProfit'),
-  getTotalPurchasesAmount: () => ipcRenderer.invoke('getTotalPurchasesAmount'),
-  getTotalSalesAmount: () => ipcRenderer.invoke('getTotalSalesAmount'),
-  getAllOverduePayments: () => ipcRenderer.invoke('getAllOverduePayments'),
-  getExpiringProducts: (days?: number) =>
-    ipcRenderer.invoke('getExpiringProducts', days),
-  getLowStockProducts: (threshold?: number) =>
-    ipcRenderer.invoke('getLowStockProducts', threshold),
-  getTopUpcomingPayingCustomers: () =>
-    ipcRenderer.invoke('getTopUpcomingPayingCustomers'),
-  getTopUpcomingPayingProviders: () =>
-    ipcRenderer.invoke('getTopUpcomingPayingProviders'),
-  getMonthlyChartData: () => ipcRenderer.invoke('getMonthlyChartData'),
+  getDueFromCustomers: (inventoryId: string) => ipcRenderer.invoke('getDueFromCustomers', inventoryId),
+  getDueToProviders: (inventoryId: string) => ipcRenderer.invoke('getDueToProviders', inventoryId),
+  getTotalProfit: (inventoryId: string) => ipcRenderer.invoke('getTotalProfit', inventoryId),
+  getTotalPurchasesAmount: (inventoryId: string) => ipcRenderer.invoke('getTotalPurchasesAmount', inventoryId),
+  getTotalSalesAmount: (inventoryId: string) => ipcRenderer.invoke('getTotalSalesAmount', inventoryId),
+  getAllOverduePayments: (inventoryId: string) => ipcRenderer.invoke('getAllOverduePayments', inventoryId),
+  getExpiringProducts: (inventoryId: string, days?: number) =>
+    ipcRenderer.invoke('getExpiringProducts', inventoryId, days),
+  getLowStockProducts: (inventoryId: string, threshold?: number) =>
+    ipcRenderer.invoke('getLowStockProducts', inventoryId, threshold),
+  getTopUpcomingPayingCustomers: (inventoryId: string) =>
+    ipcRenderer.invoke('getTopUpcomingPayingCustomers', inventoryId),
+  getTopUpcomingPayingProviders: (inventoryId: string) =>
+    ipcRenderer.invoke('getTopUpcomingPayingProviders', inventoryId),
+  getMonthlyChartData: (inventoryId: string) => ipcRenderer.invoke('getMonthlyChartData', inventoryId),
 });

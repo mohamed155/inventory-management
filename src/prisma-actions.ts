@@ -40,6 +40,14 @@ import {
   getTotalSalesAmount,
 } from './prisma-actions/dashboard.actions.ts';
 import {
+  createInventory,
+  deleteInventory,
+  getAllInventories,
+  getInventoriesCount,
+  getInventoryById,
+  updateInventory,
+} from './prisma-actions/inventory.actions.ts';
+import {
   createProduct,
   createProductBatch,
   deleteProduct,
@@ -93,37 +101,45 @@ import {
 } from './prisma-actions/users.action.ts';
 
 export const initPrismaActions = (prisma: PrismaClient) => {
+  // Inventory actions
+  ipcMain.handle('getAllInventories', () => ok(() => getAllInventories(prisma)));
+  ipcMain.handle('getInventoryById', (_, id: string) => ok(() => getInventoryById(prisma, id)));
+  ipcMain.handle('getInventoriesCount', () => ok(() => getInventoriesCount(prisma)));
+  ipcMain.handle('createInventory', (_, name: string) => ok(() => createInventory(prisma, name)));
+  ipcMain.handle('updateInventory', (_, id: string, name: string) => ok(() => updateInventory(prisma, id, name)));
+  ipcMain.handle('deleteInventory', (_, id: string) => ok(() => deleteInventory(prisma, id)));
+
   // Dashboard actions
-  ipcMain.handle('getTotalSalesAmount', () =>
-    ok(() => getTotalSalesAmount(prisma)),
+  ipcMain.handle('getTotalSalesAmount', (_, inventoryId: string) =>
+    ok(() => getTotalSalesAmount(prisma, inventoryId)),
   );
-  ipcMain.handle('getTotalPurchasesAmount', () =>
-    ok(() => getTotalPurchasesAmount(prisma)),
+  ipcMain.handle('getTotalPurchasesAmount', (_, inventoryId: string) =>
+    ok(() => getTotalPurchasesAmount(prisma, inventoryId)),
   );
-  ipcMain.handle('getTotalProfit', () => ok(() => getTotalProfit(prisma)));
-  ipcMain.handle('getDueFromCustomers', () =>
-    ok(() => getDueFromCustomers(prisma)),
+  ipcMain.handle('getTotalProfit', (_, inventoryId: string) => ok(() => getTotalProfit(prisma, inventoryId)));
+  ipcMain.handle('getDueFromCustomers', (_, inventoryId: string) =>
+    ok(() => getDueFromCustomers(prisma, inventoryId)),
   );
-  ipcMain.handle('getDueToProviders', () =>
-    ok(() => getDueToProviders(prisma)),
+  ipcMain.handle('getDueToProviders', (_, inventoryId: string) =>
+    ok(() => getDueToProviders(prisma, inventoryId)),
   );
-  ipcMain.handle('getAllOverduePayments', () =>
-    ok(() => getAllOverduePayments(prisma)),
+  ipcMain.handle('getAllOverduePayments', (_, inventoryId: string) =>
+    ok(() => getAllOverduePayments(prisma, inventoryId)),
   );
-  ipcMain.handle('getExpiringProducts', (_, days?: number) =>
-    ok(() => getExpiringProducts(prisma, days)),
+  ipcMain.handle('getExpiringProducts', (_, inventoryId: string, days?: number) =>
+    ok(() => getExpiringProducts(prisma, inventoryId, days)),
   );
-  ipcMain.handle('getLowStockProducts', (_, threshold?: number) =>
-    ok(() => getLowStockProducts(prisma, threshold)),
+  ipcMain.handle('getLowStockProducts', (_, inventoryId: string, threshold?: number) =>
+    ok(() => getLowStockProducts(prisma, inventoryId, threshold)),
   );
-  ipcMain.handle('getTopUpcomingPayingCustomers', () =>
-    ok(() => getTopUpcomingPayingCustomers(prisma)),
+  ipcMain.handle('getTopUpcomingPayingCustomers', (_, inventoryId: string) =>
+    ok(() => getTopUpcomingPayingCustomers(prisma, inventoryId)),
   );
-  ipcMain.handle('getTopUpcomingPayingProviders', () =>
-    ok(() => getTopUpcomingPayingProviders(prisma)),
+  ipcMain.handle('getTopUpcomingPayingProviders', (_, inventoryId: string) =>
+    ok(() => getTopUpcomingPayingProviders(prisma, inventoryId)),
   );
-  ipcMain.handle('getMonthlyChartData', () =>
-    ok(() => getMonthlyChartData(prisma)),
+  ipcMain.handle('getMonthlyChartData', (_, inventoryId: string) =>
+    ok(() => getMonthlyChartData(prisma, inventoryId)),
   );
 
   // Users actions
@@ -149,15 +165,15 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   // Products actions
   ipcMain.handle(
     'getAllProductsPaginated',
-    (_, params: DataParams<Product, ProductWhereInput>) =>
-      ok(() => getAllProductsPaginated(prisma, params)),
+    (_, inventoryId: string, params: DataParams<Product, ProductWhereInput>) =>
+      ok(() => getAllProductsPaginated(prisma, inventoryId, params)),
   );
-  ipcMain.handle('getAllProducts', () => ok(() => getAllProducts(prisma)));
+  ipcMain.handle('getAllProducts', (_, inventoryId: string) => ok(() => getAllProducts(prisma, inventoryId)));
   ipcMain.handle('getProductById', (_, id: string) =>
     ok(() => getProductById(prisma, id)),
   );
-  ipcMain.handle('createProduct', (_, product: Product) =>
-    ok(() => createProduct(prisma, product)),
+  ipcMain.handle('createProduct', (_, inventoryId: string, product: Product) =>
+    ok(() => createProduct(prisma, inventoryId, product)),
   );
   ipcMain.handle('updateProduct', (_, id: string, product: Product) =>
     ok(() => updateProduct(prisma, id, product)),
@@ -171,22 +187,23 @@ export const initPrismaActions = (prisma: PrismaClient) => {
     'getAllProductBatchesPaginated',
     (
       _,
+      inventoryId: string,
       params: DataParams<
         Product & ProductBatch,
-        ProductBatchWhereInput & { product: ProductWhereInput }
+        ProductBatchWhereInput & { product?: ProductWhereInput }
       >,
-    ) => ok(() => getAllProductBatchesPaginated(prisma, params)),
+    ) => ok(() => getAllProductBatchesPaginated(prisma, inventoryId, params)),
   );
-  ipcMain.handle('getAllProductBatches', () =>
-    ok(() => getAllProductBatches(prisma)),
+  ipcMain.handle('getAllProductBatches', (_, inventoryId: string) =>
+    ok(() => getAllProductBatches(prisma, inventoryId)),
   );
   ipcMain.handle('getProductBatch', (_, id: string) =>
     ok(() => getProductBatch(prisma, id)),
   );
   ipcMain.handle(
     'createProductBatch',
-    (_, productBatch: Product & ProductBatch) =>
-      ok(() => createProductBatch(prisma, productBatch)),
+    (_, inventoryId: string, productBatch: Product & ProductBatch) =>
+      ok(() => createProductBatch(prisma, inventoryId, productBatch)),
   );
   ipcMain.handle(
     'updateProductBatch',
@@ -200,15 +217,15 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   // Customers actions
   ipcMain.handle(
     'getAllCustomersPaginated',
-    (_, params: DataParams<Customer, CustomerWhereInput>) =>
-      ok(() => getAllCustomersPaginated(prisma, params)),
+    (_, inventoryId: string, params: DataParams<Customer, CustomerWhereInput>) =>
+      ok(() => getAllCustomersPaginated(prisma, inventoryId, params)),
   );
-  ipcMain.handle('getAllCustomers', () => ok(() => getAllCustomers(prisma)));
+  ipcMain.handle('getAllCustomers', (_, inventoryId: string) => ok(() => getAllCustomers(prisma, inventoryId)));
   ipcMain.handle('getCustomerById', (_, id: string) =>
     ok(() => getCustomerById(prisma, id)),
   );
-  ipcMain.handle('createCustomer', (_, customer: Customer) =>
-    ok(() => createCustomer(prisma, customer)),
+  ipcMain.handle('createCustomer', (_, inventoryId: string, customer: Customer) =>
+    ok(() => createCustomer(prisma, inventoryId, customer)),
   );
   ipcMain.handle('updateCustomer', (_, id: string, customer: Customer) =>
     ok(() => updateCustomer(prisma, id, customer)),
@@ -220,15 +237,15 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   // Providers actions
   ipcMain.handle(
     'getAllProvidersPaginated',
-    (_, params: DataParams<Provider, ProviderWhereInput>) =>
-      ok(() => getAllProvidersPaginated(prisma, params)),
+    (_, inventoryId: string, params: DataParams<Provider, ProviderWhereInput>) =>
+      ok(() => getAllProvidersPaginated(prisma, inventoryId, params)),
   );
-  ipcMain.handle('getAllProviders', () => ok(() => getAllProviders(prisma)));
+  ipcMain.handle('getAllProviders', (_, inventoryId: string) => ok(() => getAllProviders(prisma, inventoryId)));
   ipcMain.handle('getProviderById', (_, id: string) =>
     ok(() => getProviderById(prisma, id)),
   );
-  ipcMain.handle('createProvider', (_, provider: Provider) =>
-    ok(() => createProvider(prisma, provider)),
+  ipcMain.handle('createProvider', (_, inventoryId: string, provider: Provider) =>
+    ok(() => createProvider(prisma, inventoryId, provider)),
   );
   ipcMain.handle('updateProvider', (_, id: string, provider: Provider) =>
     ok(() => updateProvider(prisma, id, provider)),
@@ -240,15 +257,15 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   // Purchases actions
   ipcMain.handle(
     'getAllPurchasesPaginated',
-    (_, params: DataParams<Purchase, PurchaseWhereInput>) =>
-      ok(() => getAllPurchasesPaginated(prisma, params)),
+    (_, inventoryId: string, params: DataParams<Purchase, PurchaseWhereInput>) =>
+      ok(() => getAllPurchasesPaginated(prisma, inventoryId, params)),
   );
-  ipcMain.handle('getAllPurchases', () => ok(() => getAllPurchases(prisma)));
+  ipcMain.handle('getAllPurchases', (_, inventoryId: string) => ok(() => getAllPurchases(prisma, inventoryId)));
   ipcMain.handle('getPurchaseById', (_, id: string) =>
     ok(() => getPurchaseById(prisma, id)),
   );
-  ipcMain.handle('createPurchase', (_, data: PurchaseFormData) =>
-    ok(() => createPurchase(prisma, data)),
+  ipcMain.handle('createPurchase', (_, inventoryId: string, data: PurchaseFormData) =>
+    ok(() => createPurchase(prisma, inventoryId, data)),
   );
   ipcMain.handle('updatePurchase', (_, id: string, purchase: Purchase) =>
     ok(() => updatePurchase(prisma, id, purchase)),
@@ -259,22 +276,22 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('getAllPurchaseItems', (_, purchaseId: string) =>
     ok(() => getAllPurchaseItems(prisma, purchaseId)),
   );
-  ipcMain.handle('getPurchasesByProviderId', (_, providerId: string) =>
-    ok(() => getPurchasesByProviderId(prisma, providerId)),
+  ipcMain.handle('getPurchasesByProviderId', (_, inventoryId: string, providerId: string) =>
+    ok(() => getPurchasesByProviderId(prisma, inventoryId, providerId)),
   );
 
   // Sales actions
   ipcMain.handle(
     'getAllSalesPaginated',
-    (_, params: DataParams<Sale, SaleWhereInput>) =>
-      ok(() => getAllSalesPaginated(prisma, params)),
+    (_, inventoryId: string, params: DataParams<Sale, SaleWhereInput>) =>
+      ok(() => getAllSalesPaginated(prisma, inventoryId, params)),
   );
-  ipcMain.handle('getAllSales', () => ok(() => getAllSales(prisma)));
+  ipcMain.handle('getAllSales', (_, inventoryId: string) => ok(() => getAllSales(prisma, inventoryId)));
   ipcMain.handle('getSaleById', (_, id: string) =>
     ok(() => getSaleById(prisma, id)),
   );
-  ipcMain.handle('createSale', (_, data: SaleFormData) =>
-    ok(() => createSale(prisma, data)),
+  ipcMain.handle('createSale', (_, inventoryId: string, data: SaleFormData) =>
+    ok(() => createSale(prisma, inventoryId, data)),
   );
   ipcMain.handle('updateSale', (_, id: string, sale: Sale) =>
     ok(() => updateSale(prisma, id, sale)),
@@ -285,7 +302,7 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('getAllSaleItems', (_, saleId: string) =>
     ok(() => getAllSaleItems(prisma, saleId)),
   );
-  ipcMain.handle('getSalesByCustomerId', (_, customerId: string) =>
-    ok(() => getSalesByCustomerId(prisma, customerId)),
+  ipcMain.handle('getSalesByCustomerId', (_, inventoryId: string, customerId: string) =>
+    ok(() => getSalesByCustomerId(prisma, inventoryId, customerId)),
   );
 };

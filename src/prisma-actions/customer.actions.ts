@@ -6,6 +6,7 @@ import type { CustomerWhereInput } from '../../generated/prisma/models/Customer.
 
 export const getAllCustomersPaginated = async (
   prisma: PrismaClient,
+  inventoryId: string,
   {
     page,
     orderDirection,
@@ -13,18 +14,21 @@ export const getAllCustomersPaginated = async (
     filter,
   }: DataParams<Customer, CustomerWhereInput>,
 ) => {
+  const where = {
+    AND: [{ inventoryId }, ...(filter ? [filter as CustomerWhereInput] : [])],
+  };
   const data = await prisma.customer.findMany({
-    where: { AND: filter },
+    where,
     orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
     skip: (page - 1) * 10,
     take: 10,
   });
-  const total = (await prisma.customer.count()) as number;
+  const total = (await prisma.customer.count({ where })) as number;
   return { data, total };
 };
 
-export const getAllCustomers = async (prisma: PrismaClient) => {
-  const customers = await prisma.customer.findMany({});
+export const getAllCustomers = async (prisma: PrismaClient, inventoryId: string) => {
+  const customers = await prisma.customer.findMany({ where: { inventoryId } });
   return customers.map((customer: Customer) => ({
     id: customer.id,
     firstname: customer.firstname,
@@ -38,9 +42,15 @@ export const getCustomerById = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const createCustomer = (prisma: PrismaClient, customer: Customer) => {
+export const createCustomer = (prisma: PrismaClient, inventoryId: string, customer: Customer) => {
   return prisma.customer.create({
-    data: customer,
+    data: {
+      firstname: customer.firstname,
+      lastname: customer.lastname,
+      phone: customer.phone,
+      address: customer.address,
+      inventoryId,
+    },
   });
 };
 

@@ -52,6 +52,7 @@ const buildSaleOrderBy = (
 
 export const getAllSalesPaginated = async (
   prisma: PrismaClient,
+  inventoryId: string,
   {
     page,
     orderDirection,
@@ -84,6 +85,7 @@ export const getAllSalesPaginated = async (
 
   const where = {
     AND: [
+      { inventoryId },
       filter as SaleWhereInput,
       ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
     ],
@@ -214,8 +216,9 @@ const getSaleIdsByRemainingCost = async (
   return rows.map((r: SaleItem) => r.saleId);
 };
 
-export const getAllSales = async (prisma: PrismaClient) => {
+export const getAllSales = async (prisma: PrismaClient, inventoryId: string) => {
   const sales = await prisma.sale.findMany({
+    where: { inventoryId },
     include: { user: true, customer: true },
   });
   return sales.map((sale: Sale & { user: User; customer: Customer }) => ({
@@ -230,7 +233,7 @@ export const getSaleById = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const createSale = async (prisma: PrismaClient, body: SaleFormData) => {
+export const createSale = async (prisma: PrismaClient, inventoryId: string, body: SaleFormData) => {
   return prisma.$transaction(async (tx: PrismaClient) => {
     let customerId: string;
     if (body.customerId) {
@@ -242,6 +245,7 @@ export const createSale = async (prisma: PrismaClient, body: SaleFormData) => {
           lastname: body.customerLastname,
           phone: body.customerPhone,
           address: body.customerAddress,
+          inventoryId,
         },
       });
       customerId = newCustomer.id;
@@ -253,6 +257,7 @@ export const createSale = async (prisma: PrismaClient, body: SaleFormData) => {
         payDueDate: body.payDueDate,
         date: body.date,
         discount: body.discount || 0,
+        inventoryId,
         user: { connect: { id: body.userId } },
         customer: { connect: { id: customerId } },
       },
@@ -335,10 +340,11 @@ export const deleteSale = async (prisma: PrismaClient, id: string) => {
 
 export const getSalesByCustomerId = async (
   prisma: PrismaClient,
+  inventoryId: string,
   customerId: string,
 ) => {
   const sales = await prisma.sale.findMany({
-    where: { customerId },
+    where: { customerId, inventoryId },
     include: { items: { include: { product: true } } },
     orderBy: { date: 'desc' },
   });

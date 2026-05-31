@@ -211,4 +211,19 @@ export default {
   'Cannot remove the last admin': 'لا يمكن إزالة آخر مشرف',
   'New Password (leave blank to keep current)':
     'كلمة مرور جديدة (اتركها فارغة للإبقاء على الحالية)',
+  'Manage Inventories': 'إدارة المخازن',
+  'New Inventory Name': 'اسم المخزن الجديد',
+  'Inventory Name is required': 'اسم المخزن مطلوب',
+  'Add Inventory': 'إضافة مخزن',
+  'Cannot delete the last inventory': 'لا يمكن حذف المخزن الأخير',
+  'Select Inventory': 'اختر المخزن',
+  'Manage': 'إدارة',
+  'Delete Inventory': 'حذف المخزن',
+  'Are you sure you want to delete this inventory and all its data?':
+    'هل أنت متأكد من حذف هذا المخزن وجميع بياناته؟',
+  'Edit Inventory Name': 'تعديل اسم المخزن',
+  'Rename Inventory': 'إعادة تسمية المخزن',
+  'Failed to rename inventory': 'فشل إعادة تسمية المخزن',
+  'Failed to add inventory': 'فشل إضافة المخزن',
+  'Failed to delete inventory': 'فشل حذف المخزن',
 };
