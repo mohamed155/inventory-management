@@ -1,4 +1,4 @@
-// @ts-expect-error
+// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
 import type { PrismaClient } from '@prisma/client';
 import type {
   Customer,
@@ -52,6 +52,7 @@ const buildSaleOrderBy = (
 
 export const getAllSalesPaginated = async (
   prisma: PrismaClient,
+  inventoryId: string,
   {
     page,
     orderDirection,
@@ -84,6 +85,7 @@ export const getAllSalesPaginated = async (
 
   const where = {
     AND: [
+      { inventoryId },
       filter as SaleWhereInput,
       ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
     ],
@@ -131,7 +133,7 @@ export const getAllSalesPaginated = async (
         customerName: `${sale.customer.firstname} ${sale.customer.lastname}`,
         itemsCount: sale._count.items,
         totalCost: totalCost - sale.discount,
-        remainingCost: totalCost - sale.paidAmount - sale.discount,
+        remainingCost: totalCost - sale.discount - sale.paidAmount,
       };
     },
   );
@@ -214,8 +216,9 @@ const getSaleIdsByRemainingCost = async (
   return rows.map((r: SaleItem) => r.saleId);
 };
 
-export const getAllSales = async (prisma: PrismaClient) => {
+export const getAllSales = async (prisma: PrismaClient, inventoryId: string) => {
   const sales = await prisma.sale.findMany({
+    where: { inventoryId },
     include: { user: true, customer: true },
   });
   return sales.map((sale: Sale & { user: User; customer: Customer }) => ({
@@ -230,8 +233,7 @@ export const getSaleById = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const createSale = async (prisma: PrismaClient, body: SaleFormData) => {
-  console.log(body);
+export const createSale = async (prisma: PrismaClient, inventoryId: string, body: SaleFormData) => {
   return prisma.$transaction(async (tx: PrismaClient) => {
     let customerId: string;
     if (body.customerId) {
@@ -243,6 +245,7 @@ export const createSale = async (prisma: PrismaClient, body: SaleFormData) => {
           lastname: body.customerLastname,
           phone: body.customerPhone,
           address: body.customerAddress,
+          inventoryId,
         },
       });
       customerId = newCustomer.id;
@@ -254,6 +257,7 @@ export const createSale = async (prisma: PrismaClient, body: SaleFormData) => {
         payDueDate: body.payDueDate,
         date: body.date,
         discount: body.discount || 0,
+        inventoryId,
         user: { connect: { id: body.userId } },
         customer: { connect: { id: customerId } },
       },
@@ -317,40 +321,56 @@ export const updateSale = (
   });
 };
 
-export const deleteSale = (prisma: PrismaClient, id: string) => {
-  return prisma.sale.delete({
-    where: { id },
+export const deleteSale = async (prisma: PrismaClient, id: string) => {
+  const items = await prisma.saleItem.findMany({
+    where: { saleId: id },
+    select: { batchId: true, quantity: true },
   });
+
+  return prisma.$transaction([
+    ...items.map((item: { batchId: string; quantity: number }) =>
+      prisma.productBatch.update({
+        where: { id: item.batchId },
+        data: { quantity: { increment: item.quantity } },
+      }),
+    ),
+    prisma.sale.delete({ where: { id } }),
+  ]);
 };
 
 export const getSalesByCustomerId = async (
   prisma: PrismaClient,
+  inventoryId: string,
   customerId: string,
 ) => {
   const sales = await prisma.sale.findMany({
-    where: { customerId },
+    where: { customerId, inventoryId },
     include: { items: { include: { product: true } } },
     orderBy: { date: 'desc' },
   });
 
-  return sales.map((sale: Sale & { items: (SaleItem & { product: Product })[] }) => {
-    const totalCost =
-      sale.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0) -
-      sale.discount;
-    const remainingCost = totalCost - sale.paidAmount;
-    return {
-      id: sale.id,
-      date: sale.date,
-      payDueDate: sale.payDueDate,
-      totalCost,
-      paidAmount: sale.paidAmount,
-      remainingCost,
-      items: sale.items.map((item) => ({
-        name: item.product.name,
-        quantity: item.quantity,
-      })),
-    };
-  });
+  return sales.map(
+    (sale: Sale & { items: (SaleItem & { product: Product })[] }) => {
+      const totalCost =
+        sale.items.reduce(
+          (sum, item) => sum + item.unitPrice * item.quantity,
+          0,
+        ) - sale.discount;
+      const remainingCost = totalCost - sale.paidAmount;
+      return {
+        id: sale.id,
+        date: sale.date,
+        payDueDate: sale.payDueDate,
+        totalCost,
+        paidAmount: sale.paidAmount,
+        remainingCost,
+        items: sale.items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+        })),
+      };
+    },
+  );
 };
 
 export const getAllSaleItems = async (prisma: PrismaClient, saleId: string) => {
@@ -365,11 +385,11 @@ export const getAllSaleItems = async (prisma: PrismaClient, saleId: string) => {
   return items.map(
     (
       item: SaleItem & { product: Product } & {
-        productBatch: ProductBatch;
+        batch: ProductBatch;
       },
     ) => ({
       ...item.product,
-      ...item.productBatch,
+      ...item.batch,
       ...item,
     }),
   );

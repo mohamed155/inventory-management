@@ -1,3 +1,4 @@
+import type { IpcResponse } from '@/lib/ipc.ts';
 import type { DataParams } from '@/models/params.ts';
 import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
@@ -6,6 +7,7 @@ import type { SalesListResult } from '@/models/sales-list-result.ts';
 import type { UserModel } from '@/models/user.ts';
 import type {
   Customer,
+  Inventory,
   ProductBatch,
   Provider,
   Purchase,
@@ -45,89 +47,158 @@ declare global {
       minimizeWindow: () => void;
       restoreWindow: () => void;
 
+      // inventory actions
+      getAllInventories: () => Promise<IpcResponse<Inventory[]>>;
+      getInventoryById: (id: string) => Promise<IpcResponse<Inventory | null>>;
+      getInventoriesCount: () => Promise<IpcResponse<number>>;
+      createInventory: (name: string) => Promise<IpcResponse<Inventory>>;
+      updateInventory: (id: string, name: string) => Promise<IpcResponse<Inventory>>;
+      deleteInventory: (id: string) => Promise<IpcResponse<void>>;
+
       // dashboard actions
-      getDueFromCustomers: () => Promise<number>;
-      getDueToProviders: () => Promise<number>;
-      getTotalProfit: () => Promise<number>;
-      getTotalPurchasesAmount: () => Promise<number>;
-      getTotalSalesAmount: () => Promise<number>;
-      getAllOverduePayments: () => Promise<{
-        totalRemainingAmount: number;
-        count: number;
-      }>;
+      getDueFromCustomers: (inventoryId: string) => Promise<IpcResponse<number>>;
+      getDueToProviders: (inventoryId: string) => Promise<IpcResponse<number>>;
+      getTotalProfit: (inventoryId: string) => Promise<IpcResponse<number>>;
+      getTotalPurchasesAmount: (inventoryId: string) => Promise<IpcResponse<number>>;
+      getTotalSalesAmount: (inventoryId: string) => Promise<IpcResponse<number>>;
+      getAllOverduePayments: (inventoryId: string) => Promise<
+        IpcResponse<{ totalRemainingAmount: number; count: number }>
+      >;
       getExpiringProducts: (
+        inventoryId: string,
         days?: number,
       ) => Promise<
-        { name: string; expirationDate: string; quantity: number }[]
+        IpcResponse<
+          { name: string; expirationDate: string; quantity: number }[]
+        >
       >;
       getLowStockProducts: (
+        inventoryId: string,
         threshold?: number,
-      ) => Promise<{ name: string; totalQuantity: number }[]>;
-      getTopUpcomingPayingCustomers: () => Promise<
-        { name: string; phone: string; payDueDate: string; amountDue: number }[]
+      ) => Promise<IpcResponse<{ name: string; totalQuantity: number }[]>>;
+      getTopUpcomingPayingCustomers: (inventoryId: string) => Promise<
+        IpcResponse<
+          {
+            name: string;
+            phone: string;
+            payDueDate: string;
+            amountDue: number;
+          }[]
+        >
       >;
-      getTopUpcomingPayingProviders: () => Promise<
-        { name: string; phone: string; payDueDate: string; amountDue: number }[]
+      getTopUpcomingPayingProviders: (inventoryId: string) => Promise<
+        IpcResponse<
+          {
+            name: string;
+            phone: string;
+            payDueDate: string;
+            amountDue: number;
+          }[]
+        >
+      >;
+      getMonthlyChartData: (inventoryId: string) => Promise<
+        IpcResponse<
+          { month: string; sales: number; purchases: number; profit: number }[]
+        >
       >;
 
       // users actions
-      getUsers: () => Promise<User[]>;
-      getUserById: (id: string) => Promise<User | null>;
-      getUserByUsername: (username: string) => Promise<User | null>;
-      getUsersCount: () => Promise<number>;
-      createUser: (user: UserModel) => Promise<User>;
-      signIn: (username: string, password: string) => Promise<User | null>;
+      getUsers: () => Promise<IpcResponse<User[]>>;
+      getUserById: (id: string) => Promise<IpcResponse<User | null>>;
+      getUserByUsername: (
+        username: string,
+      ) => Promise<IpcResponse<User | null>>;
+      getUsersCount: () => Promise<IpcResponse<number>>;
+      createUser: (user: UserModel) => Promise<IpcResponse<User>>;
+      updateUser: (
+        id: string,
+        data: Partial<UserModel>,
+      ) => Promise<IpcResponse<User>>;
+      deleteUser: (id: string) => Promise<IpcResponse<User>>;
+      signIn: (
+        username: string,
+        password: string,
+      ) => Promise<IpcResponse<User | null>>;
 
       // products actions
       getAllProductsPaginated: (
+        inventoryId: string,
         params: DataParams<Product, ProductWhereInput>,
-      ) => Promise<{ data: Product[]; total: number }>;
-      getAllProducts: () => Promise<Pick<Product, 'id' | 'name'>[]>;
-      getProductById: (id: string) => Promise<Product | null>;
-      createProduct: (product: Product) => Promise<Product>;
-      updateProduct: (id: string, product: Product) => Promise<Product>;
-      deleteProduct: (id: string) => Promise<Product>;
+      ) => Promise<IpcResponse<{ data: Product[]; total: number }>>;
+      getAllProducts: (inventoryId: string) => Promise<
+        IpcResponse<Pick<Product, 'id' | 'name'>[]>
+      >;
+      getProductById: (id: string) => Promise<IpcResponse<Product | null>>;
+      createProduct: (inventoryId: string, product: Product) => Promise<IpcResponse<Product>>;
+      updateProduct: (
+        id: string,
+        product: Product,
+      ) => Promise<IpcResponse<Product>>;
+      deleteProduct: (id: string) => Promise<IpcResponse<Product>>;
 
       // product batches actions
       getAllProductBatchesPaginated: (
+        inventoryId: string,
         params: DataParams<
           Product & ProductBatch,
           ProductBatchWhereInput & { product: ProductWhereInput }
         >,
-      ) => Promise<{ data: (Product & ProductBatch)[]; total: number }>;
-      getAllProductBatches: () => Promise<Pick<Product & ProductBatch>[]>;
+      ) => Promise<
+        IpcResponse<{ data: (Product & ProductBatch)[]; total: number }>
+      >;
+      getAllProductBatches: (inventoryId: string) => Promise<
+        IpcResponse<(Product & ProductBatch)[]>
+      >;
       getProductBatchById: (
         id: string,
-      ) => Promise<(Product & ProductBatch) | null>;
-      createProductBatch: (product: Product) => Promise<Product & ProductBatch>;
+      ) => Promise<IpcResponse<(Product & ProductBatch) | null>>;
+      createProductBatch: (
+        inventoryId: string,
+        product: Product,
+      ) => Promise<IpcResponse<Product & ProductBatch>>;
       updateProductBatch: (
         id: string,
         product: Product & ProductBatch,
-      ) => Promise<Product & ProductBatch>;
-      deleteProductBatch: (id: string) => Promise<Product & ProductBatch>;
+      ) => Promise<IpcResponse<Product & ProductBatch>>;
+      deleteProductBatch: (
+        id: string,
+      ) => Promise<IpcResponse<Product & ProductBatch>>;
 
       // customer actions
       getAllCustomersPaginated: (
+        inventoryId: string,
         params: DataParams<Customer, CustomerWhereInput>,
-      ) => Promise<{ data: Customer[]; total: number }>;
-      getAllCustomers: () => Promise<Pick<Customer, 'id' | 'name'>[]>;
-      getCustomerById: (id: string) => Promise<Customer | null>;
-      createCustomer: (customer: Customer) => Promise<Customer>;
-      updateCustomer: (id: string, customer: Customer) => Promise<Customer>;
-      deleteCustomer: (id: string) => Promise<Customer>;
+      ) => Promise<IpcResponse<{ data: Customer[]; total: number }>>;
+      getAllCustomers: (inventoryId: string) => Promise<
+        IpcResponse<Pick<Customer, 'id' | 'firstname' | 'lastname'>[]>
+      >;
+      getCustomerById: (id: string) => Promise<IpcResponse<Customer | null>>;
+      createCustomer: (inventoryId: string, customer: Customer) => Promise<IpcResponse<Customer>>;
+      updateCustomer: (
+        id: string,
+        customer: Customer,
+      ) => Promise<IpcResponse<Customer>>;
+      deleteCustomer: (id: string) => Promise<IpcResponse<Customer>>;
 
       // provider actions
       getAllProvidersPaginated: (
+        inventoryId: string,
         params: DataParams<Provider, ProviderWhereInput>,
-      ) => Promise<{ data: Provider[]; total: number }>;
-      getAllProviders: () => Promise<Pick<Provider, 'id' | 'name'>[]>;
-      getProviderById: (id: string) => Promise<Provider | null>;
-      createProvider: (provider: Provider) => Promise<Provider>;
-      updateProvider: (id: string, provider: Provider) => Promise<Provider>;
-      deleteProvider: (id: string) => Promise<Provider>;
+      ) => Promise<IpcResponse<{ data: Provider[]; total: number }>>;
+      getAllProviders: (inventoryId: string) => Promise<
+        IpcResponse<Pick<Provider, 'id' | 'name'>[]>
+      >;
+      getProviderById: (id: string) => Promise<IpcResponse<Provider | null>>;
+      createProvider: (inventoryId: string, provider: Provider) => Promise<IpcResponse<Provider>>;
+      updateProvider: (
+        id: string,
+        provider: Provider,
+      ) => Promise<IpcResponse<Provider>>;
+      deleteProvider: (id: string) => Promise<IpcResponse<Provider>>;
 
       // purchase actions
       getAllPurchasesPaginated: (
+        inventoryId: string,
         params: DataParams<
           Purchase,
           PurchaseWhereInput & {
@@ -136,32 +207,40 @@ declare global {
             remainingCost?: number;
           }
         >,
-      ) => Promise<{ data: PurchasesListResult[]; total: number }>;
-      getAllPurchases: () => Promise<Pick<Purchase, 'id' | 'name'>[]>;
-      getPurchaseById: (id: string) => Promise<Purchase | null>;
-      createPurchase: (purchase: PurchaseFormData) => Promise<Purchase>;
+      ) => Promise<IpcResponse<{ data: PurchasesListResult[]; total: number }>>;
+      getAllPurchases: (inventoryId: string) => Promise<
+        IpcResponse<Pick<Purchase, 'id' | 'name'>[]>
+      >;
+      getPurchaseById: (id: string) => Promise<IpcResponse<Purchase | null>>;
+      createPurchase: (
+        inventoryId: string,
+        purchase: PurchaseFormData,
+      ) => Promise<IpcResponse<Purchase>>;
       updatePurchase: (
         id: string,
         purchase: Partial<Purchase>,
-      ) => Promise<Purchase>;
-      deletePurchase: (id: string) => Promise<Purchase>;
+      ) => Promise<IpcResponse<Purchase>>;
+      deletePurchase: (id: string) => Promise<IpcResponse<Purchase>>;
       getAllPurchaseItems: (
         purchaseId: string,
-      ) => Promise<(PurchaseItem & Product & ProductBatch)[]>;
-      getPurchasesByProviderId: (providerId: string) => Promise<
-        {
-          id: string;
-          date: Date;
-          payDueDate: Date;
-          totalCost: number;
-          paidAmount: number;
-          remainingCost: number;
-          items: { name: string; quantity: number }[];
-        }[]
+      ) => Promise<IpcResponse<(PurchaseItem & Product & ProductBatch)[]>>;
+      getPurchasesByProviderId: (inventoryId: string, providerId: string) => Promise<
+        IpcResponse<
+          {
+            id: string;
+            date: Date;
+            payDueDate: Date;
+            totalCost: number;
+            paidAmount: number;
+            remainingCost: number;
+            items: { name: string; quantity: number }[];
+          }[]
+        >
       >;
 
       // sales actions
       getAllSalesPaginated: (
+        inventoryId: string,
         params: DataParams<
           Sale,
           SaleWhereInput & {
@@ -170,28 +249,30 @@ declare global {
             remainingCost?: number;
           }
         >,
-      ) => Promise<{ data: SalesListResult[]; total: number }>;
-      getAllSales: () => Promise<Pick<Sale, 'id' | 'name'>[]>;
-      getSaleById: (id: string) => Promise<Sale | null>;
-      createSale: (sale: SaleFormData) => Promise<Sale>;
-      updateSale: (id: string, sale: Partial<Sale>) => Promise<Sale>;
-      deleteSale: (id: string) => Promise<Sale>;
+      ) => Promise<IpcResponse<{ data: SalesListResult[]; total: number }>>;
+      getAllSales: (inventoryId: string) => Promise<IpcResponse<Pick<Sale, 'id' | 'name'>[]>>;
+      getSaleById: (id: string) => Promise<IpcResponse<Sale | null>>;
+      createSale: (inventoryId: string, sale: SaleFormData) => Promise<IpcResponse<Sale>>;
+      updateSale: (
+        id: string,
+        sale: Partial<Sale>,
+      ) => Promise<IpcResponse<Sale>>;
+      deleteSale: (id: string) => Promise<IpcResponse<Sale>>;
       getAllSaleItems: (
         saleId: string,
-      ) => Promise<(SaleItem & Product & ProductBatch)[]>;
-      getSalesByCustomerId: (customerId: string) => Promise<
-        {
-          id: string;
-          date: Date;
-          payDueDate: Date;
-          totalCost: number;
-          paidAmount: number;
-          remainingCost: number;
-          items: { name: string; quantity: number }[];
-        }[]
-      >;
-      getMonthlyChartData: () => Promise<
-        { month: string; sales: number; purchases: number; profit: number }[]
+      ) => Promise<IpcResponse<(SaleItem & Product & ProductBatch)[]>>;
+      getSalesByCustomerId: (inventoryId: string, customerId: string) => Promise<
+        IpcResponse<
+          {
+            id: string;
+            date: Date;
+            payDueDate: Date;
+            totalCost: number;
+            paidAmount: number;
+            remainingCost: number;
+            items: { name: string; quantity: number }[];
+          }[]
+        >
       >;
     };
   }

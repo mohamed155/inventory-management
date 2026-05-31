@@ -41,7 +41,7 @@ function SaleDialog({
   onClose?: (sale?: SaleFormData) => void;
 }) {
   const { t } = useTranslation();
-  const currentUser = useCurrentUserStore((state: any) => state.currentUser);
+  const currentUser = useCurrentUserStore((state) => state.currentUser);
 
   const [customerStatus, setCustomerStatus] = useState<'exist' | 'add'>(
     'exist',
@@ -50,7 +50,7 @@ function SaleDialog({
   const { data: customers } = useQuery({
     queryKey: ['customers'],
     queryFn: () =>
-      getAllCustomers().then((customers: any[]) =>
+      getAllCustomers().then((customers) =>
         customers.map((c) => ({ ...c, name: `${c.firstname} ${c.lastname}` })),
       ),
   });
@@ -67,33 +67,41 @@ function SaleDialog({
 
   const formSchema = useMemo(
     () =>
-      z.object({
-        ...(customerStatus === 'exist'
-          ? {
-              customerId: z.string().min(1, t('Customer is required')),
-            }
-          : {
-              customerFirstname: z
-                .string()
-                .min(1, t('Customer First Name is required')),
-              customerLastname: z
-                .string()
-                .min(1, t('Customer Last Name is required')),
-              customerPhone: z.string(),
-              customerAddress: z.string(),
+      z
+        .object({
+          ...(customerStatus === 'exist'
+            ? {
+                customerId: z.string().min(1, t('Customer is required')),
+              }
+            : {
+                customerFirstname: z
+                  .string()
+                  .min(1, t('Customer First Name is required')),
+                customerLastname: z
+                  .string()
+                  .min(1, t('Customer Last Name is required')),
+                customerPhone: z.string(),
+                customerAddress: z.string(),
+              }),
+          products: z.array(
+            z.object({
+              id: z.string().min(1, t('Product is required')),
+              quantity: z.number().min(1, t('Quantity must be at least 1')),
+              unitPrice: z.number().min(0, t('Unit Price must be positive')),
             }),
-        products: z.array(
-          z.object({
-            id: z.string().min(1, t('Product is required')),
-            quantity: z.number().min(1, t('Quantity must be at least 1')),
-            unitPrice: z.number().min(0, t('Unit Price must be positive')),
-          }),
-        ),
-        paidAmount: z.number(),
-        discount: z.number().optional(),
-        payDueDate: z.date(),
-        date: z.date(),
-      }),
+          ),
+          paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
+          discount: z
+            .number()
+            .min(0, t('Discount cannot be negative'))
+            .optional(),
+          payDueDate: z.date(),
+          date: z.date(),
+        })
+        .refine((data) => data.payDueDate >= data.date, {
+          message: t('Payment due date cannot be before the transaction date'),
+          path: ['payDueDate'],
+        }),
     [t, customerStatus],
   );
 
@@ -155,9 +163,19 @@ function SaleDialog({
 
   const onSubmit = async () => {
     if (onClose) {
+      const values = form.getValues();
+      const totalCost =
+        values.products.reduce((sum, p) => sum + p.unitPrice * p.quantity, 0) -
+        (values.discount ?? 0);
+      if (values.paidAmount > totalCost) {
+        form.setError('paidAmount', {
+          message: t('Paid amount cannot exceed total'),
+        });
+        return;
+      }
       const result: SaleFormData = {
-        ...form.getValues(),
-        userId: currentUser?.id,
+        ...values,
+        userId: currentUser!.id,
       };
       onClose(result);
     }
@@ -179,8 +197,8 @@ function SaleDialog({
 
   const getProductStock = (productId: string) => {
     const batches =
-      productBatches?.filter((b: any) => b.productId === productId) || [];
-    return batches.reduce((sum: number, b: any) => sum + (b.quantity || 0), 0);
+      productBatches?.filter((b) => b.productId === productId) || [];
+    return batches.reduce((sum: number, b) => sum + (b.quantity || 0), 0);
   };
 
   return (

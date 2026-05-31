@@ -19,9 +19,7 @@ import { useCurrentUserStore } from '@/store/user.store.ts';
 function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const setCurrentUser = useCurrentUserStore(
-    (state: any) => state.setCurrentUser,
-  );
+  const setCurrentUser = useCurrentUserStore((state) => state.setCurrentUser);
 
   const formSchema = useMemo(
     () =>
@@ -52,18 +50,22 @@ function Login() {
 
   const onSubmit = async () => {
     const loginValue = form.getValues();
-    const user = await signIn(loginValue.username, loginValue.password);
-    if (user) {
-      console.log(user);
-      await setCurrentUser({
-        id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        username: user.username,
-      });
-      navigate('/');
-    } else {
-      toast('Invalid username or password');
+    try {
+      const user = await signIn(loginValue.username, loginValue.password);
+      if (user) {
+        await setCurrentUser({
+          id: user.id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          username: user.username,
+          role: user.role,
+        });
+        navigate('/');
+      } else {
+        toast(t('Invalid username or password'));
+      }
+    } catch {
+      toast(t('Invalid username or password'));
     }
   };
 
@@ -110,7 +112,7 @@ function Login() {
               )}
             />
           </FieldGroup>
-          <Button className="mt-12 w-full">Submit</Button>
+          <Button className="mt-12 w-full">{t('Submit')}</Button>
         </form>
       </div>
     </div>

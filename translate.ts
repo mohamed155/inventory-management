@@ -67,7 +67,10 @@ function extractKeys(files) {
   for (const filePath of files) {
     const content = fs.readFileSync(filePath, 'utf-8');
     // New regex instance per file to ensure lastIndex starts at 0
-    const regex = new RegExp(T_FUNCTION_REGEX_SOURCE.source, T_FUNCTION_REGEX_SOURCE.flags);
+    const regex = new RegExp(
+      T_FUNCTION_REGEX_SOURCE.source,
+      T_FUNCTION_REGEX_SOURCE.flags,
+    );
     let match = regex.exec(content);
     while (match !== null) {
       keys.add(match[2]);
@@ -89,7 +92,8 @@ function readExistingTranslations(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     const entries = {};
     // Matches: 'key': 'value', — supports \' escapes inside both key and value
-    const entryRegex = /^\s*'((?:[^'\\]|\\.)*)'\s*:\s*'((?:[^'\\]|\\.)*)',?\s*$/gm;
+    const entryRegex =
+      /^\s*'((?:[^'\\]|\\.)*)'\s*:\s*'((?:[^'\\]|\\.)*)',?\s*$/gm;
     let m = entryRegex.exec(content);
     while (m !== null) {
       entries[m[1].replace(/\\'/g, "'")] = m[2].replace(/\\'/g, "'");
@@ -105,7 +109,12 @@ function readExistingTranslations(filePath) {
 /**
  * Generate file content, skipping keys already present in existingData.
  */
-async function generateFileContent(keys, existingData, isArabic = false, page = null) {
+async function generateFileContent(
+  keys,
+  existingData,
+  isArabic = false,
+  page = null,
+) {
   const lines = ['export default {'];
 
   for (const key of keys) {
@@ -157,17 +166,30 @@ async function generateFileContent(keys, existingData, isArabic = false, page = 
 
   if (newArKeys.length > 0) {
     console.log('🌐 Launching Puppeteer for translations...');
-    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox'],
+    });
     page = await browser.newPage();
   } else {
     console.log('✅ All keys already translated, skipping browser.');
   }
 
   console.log('📝 Generating English file...');
-  const newEnContent = await generateFileContent(foundKeys, existingEn, false, null);
+  const newEnContent = await generateFileContent(
+    foundKeys,
+    existingEn,
+    false,
+    null,
+  );
 
   console.log('📝 Generating Arabic file...');
-  const newArContent = await generateFileContent(foundKeys, existingAr, true, page);
+  const newArContent = await generateFileContent(
+    foundKeys,
+    existingAr,
+    true,
+    page,
+  );
 
   if (browser) await browser.close();
 

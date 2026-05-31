@@ -1,35 +1,31 @@
+import { unwrap } from '@/lib/ipc.ts';
 import type { DataParams } from '@/models/params.ts';
+import { useInventoryStore } from '@/store/inventory.store.ts';
 import type { Customer } from '../../generated/prisma/browser.ts';
 import type { CustomerWhereInput } from '../../generated/prisma/models/Customer.ts';
 
+const getInventoryId = () => useInventoryStore.getState().activeInventoryId ?? '';
+
+export const customerKeys = {
+  all: (inventoryId: string) => ['customers', inventoryId] as const,
+  paginated: (inventoryId: string, params: unknown) => ['customers', inventoryId, params] as const,
+};
+
 export const getAllCustomersPaginated = (
   params: DataParams<Customer, CustomerWhereInput>,
-) => {
-  const getAllCustomersPaginated = window.electronAPI.getAllCustomersPaginated;
-  return getAllCustomersPaginated(params);
-};
+) => window.electronAPI.getAllCustomersPaginated(getInventoryId(), params).then(unwrap);
 
-export const getAllCustomers = () => {
-  const getAllCustomers = window.electronAPI.getAllCustomers;
-  return getAllCustomers();
-};
+export const getAllCustomers = () =>
+  window.electronAPI.getAllCustomers(getInventoryId()).then(unwrap);
 
-export const getCustomerById = (id: string) => {
-  const getCustomerBtId = window.electronAPI.getCustomerById;
-  return getCustomerBtId(id);
-};
+export const getCustomerById = (id: string) =>
+  window.electronAPI.getCustomerById(id).then(unwrap);
 
-export const createCustomer = (customer: Customer) => {
-  const createCustomer = window.electronAPI.createCustomer;
-  return createCustomer(customer);
-};
+export const createCustomer = (customer: Customer) =>
+  window.electronAPI.createCustomer(getInventoryId(), customer).then(unwrap);
 
-export const updateCustomer = (id: string, customer: Customer) => {
-  const updateCustomer = window.electronAPI.updateCustomer;
-  return updateCustomer(id, customer);
-};
+export const updateCustomer = (id: string, customer: Customer) =>
+  window.electronAPI.updateCustomer(id, customer).then(unwrap);
 
-export const deleteCustomer = (id: string) => {
-  const deleteCustomer = window.electronAPI.deleteCustomer;
-  return deleteCustomer(id);
-};
+export const deleteCustomer = (id: string) =>
+  window.electronAPI.deleteCustomer(id).then(unwrap);

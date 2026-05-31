@@ -1,58 +1,63 @@
-// @ts-expect-error
+// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
 import type { PrismaClient } from '@prisma/client';
 
-export const getTotalSalesAmount = async (prisma: PrismaClient) => {
+export const getTotalSalesAmount = async (prisma: PrismaClient, inventoryId: string) => {
   const result = await prisma.$queryRaw<
     { total: number }[]
-  >`SELECT SUM(paidAmount - discount) as total FROM Sale`;
+  >`SELECT SUM(paidAmount - discount) as total FROM Sale WHERE inventoryId = ${inventoryId}`;
   return result[0].total ?? 0;
 };
 
-export const getTotalPurchasesAmount = async (prisma: PrismaClient) => {
+export const getTotalPurchasesAmount = async (prisma: PrismaClient, inventoryId: string) => {
   const result = await prisma.$queryRaw<
     { total: number }[]
-  >`SELECT SUM(paidAmount) as total FROM Purchase`;
+  >`SELECT SUM(paidAmount) as total FROM Purchase WHERE inventoryId = ${inventoryId}`;
   return result[0].total ?? 0;
 };
 
-export const getTotalProfit = async (prisma: PrismaClient) => {
-  const sales = await getTotalSalesAmount(prisma);
-  const purchases = await getTotalPurchasesAmount(prisma);
+export const getTotalProfit = async (prisma: PrismaClient, inventoryId: string) => {
+  const sales = await getTotalSalesAmount(prisma, inventoryId);
+  const purchases = await getTotalPurchasesAmount(prisma, inventoryId);
   return sales - purchases;
 };
 
 export const getDueFromCustomers = async (
   prisma: PrismaClient,
+  inventoryId: string,
 ): Promise<number> => {
   const result = await prisma.$queryRaw<{ totalDue: number }[]>`
-		SELECT SUM(
-						 (SELECT SUM("quantity" * "unitPrice")
-			        FROM "SaleItem"
-			        WHERE "SaleItem"."saleId" = "Sale"."id") - "Sale"."discount" - "Sale"."paidAmount"
-		       ) as "totalDue"
-		FROM "Sale"
-	`;
+    SELECT SUM(
+      (SELECT SUM("quantity" * "unitPrice")
+       FROM "SaleItem"
+       WHERE "SaleItem"."saleId" = "Sale"."id") - "Sale"."discount" - "Sale"."paidAmount"
+    ) as "totalDue"
+    FROM "Sale"
+    WHERE "Sale"."inventoryId" = ${inventoryId}
+  `;
 
   return result[0]?.totalDue ?? 0;
 };
 
 export const getDueToProviders = async (
   prisma: PrismaClient,
+  inventoryId: string,
 ): Promise<number> => {
   const result = await prisma.$queryRaw<{ totalDue: number }[]>`
-		SELECT SUM(
-						 (SELECT SUM("quantity" * "unitPrice")
-			        FROM "PurchaseItem"
-			        WHERE "PurchaseItem"."purchaseId" = "Purchase"."id") - "Purchase"."paidAmount"
-		       ) as "totalDue"
-		FROM "Purchase"
-	`;
+    SELECT SUM(
+      (SELECT SUM("quantity" * "unitPrice")
+       FROM "PurchaseItem"
+       WHERE "PurchaseItem"."purchaseId" = "Purchase"."id") - "Purchase"."paidAmount"
+    ) as "totalDue"
+    FROM "Purchase"
+    WHERE "Purchase"."inventoryId" = ${inventoryId}
+  `;
 
   return result[0]?.totalDue ?? 0;
 };
 
 export const getAllOverduePayments = async (
   prisma: PrismaClient,
+  inventoryId: string,
 ): Promise<{
   totalRemainingAmount: number;
   count: number;
@@ -60,25 +65,25 @@ export const getAllOverduePayments = async (
   const result = await prisma.$queryRaw<
     { totalRemainingAmount: number; count: number }[]
   >`
-		SELECT SUM(remaining) as "totalRemainingAmount",
-		       COUNT(*)       as "count"
-		FROM (SELECT (
-									 (SELECT SUM("quantity" * "unitPrice")
-			              FROM "SaleItem"
-			              WHERE "SaleItem"."saleId" = "Sale"."id")
-										 - "Sale"."discount"
-										 - "Sale"."paidAmount"
-									 ) as remaining
-		      FROM "Sale"
-		      WHERE "payDueDate" < CURRENT_TIMESTAMP) t
-		WHERE remaining > 0
-	`;
+    SELECT SUM(remaining) as "totalRemainingAmount", COUNT(*) as "count"
+    FROM (
+      SELECT (
+        (SELECT SUM("quantity" * "unitPrice") FROM "SaleItem" WHERE "SaleItem"."saleId" = "Sale"."id")
+        - "Sale"."discount" - "Sale"."paidAmount"
+      ) as remaining
+      FROM "Sale"
+      WHERE "payDueDate" < CURRENT_TIMESTAMP
+        AND "Sale"."inventoryId" = ${inventoryId}
+    ) t
+    WHERE remaining > 0
+  `;
 
   return result[0] ?? { totalRemainingAmount: 0, count: 0 };
 };
 
 export const getExpiringProducts = async (
   prisma: PrismaClient,
+  inventoryId: string,
   days = 10,
 ): Promise<{ name: string; expirationDate: Date; quantity: number }[]> => {
   const result = await prisma.$queryRaw<
@@ -89,6 +94,7 @@ export const getExpiringProducts = async (
     JOIN "Product" p ON p."id" = pb."productId"
     WHERE pb."expirationDate" <= datetime('now', '+' || ${days} || ' days')
       AND pb."expirationDate" >= datetime('now')
+      AND p."inventoryId" = ${inventoryId}
     ORDER BY pb."expirationDate"
   `;
   return result ?? [];
@@ -96,6 +102,7 @@ export const getExpiringProducts = async (
 
 export const getLowStockProducts = async (
   prisma: PrismaClient,
+  inventoryId: string,
   threshold = 10,
 ): Promise<{ name: string; totalQuantity: number }[]> => {
   const result = await prisma.$queryRaw<
@@ -104,6 +111,7 @@ export const getLowStockProducts = async (
     SELECT p."name", SUM(pb."quantity") as "totalQuantity"
     FROM "ProductBatch" pb
     JOIN "Product" p ON p."id" = pb."productId"
+    WHERE p."inventoryId" = ${inventoryId}
     GROUP BY p."id", p."name"
     HAVING SUM(pb."quantity") <= ${threshold}
     ORDER BY "totalQuantity"
@@ -113,6 +121,7 @@ export const getLowStockProducts = async (
 
 export const getTopUpcomingPayingCustomers = async (
   prisma: PrismaClient,
+  inventoryId: string,
 ): Promise<
   {
     name: string;
@@ -130,10 +139,10 @@ export const getTopUpcomingPayingCustomers = async (
              c."phone",
              s."payDueDate",
              (SELECT SUM(si."quantity" * si."unitPrice")
-              FROM "SaleItem" si
-              WHERE si."saleId" = s."id") - s."discount" - s."paidAmount" as "amountDue"
+              FROM "SaleItem" si WHERE si."saleId" = s."id") - s."discount" - s."paidAmount" as "amountDue"
       FROM "Sale" s
       JOIN "Customer" c ON c."id" = s."customerId"
+      WHERE s."inventoryId" = ${inventoryId}
     )
     WHERE "amountDue" > 0
     ORDER BY "payDueDate"
@@ -144,12 +153,17 @@ export const getTopUpcomingPayingCustomers = async (
 
 export const getMonthlyChartData = async (
   prisma: PrismaClient,
-): Promise<{ month: string; sales: number; purchases: number; profit: number }[]> => {
-  const salesData: { month: string; total: number }[] =
-    await prisma.$queryRaw<{ month: string; total: number }[]>`
+  inventoryId: string,
+): Promise<
+  { month: string; sales: number; purchases: number; profit: number }[]
+> => {
+  const salesData: { month: string; total: number }[] = await prisma.$queryRaw<
+    { month: string; total: number }[]
+  >`
     SELECT strftime('%Y-%m', "date") as "month",
            SUM("paidAmount" - "discount") as "total"
     FROM "Sale"
+    WHERE "inventoryId" = ${inventoryId}
     GROUP BY strftime('%Y-%m', "date")
     ORDER BY "month"
   `;
@@ -159,6 +173,7 @@ export const getMonthlyChartData = async (
     SELECT strftime('%Y-%m', "date") as "month",
            SUM("paidAmount") as "total"
     FROM "Purchase"
+    WHERE "inventoryId" = ${inventoryId}
     GROUP BY strftime('%Y-%m', "date")
     ORDER BY "month"
   `;
@@ -169,7 +184,9 @@ export const getMonthlyChartData = async (
   ]);
 
   const salesMap = new Map(salesData.map((r) => [r.month, Number(r.total)]));
-  const purchasesMap = new Map(purchasesData.map((r) => [r.month, Number(r.total)]));
+  const purchasesMap = new Map(
+    purchasesData.map((r) => [r.month, Number(r.total)]),
+  );
 
   return Array.from(monthSet)
     .sort()
@@ -182,6 +199,7 @@ export const getMonthlyChartData = async (
 
 export const getTopUpcomingPayingProviders = async (
   prisma: PrismaClient,
+  inventoryId: string,
 ): Promise<
   {
     name: string;
@@ -199,10 +217,10 @@ export const getTopUpcomingPayingProviders = async (
              p."phone",
              pu."payDueDate",
              (SELECT SUM(pi."quantity" * pi."unitPrice")
-              FROM "PurchaseItem" pi
-              WHERE pi."purchaseId" = pu."id") - pu."paidAmount" as "amountDue"
+              FROM "PurchaseItem" pi WHERE pi."purchaseId" = pu."id") - pu."paidAmount" as "amountDue"
       FROM "Purchase" pu
       JOIN "Provider" p ON p."id" = pu."providerId"
+      WHERE pu."inventoryId" = ${inventoryId}
     )
     WHERE "amountDue" > 0
     ORDER BY "payDueDate"

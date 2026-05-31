@@ -7,6 +7,7 @@ import {
   Truck,
   Users,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Bar,
   BarChart,
@@ -19,9 +20,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useTranslation } from 'react-i18next';
-import { useCurrentSettings } from '@/store/settings.store.ts';
-import { formatDate } from '@/lib/format-date.ts';
 import DashboardCard from '@/components/dashboard-card.tsx';
 import {
   Alert,
@@ -30,6 +28,7 @@ import {
   AlertSubtitle,
   AlertTitle,
 } from '@/components/ui/alert';
+import { formatDate } from '@/lib/format-date.ts';
 import {
   getAllOverduePayments,
   getDueFromCustomers,
@@ -43,6 +42,7 @@ import {
   getTotalPurchasesAmount,
   getTotalSalesAmount,
 } from '@/services/dashboard.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 
 function Dashboard() {
   const { t } = useTranslation();
@@ -288,22 +288,44 @@ function Dashboard() {
           <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
             <h6 className="font-normal">{t('Monthly Trends')}</h6>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="monthLabel" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="sales" stroke="#8884d8" activeDot={{ r: 8 }} name={t('Sales')} />
-                <Line type="monotone" dataKey="purchases" stroke="#82ca9d" name={t('Purchases')} />
-                <Line type="monotone" dataKey="profit" stroke="#ff7300" name={t('Profit')} />
+                <Line
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#8884d8"
+                  activeDot={{ r: 8 }}
+                  name={t('Sales')}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="purchases"
+                  stroke="#82ca9d"
+                  name={t('Purchases')}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="profit"
+                  stroke="#ff7300"
+                  name={t('Profit')}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
           <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
             <h6 className="font-normal">{t('Monthly Comparison')}</h6>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="monthLabel" />
                 <YAxis />

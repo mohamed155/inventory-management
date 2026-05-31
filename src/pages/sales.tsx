@@ -9,8 +9,6 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { Activity, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatDate } from '@/lib/format-date.ts';
-import { useCurrentSettings } from '@/store/settings.store.ts';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import SaleDialog from '@/components/dialogs/sale-dialog.tsx';
@@ -18,6 +16,7 @@ import UpdatePaymentDialog from '@/components/dialogs/update-payment-dialog.tsx'
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
+import { formatDate } from '@/lib/format-date.ts';
 import type { SaleFormData } from '@/models/sales-form.ts';
 import type { SalesListResult } from '@/models/sales-list-result.ts';
 import {
@@ -26,6 +25,7 @@ import {
   getAllSalesPaginated,
   updateSale,
 } from '@/services/sales.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 import type { Sale } from '../../generated/prisma/browser.ts';
 import type { SaleWhereInput } from '../../generated/prisma/models/Sale.ts';
 
@@ -79,12 +79,10 @@ function Sales() {
       totalCost: totalCost ? { equals: Number(totalCost) } : undefined,
       paidAmount: paidAmount ? { equals: Number(paidAmount) } : undefined,
       remainingCost: remainingCost
-        ? { equals: Number(remainingCost) }
-        : status === t('Partial')
-          ? { gt: 0 }
-          : status === t('Paid')
-            ? { eq: 0 }
-            : undefined,
+        ? Number(remainingCost)
+        : status === t('Paid')
+          ? 0
+          : undefined,
     } as SaleWhereInput;
   }, [filtering, t]);
 
@@ -182,7 +180,7 @@ function Sales() {
         },
         meta: {
           filterVariant: 'select',
-          filterOptions: [t('all'), t('paid'), t('partial')],
+          selectOptions: [t('all'), t('Paid'), t('Partial')],
         },
       },
       {
@@ -216,7 +214,14 @@ function Sales() {
         ),
       },
     ],
-    [t, currency, dateFormat, performDeleteSale, openDetailsDialog, openUpdatePaymentDialog],
+    [
+      t,
+      currency,
+      dateFormat,
+      performDeleteSale,
+      openDetailsDialog,
+      openUpdatePaymentDialog,
+    ],
   );
 
   const handleDialogClose = (sale?: SaleFormData) => {

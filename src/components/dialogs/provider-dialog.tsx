@@ -151,12 +151,7 @@ function ProviderDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button
-              onClick={() => {
-                console.log(form.formState.errors);
-                form.handleSubmit(onSubmit)();
-              }}
-            >
+            <Button onClick={() => form.handleSubmit(onSubmit)()}>
               {t('Save')}
             </Button>
           </DialogFooter>
