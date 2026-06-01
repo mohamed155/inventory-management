@@ -143,6 +143,8 @@ export default {
   'Purchase Date': 'Purchase Date',
   'Purchase Details': 'Purchase Details',
   Purchases: 'Purchases',
+  'Batch Quantity': 'Batch Qty',
+  'Total Quantity': 'Total Qty',
   Quantity: 'Quantity',
   'Quantity can not be zero or less': 'Quantity can not be zero or less',
   'Quantity must be at least 1': 'Quantity must be at least 1',

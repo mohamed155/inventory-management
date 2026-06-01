@@ -143,6 +143,8 @@ export default {
   'Purchase Date': 'تاريخ الشراء',
   'Purchase Details': 'تفاصيل الشراء',
   Purchases: 'المشتريات',
+  'Batch Quantity': 'كمية الدفعة',
+  'Total Quantity': 'الكمية الإجمالية',
   Quantity: 'الكمية',
   'Quantity can not be zero or less': 'لا يمكن أن تكون الكمية صفراً أو أقل',
   'Quantity must be at least 1': 'يجب أن تكون الكمية 1 على الأقل',
