@@ -29,8 +29,8 @@ const defaults = {
   primaryColor: 'violet' as ColorToken,
   currency: 'EGP' as CurrencyCode,
   dateFormat: 'dd/MM/yyyy' as DateFormatPattern,
-  expiryWarningDays: 10,
-  lowStockThreshold: 10,
+  expiryWarningDays: 90,
+  lowStockThreshold: 15,
 };
 
 export const useCurrentSettings = create<SettingsState>()(

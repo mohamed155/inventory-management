@@ -9,7 +9,7 @@ interface LangState {
 export const useCurrentLang = create<LangState>()(
   persist(
     (set) => ({
-      lang: 'en',
+      lang: 'ar',
       setLang: (lang) => set({ lang }),
     }),
     {

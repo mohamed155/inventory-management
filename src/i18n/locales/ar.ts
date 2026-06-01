@@ -140,6 +140,7 @@ export default {
   'Provider Phone': 'هاتف المورد',
   'Provider is required': 'المورد مطلوب',
   Providers: 'الموردون',
+  Reports: 'التقارير',
   'Purchase Date': 'تاريخ الشراء',
   'Purchase Details': 'تفاصيل الشراء',
   Purchases: 'المشتريات',

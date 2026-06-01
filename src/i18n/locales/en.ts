@@ -140,6 +140,7 @@ export default {
   'Provider Phone': 'Provider Phone',
   'Provider is required': 'Provider is required',
   Providers: 'Providers',
+  Reports: 'Reports',
   'Purchase Date': 'Purchase Date',
   'Purchase Details': 'Purchase Details',
   Purchases: 'Purchases',
