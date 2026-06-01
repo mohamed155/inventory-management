@@ -1,6 +1,6 @@
-import type { PurchaseFormData } from '@/models/purchase-form.ts';
-import { createPurchase } from '@/prisma-actions/purchases.action.ts';
-import type { PrismaClient } from '../../generated/prisma/client.ts';
+import type { PurchaseFormData } from '../../src/models/purchase-form.ts'
+import type { PrismaClient } from '../../generated/prisma/client.ts'
+import { createPurchase } from '../../src/prisma-actions/purchases.action.ts'
 
 export function makePurchaseFormData(
   userId: string,
@@ -16,12 +16,12 @@ export function makePurchaseFormData(
     date: new Date('2026-01-01'),
     products,
     ...overrides,
-  };
+  }
 }
 
 export async function seedPurchase(
   prisma: PrismaClient,
   formData: PurchaseFormData,
 ) {
-  return createPurchase(prisma, formData);
+  return createPurchase(prisma, formData)
 }

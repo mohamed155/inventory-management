@@ -35,7 +35,7 @@ function MenuItem({
       className={`w-full shadow-none bg-white justify-start font-semibold flex px-3 py-2 hover:bg-primary/10 rounded-md text-primary text-sm align-center mb-1 cursor-pointer transition ${selected ? '!bg-primary !text-white' : ''}`}
       onClick={onClick}
     >
-      <div className="me-2 flex justify-center items-center">{icon}</div>
+      <div className="mr-2 flex justify-center items-center">{icon}</div>
       {title}
     </Button>
   );
@@ -47,13 +47,7 @@ function Sidenav() {
   const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
-    let active = true;
-    window.electronAPI.onUpdateDownloaded(() => {
-      if (active) setUpdateReady(true);
-    });
-    return () => {
-      active = false;
-    };
+    window.electronAPI.onUpdateDownloaded(() => setUpdateReady(true));
   }, []);
 
   const menuItems = useMemo(
@@ -158,7 +152,7 @@ function Sidenav() {
           )}
           onClick={logout}
         >
-          <div className="me-2 flex justify-center items-center">
+          <div className="mr-2 flex justify-center items-center">
             <LogOut size={18} />
           </div>
           {t('Logout')}

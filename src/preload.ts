@@ -37,50 +37,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   restoreWindow: () => ipcRenderer.send('restore-window'),
 
-  // inventory actions
-  getAllInventories: () => ipcRenderer.invoke('getAllInventories'),
-  getInventoryById: (id: string) => ipcRenderer.invoke('getInventoryById', id),
-  getInventoriesCount: () => ipcRenderer.invoke('getInventoriesCount'),
-  createInventory: (name: string) => ipcRenderer.invoke('createInventory', name),
-  updateInventory: (id: string, name: string) => ipcRenderer.invoke('updateInventory', id, name),
-  deleteInventory: (id: string) => ipcRenderer.invoke('deleteInventory', id),
-
   // prisma-actions actions
   createUser: (user: User) => ipcRenderer.invoke('createUser', user),
   getUsers: () => ipcRenderer.invoke('getUsers'),
-  getUserById: (id: string) => ipcRenderer.invoke('getUserById', id),
+  getUserById: (id: number) => ipcRenderer.invoke('getUserById', id),
   getUserByUsername: (username: string) =>
     ipcRenderer.invoke('getUserByUsername', username),
   getUsersCount: () => ipcRenderer.invoke('getUsersCount'),
   signIn: (username: string, password: string) =>
     ipcRenderer.invoke('signIn', username, password),
-  updateUser: (id: string, data: Partial<User>) =>
-    ipcRenderer.invoke('updateUser', id, data),
-  deleteUser: (id: string) => ipcRenderer.invoke('deleteUser', id),
 
   // products actions
-  getAllProductsPaginated: (inventoryId: string, params: DataParams<Product, ProductWhereInput>) =>
-    ipcRenderer.invoke('getAllProductsPaginated', inventoryId, params),
-  getAllProducts: (inventoryId: string) => ipcRenderer.invoke('getAllProducts', inventoryId),
+  getAllProductsPaginated: (params: DataParams<Product, ProductWhereInput>) =>
+    ipcRenderer.invoke('getAllProductsPaginated', params),
+  getAllProducts: () => ipcRenderer.invoke('getAllProducts'),
   getProductById: (id: string) => ipcRenderer.invoke('getProductById', id),
-  createProduct: (inventoryId: string, product: Product) =>
-    ipcRenderer.invoke('createProduct', inventoryId, product),
+  createProduct: (product: Product) =>
+    ipcRenderer.invoke('createProduct', product),
   updateProduct: (id: string, product: Product) =>
     ipcRenderer.invoke('updateProduct', id, product),
   deleteProduct: (id: string) => ipcRenderer.invoke('deleteProduct', id),
 
   getAllProductBatchesPaginated: (
-    inventoryId: string,
     params: DataParams<
       Product & ProductBatch,
       ProductBatchWhereInput & { product: ProductWhereInput }
     >,
-  ) => ipcRenderer.invoke('getAllProductBatchesPaginated', inventoryId, params),
-  getAllProductBatches: (inventoryId: string) => ipcRenderer.invoke('getAllProductBatches', inventoryId),
-  getProductBatchById: (id: string) =>
-    ipcRenderer.invoke('getProductBatch', id),
-  createProductBatch: (inventoryId: string, productBatch: Product & ProductBatch) =>
-    ipcRenderer.invoke('createProductBatch', inventoryId, productBatch),
+  ) => ipcRenderer.invoke('getAllProductBatchesPaginated', params),
+  getAllProductBatches: () => ipcRenderer.invoke('getAllProductBatches'),
+  createProductBatch: (productBatch: Product & ProductBatch) =>
+    ipcRenderer.invoke('createProductBatch', productBatch),
   updateProductBatch: (id: string, productBatch: Product & ProductBatch) =>
     ipcRenderer.invoke('updateProductBatch', id, productBatch),
   deleteProductBatch: (id: string) =>
@@ -88,73 +74,72 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // customer actions
   getAllCustomersPaginated: (
-    inventoryId: string,
     params: DataParams<Customer, CustomerWhereInput>,
-  ) => ipcRenderer.invoke('getAllCustomersPaginated', inventoryId, params),
-  getAllCustomers: (inventoryId: string) => ipcRenderer.invoke('getAllCustomers', inventoryId),
+  ) => ipcRenderer.invoke('getAllCustomersPaginated', params),
+  getAllCustomers: () => ipcRenderer.invoke('getAllCustomers'),
   getCustomerById: (id: string) => ipcRenderer.invoke('getCustomerById', id),
-  createCustomer: (inventoryId: string, customer: Customer) =>
-    ipcRenderer.invoke('createCustomer', inventoryId, customer),
+  createCustomer: (customer: Customer) =>
+    ipcRenderer.invoke('createCustomer', customer),
   updateCustomer: (id: string, customer: Customer) =>
     ipcRenderer.invoke('updateCustomer', id, customer),
   deleteCustomer: (id: string) => ipcRenderer.invoke('deleteCustomer', id),
 
   // provider actions
   getAllProvidersPaginated: (
-    inventoryId: string,
     params: DataParams<Provider, ProviderWhereInput>,
-  ) => ipcRenderer.invoke('getAllProvidersPaginated', inventoryId, params),
-  getAllProviders: (inventoryId: string) => ipcRenderer.invoke('getAllProviders', inventoryId),
+  ) => ipcRenderer.invoke('getAllProvidersPaginated', params),
+  getAllProviders: () => ipcRenderer.invoke('getAllProviders'),
   getProviderById: (id: string) => ipcRenderer.invoke('getProviderById', id),
-  createProvider: (inventoryId: string, provider: Provider) =>
-    ipcRenderer.invoke('createProvider', inventoryId, provider),
+  createProvider: (provider: Provider) =>
+    ipcRenderer.invoke('createProvider', provider),
   updateProvider: (id: string, provider: Provider) =>
     ipcRenderer.invoke('updateProvider', id, provider),
   deleteProvider: (id: string) => ipcRenderer.invoke('deleteProvider', id),
 
   // purchase actions
-  getAllPurchasesPaginated: (inventoryId: string, params: DataParams<Purchase, ProductWhereInput>) =>
-    ipcRenderer.invoke('getAllPurchasesPaginated', inventoryId, params),
-  getAllPurchases: (inventoryId: string) => ipcRenderer.invoke('getAllPurchases', inventoryId),
+  getAllPurchasesPaginated: (params: DataParams<Purchase, ProductWhereInput>) =>
+    ipcRenderer.invoke('getAllPurchasesPaginated', params),
+  getAllPurchases: () => ipcRenderer.invoke('getAllPurchases'),
   getPurchaseById: (id: string) => ipcRenderer.invoke('getPurchaseById', id),
-  createPurchase: (inventoryId: string, body: PurchaseFormData) =>
-    ipcRenderer.invoke('createPurchase', inventoryId, body),
+  createPurchase: (body: PurchaseFormData) =>
+    ipcRenderer.invoke('createPurchase', body),
   updatePurchase: (id: string, purchase: Purchase) =>
     ipcRenderer.invoke('updatePurchase', id, purchase),
   deletePurchase: (id: string) => ipcRenderer.invoke('deletePurchase', id),
   getAllPurchaseItems: (purchaseId: string) =>
     ipcRenderer.invoke('getAllPurchaseItems', purchaseId),
-  getPurchasesByProviderId: (inventoryId: string, providerId: string) =>
-    ipcRenderer.invoke('getPurchasesByProviderId', inventoryId, providerId),
+  getPurchasesByProviderId: (providerId: string) =>
+    ipcRenderer.invoke('getPurchasesByProviderId', providerId),
 
   // sale actions
-  getAllSalesPaginated: (inventoryId: string, params: DataParams<Sale, SaleWhereInput>) =>
-    ipcRenderer.invoke('getAllSalesPaginated', inventoryId, params),
-  getAllSales: (inventoryId: string) => ipcRenderer.invoke('getAllSales', inventoryId),
+  getAllSalesPaginated: (
+    params: DataParams<Sale, SaleWhereInput>,
+  ) => ipcRenderer.invoke('getAllSalesPaginated', params),
+  getAllSales: () => ipcRenderer.invoke('getAllSales'),
   getSaleById: (id: string) => ipcRenderer.invoke('getSaleById', id),
-  createSale: (inventoryId: string, body: SaleFormData) => ipcRenderer.invoke('createSale', inventoryId, body),
+  createSale: (body: SaleFormData) => ipcRenderer.invoke('createSale', body),
   updateSale: (id: string, sale: Partial<Sale>) =>
     ipcRenderer.invoke('updateSale', id, sale),
   deleteSale: (id: string) => ipcRenderer.invoke('deleteSale', id),
   getAllSaleItems: (saleId: string) =>
     ipcRenderer.invoke('getAllSaleItems', saleId),
-  getSalesByCustomerId: (inventoryId: string, customerId: string) =>
-    ipcRenderer.invoke('getSalesByCustomerId', inventoryId, customerId),
+  getSalesByCustomerId: (customerId: string) =>
+    ipcRenderer.invoke('getSalesByCustomerId', customerId),
 
   // dashboard actions
-  getDueFromCustomers: (inventoryId: string) => ipcRenderer.invoke('getDueFromCustomers', inventoryId),
-  getDueToProviders: (inventoryId: string) => ipcRenderer.invoke('getDueToProviders', inventoryId),
-  getTotalProfit: (inventoryId: string) => ipcRenderer.invoke('getTotalProfit', inventoryId),
-  getTotalPurchasesAmount: (inventoryId: string) => ipcRenderer.invoke('getTotalPurchasesAmount', inventoryId),
-  getTotalSalesAmount: (inventoryId: string) => ipcRenderer.invoke('getTotalSalesAmount', inventoryId),
-  getAllOverduePayments: (inventoryId: string) => ipcRenderer.invoke('getAllOverduePayments', inventoryId),
-  getExpiringProducts: (inventoryId: string, days?: number) =>
-    ipcRenderer.invoke('getExpiringProducts', inventoryId, days),
-  getLowStockProducts: (inventoryId: string, threshold?: number) =>
-    ipcRenderer.invoke('getLowStockProducts', inventoryId, threshold),
-  getTopUpcomingPayingCustomers: (inventoryId: string) =>
-    ipcRenderer.invoke('getTopUpcomingPayingCustomers', inventoryId),
-  getTopUpcomingPayingProviders: (inventoryId: string) =>
-    ipcRenderer.invoke('getTopUpcomingPayingProviders', inventoryId),
-  getMonthlyChartData: (inventoryId: string) => ipcRenderer.invoke('getMonthlyChartData', inventoryId),
+  getDueFromCustomers: () => ipcRenderer.invoke('getDueFromCustomers'),
+  getDueToProviders: () => ipcRenderer.invoke('getDueToProviders'),
+  getTotalProfit: () => ipcRenderer.invoke('getTotalProfit'),
+  getTotalPurchasesAmount: () => ipcRenderer.invoke('getTotalPurchasesAmount'),
+  getTotalSalesAmount: () => ipcRenderer.invoke('getTotalSalesAmount'),
+  getAllOverduePayments: () => ipcRenderer.invoke('getAllOverduePayments'),
+  getExpiringProducts: (days?: number) =>
+    ipcRenderer.invoke('getExpiringProducts', days),
+  getLowStockProducts: (threshold?: number) =>
+    ipcRenderer.invoke('getLowStockProducts', threshold),
+  getTopUpcomingPayingCustomers: () =>
+    ipcRenderer.invoke('getTopUpcomingPayingCustomers'),
+  getTopUpcomingPayingProviders: () =>
+    ipcRenderer.invoke('getTopUpcomingPayingProviders'),
+  getMonthlyChartData: () => ipcRenderer.invoke('getMonthlyChartData'),
 });

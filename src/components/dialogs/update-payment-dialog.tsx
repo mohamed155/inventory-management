@@ -41,31 +41,26 @@ function UpdatePaymentDialog({
 }: UpdatePaymentProps) {
   const { t } = useTranslation();
 
-  const currentRemainingCost = Number(data?.remainingCost ?? 0);
-
   const formSchema = useMemo(
     () =>
       z.object({
-        remainingCost: z
-          .number()
-          .min(1, t('Paid can not be zero or less'))
-          .max(currentRemainingCost, t('New paid amount cannot exceed remaining cost')),
+        remainingCost: z.number().min(1, t('Paid can not be zero or less')),
         payDueDate: z.date(),
       }),
-    [t, currentRemainingCost],
+    [t],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      remainingCost: Number(data?.remainingCost ?? 0),
+      remainingCost: Number(data?.remainingCost),
       payDueDate: data?.payDueDate,
     },
   });
 
   useEffect(() => {
     form.reset({
-      remainingCost: Number(data?.remainingCost ?? 0),
+      remainingCost: Number(data?.remainingCost),
       payDueDate: data?.payDueDate,
     });
   }, [form, data]);

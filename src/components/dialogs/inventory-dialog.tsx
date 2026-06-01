@@ -270,7 +270,7 @@ function InventoryDialog({
                       field.onChange({ target: { value: date } })
                     }
                     aria-invalid={fieldState.invalid}
-                    maxDate={nextTenYears}
+										maxDate={nextTenYears}
                   ></DatePicker>
                   <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
                     <FieldError errors={[fieldState.error]} />

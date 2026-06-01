@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/format-date.ts';
+import { useCurrentSettings } from '@/store/settings.store.ts';
 import { Badge } from '@/components/ui/badge.tsx';
 import {
   Dialog,
@@ -15,9 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.tsx';
-import { formatDate } from '@/lib/format-date.ts';
 import { getSalesByCustomerId } from '@/services/sales.ts';
-import { useCurrentSettings } from '@/store/settings.store.ts';
 import type { Customer } from '../../../generated/prisma/browser.ts';
 
 type SaleHistoryItem = {
@@ -54,12 +54,7 @@ function CustomerDetailsDialog({
   if (!customer) return null;
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) close();
-      }}
-    >
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) close(); }}>
       <DialogContent className="w-fit sm:max-w-fit max-w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('Customer Details')}</DialogTitle>
@@ -88,9 +83,7 @@ function CustomerDetailsDialog({
           <div>
             <h6 className="font-medium mb-3">{t('Sales History')}</h6>
             {!sales || sales.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t('No sales history')}
-              </p>
+              <p className="text-sm text-muted-foreground">{t('No sales history')}</p>
             ) : (
               <div className="border rounded-lg overflow-hidden">
                 <Table>
@@ -109,30 +102,19 @@ function CustomerDetailsDialog({
                       const isPaid = sale.remainingCost <= 0;
                       return (
                         <TableRow key={sale.id}>
-                          <TableCell>
-                            {formatDate(sale.date, dateFormat)}
-                          </TableCell>
+                          <TableCell>{formatDate(sale.date, dateFormat)}</TableCell>
                           <TableCell>
                             <div className="space-y-0.5">
                               {sale.items.map((item) => (
-                                <div
-                                  key={`${item.name}-${item.quantity}`}
-                                  className="text-sm"
-                                >
+                                <div key={`${item.name}-${item.quantity}`} className="text-sm">
                                   {item.name} (×{item.quantity})
                                 </div>
                               ))}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            {sale.totalCost} {t(currency)}
-                          </TableCell>
-                          <TableCell className="text-green-600">
-                            {sale.paidAmount} {t(currency)}
-                          </TableCell>
-                          <TableCell className="text-red-600">
-                            {sale.remainingCost} {t(currency)}
-                          </TableCell>
+                          <TableCell>{sale.totalCost} {t(currency)}</TableCell>
+                          <TableCell className="text-green-600">{sale.paidAmount} {t(currency)}</TableCell>
+                          <TableCell className="text-red-600">{sale.remainingCost} {t(currency)}</TableCell>
                           <TableCell>
                             <Badge variant={isPaid ? 'default' : 'secondary'}>
                               {isPaid ? t('Paid') : t('Partial')}

@@ -1,6 +1,6 @@
-import type { SaleFormData } from '@/models/sales-form.ts';
-import { createSale } from '@/prisma-actions/sales.action.ts';
-import type { PrismaClient } from '../../generated/prisma/client.ts';
+import type { SaleFormData } from '../../src/models/sales-form.ts'
+import type { PrismaClient } from '../../generated/prisma/client.ts'
+import { createSale } from '../../src/prisma-actions/sales.action.ts'
 
 export function makeSaleFormData(
   userId: string,
@@ -17,9 +17,9 @@ export function makeSaleFormData(
     discount: 0,
     products,
     ...overrides,
-  };
+  }
 }
 
 export async function seedSale(prisma: PrismaClient, formData: SaleFormData) {
-  return createSale(prisma, formData);
+  return createSale(prisma, formData)
 }

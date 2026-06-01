@@ -1,4 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import type { PrismaClient } from '../../../generated/prisma/client.ts'
 import {
   createCustomer,
   deleteCustomer,
@@ -6,26 +7,25 @@ import {
   getAllCustomersPaginated,
   getCustomerById,
   updateCustomer,
-} from '@/prisma-actions/customer.actions.ts';
-import type { PrismaClient } from '../../../generated/prisma/client.ts';
-import { clearDatabase, createTestPrisma } from '../../setup/db.ts';
+} from '../../../src/prisma-actions/customer.actions.ts'
+import { clearDatabase, createTestPrisma } from '../../setup/db.ts'
 
-let prisma: PrismaClient;
-let closeDb: () => void;
+let prisma: PrismaClient
+let closeDb: () => void
 
 beforeAll(async () => {
-  const db = await createTestPrisma();
-  prisma = db.prisma;
-  closeDb = db.close;
-});
+  const db = await createTestPrisma()
+  prisma = db.prisma
+  closeDb = db.close
+})
 
 afterAll(() => {
-  closeDb();
-});
+  closeDb()
+})
 
 afterEach(async () => {
-  await clearDatabase(prisma);
-});
+  await clearDatabase(prisma)
+})
 
 describe('getAllCustomersPaginated', () => {
   it('returns page 1 of 10 with total of 15', async () => {
@@ -36,17 +36,17 @@ describe('getAllCustomersPaginated', () => {
           lastname: `Last${i}`,
           phone: `010${String(i).padStart(8, '0')}`,
         },
-      });
+      })
     }
 
     const result = await getAllCustomersPaginated(prisma, {
       page: 1,
       filter: [],
-    } as any);
+    } as any)
 
-    expect(result.data).toHaveLength(10);
-    expect(result.total).toBe(15);
-  });
+    expect(result.data).toHaveLength(10)
+    expect(result.total).toBe(15)
+  })
 
   it('returns page 2 with 5 remaining records', async () => {
     for (let i = 0; i < 15; i++) {
@@ -56,20 +56,20 @@ describe('getAllCustomersPaginated', () => {
           lastname: `Last${i}`,
           phone: `011${String(i).padStart(8, '0')}`,
         },
-      });
+      })
     }
 
     const result = await getAllCustomersPaginated(prisma, {
       page: 2,
       filter: [],
-    } as any);
+    } as any)
 
-    expect(result.data).toHaveLength(5);
-    expect(result.total).toBe(15);
-  });
+    expect(result.data).toHaveLength(5)
+    expect(result.total).toBe(15)
+  })
 
   it('sorts by firstname ascending', async () => {
-    const names = ['Zara', 'Alice', 'Mohamed'];
+    const names = ['Zara', 'Alice', 'Mohamed']
     for (let i = 0; i < names.length; i++) {
       await prisma.customer.create({
         data: {
@@ -77,7 +77,7 @@ describe('getAllCustomersPaginated', () => {
           lastname: 'Test',
           phone: `012${String(i).padStart(8, '0')}`,
         },
-      });
+      })
     }
 
     const result = await getAllCustomersPaginated(prisma, {
@@ -85,11 +85,11 @@ describe('getAllCustomersPaginated', () => {
       orderProperty: 'firstname',
       orderDirection: 'asc',
       filter: [],
-    } as any);
+    } as any)
 
-    expect(result.data[0].firstname).toBe('Alice');
-  });
-});
+    expect(result.data[0].firstname).toBe('Alice')
+  })
+})
 
 describe('getAllCustomers', () => {
   it('returns only id, firstname, lastname fields', async () => {
@@ -100,19 +100,19 @@ describe('getAllCustomers', () => {
         phone: '01099999999',
         address: 'Some Street',
       },
-    });
+    })
 
-    const customers = await getAllCustomers(prisma);
+    const customers = await getAllCustomers(prisma)
 
-    expect(customers.length).toBeGreaterThan(0);
-    const customer = customers[0];
-    expect(customer).toHaveProperty('id');
-    expect(customer).toHaveProperty('firstname');
-    expect(customer).toHaveProperty('lastname');
-    expect(customer).not.toHaveProperty('phone');
-    expect(customer).not.toHaveProperty('address');
-  });
-});
+    expect(customers.length).toBeGreaterThan(0)
+    const customer = customers[0]
+    expect(customer).toHaveProperty('id')
+    expect(customer).toHaveProperty('firstname')
+    expect(customer).toHaveProperty('lastname')
+    expect(customer).not.toHaveProperty('phone')
+    expect(customer).not.toHaveProperty('address')
+  })
+})
 
 describe('CRUD round-trip', () => {
   it('creates, updates, and deletes a customer', async () => {
@@ -120,21 +120,21 @@ describe('CRUD round-trip', () => {
       firstname: 'Create',
       lastname: 'Me',
       phone: '01011111111',
-    } as any);
+    } as any)
 
-    expect(created.firstname).toBe('Create');
+    expect(created.firstname).toBe('Create')
 
     await updateCustomer(prisma, created.id, {
       ...created,
       firstname: 'Updated',
-    });
+    })
 
-    const updated = await getCustomerById(prisma, created.id);
-    expect(updated?.firstname).toBe('Updated');
+    const updated = await getCustomerById(prisma, created.id)
+    expect(updated?.firstname).toBe('Updated')
 
-    await deleteCustomer(prisma, created.id);
+    await deleteCustomer(prisma, created.id)
 
-    const deleted = await getCustomerById(prisma, created.id);
-    expect(deleted).toBeNull();
-  });
-});
+    const deleted = await getCustomerById(prisma, created.id)
+    expect(deleted).toBeNull()
+  })
+})

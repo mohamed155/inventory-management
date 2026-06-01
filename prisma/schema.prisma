@@ -10,25 +10,12 @@ datasource db {
   provider = "sqlite"
 }
 
-model Inventory {
-  id        String     @id @default(uuid())
-  name      String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  products  Product[]
-  customers Customer[]
-  providers Provider[]
-  purchases Purchase[]
-  sales     Sale[]
-}
-
 model User {
   id        String     @id @default(uuid())
   firstname String
   lastname  String
   username  String     @unique
   password  String
-  role      String     @default("admin")
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   purchases Purchase[]
@@ -39,15 +26,11 @@ model Product {
   id            String         @id @default(uuid())
   name          String
   description   String?
-  inventoryId   String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   batches       ProductBatch[]
   purchaseItems PurchaseItem[]
   saleItems     SaleItem[]
-  inventory     Inventory      @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-
-  @@index([inventoryId])
 }
 
 model ProductBatch {
@@ -57,7 +40,7 @@ model ProductBatch {
   expirationDate DateTime
   quantity       Int
   createdAt      DateTime       @default(now())
-  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id])
   purchaseItems  PurchaseItem[]
   saleItems      SaleItem[]
 
@@ -65,54 +48,41 @@ model ProductBatch {
 }
 
 model Customer {
-  id          String   @id @default(uuid())
-  firstname   String
-  lastname    String
-  phone       String
-  address     String?
-  inventoryId String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  sales       Sale[]
-  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-
-  @@unique([inventoryId, phone])
-  @@index([inventoryId])
+  id        String   @id @default(uuid())
+  firstname String
+  lastname  String
+  phone     String   @unique
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
 }
 
 model Provider {
-  id          String     @id @default(uuid())
-  name        String
-  phone       String
-  address     String?
-  inventoryId String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  purchases   Purchase[]
-  inventory   Inventory  @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-
-  @@unique([inventoryId, phone])
-  @@index([inventoryId])
+  id        String     @id @default(uuid())
+  name      String
+  phone     String     @unique
+  address   String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  purchases Purchase[]
 }
 
 model Purchase {
-  id          String         @id @default(uuid())
-  userId      String
-  providerId  String
-  inventoryId String
-  paidAmount  Float
-  date        DateTime
-  payDueDate  DateTime
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  provider    Provider       @relation(fields: [providerId], references: [id])
-  user        User           @relation(fields: [userId], references: [id])
-  inventory   Inventory      @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  items       PurchaseItem[]
+  id         String         @id @default(uuid())
+  userId     String
+  providerId String
+  paidAmount Float
+  date       DateTime
+  payDueDate DateTime
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  provider   Provider       @relation(fields: [providerId], references: [id])
+  user       User           @relation(fields: [userId], references: [id])
+  items      PurchaseItem[]
 
   @@index([userId])
   @@index([providerId])
-  @@index([inventoryId])
 }
 
 model PurchaseItem {
@@ -122,9 +92,9 @@ model PurchaseItem {
   batchId    String
   quantity   Int
   unitPrice  Float
-  batch      ProductBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  purchase   Purchase     @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  batch      ProductBatch @relation(fields: [batchId], references: [id])
+  product    Product      @relation(fields: [productId], references: [id])
+  purchase   Purchase     @relation(fields: [purchaseId], references: [id])
 
   @@index([purchaseId])
   @@index([productId])
@@ -132,24 +102,21 @@ model PurchaseItem {
 }
 
 model Sale {
-  id          String     @id @default(uuid())
-  userId      String
-  customerId  String
-  inventoryId String
-  paidAmount  Float
-  date        DateTime
-  payDueDate  DateTime
-  discount    Float      @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  customer    Customer   @relation(fields: [customerId], references: [id])
-  user        User       @relation(fields: [userId], references: [id])
-  inventory   Inventory  @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  items       SaleItem[]
+  id         String     @id @default(uuid())
+  userId     String
+  customerId String
+  paidAmount Float
+  date       DateTime
+  payDueDate DateTime
+  discount   Float      @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+  items      SaleItem[]
 
   @@index([userId])
   @@index([customerId])
-  @@index([inventoryId])
 }
 
 model SaleItem {
@@ -159,9 +126,9 @@ model SaleItem {
   batchId   String
   quantity  Int
   unitPrice Float
-  batch     ProductBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  sale      Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  batch     ProductBatch @relation(fields: [batchId], references: [id])
+  product   Product      @relation(fields: [productId], references: [id])
+  sale      Sale         @relation(fields: [saleId], references: [id])
 
   @@index([saleId])
   @@index([productId])

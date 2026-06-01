@@ -1,4 +1,7 @@
-import type { Purchase, User } from '../../generated/prisma/client.ts';
+import type {
+  Purchase,
+  User,
+} from '../../generated/prisma/client.ts';
 
 export type PurchasesListResult = Purchase & {
   purchasedBy: User;

@@ -20,41 +20,6 @@
       "recommended": true
     }
   },
-  "overrides": [
-    {
-      "includes": [
-        "data-table.tsx",
-        "translate.ts",
-        "src/components/animate-ui/**"
-      ],
-      "linter": {
-        "enabled": false
-      },
-      "formatter": {
-        "enabled": false
-      }
-    },
-    {
-      "includes": ["tests/**"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["src/components/ui/chart.tsx"],
-      "linter": {
-        "rules": {
-          "security": {
-            "noDangerouslySetInnerHtml": "off"
-          }
-        }
-      }
-    }
-  ],
   "css": {
     "parser": {
       "tailwindDirectives": true

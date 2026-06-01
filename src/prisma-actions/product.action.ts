@@ -1,4 +1,4 @@
-// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
+// @ts-expect-error
 import type { PrismaClient } from '@prisma/client';
 import type { Product, ProductBatch } from '../../generated/prisma/client.ts';
 import type { ProductWhereInput } from '../../generated/prisma/models/Product.ts';
@@ -7,7 +7,6 @@ import type { DataParams } from '../models/params.ts';
 
 export const getAllProductsPaginated = async (
   prisma: PrismaClient,
-  inventoryId: string,
   {
     page,
     orderDirection,
@@ -15,19 +14,18 @@ export const getAllProductsPaginated = async (
     filter,
   }: DataParams<Product, ProductWhereInput>,
 ) => {
-  const where = { AND: [{ inventoryId }, ...(filter ? [filter as ProductWhereInput] : [])] };
   const data = await prisma.product.findMany({
-    where,
+    where: { AND: filter },
     orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
     skip: (page - 1) * 10,
     take: 10,
   });
-  const total = (await prisma.product.count({ where })) as number;
+  const total = (await prisma.product.count()) as number;
   return { data, total };
 };
 
-export const getAllProducts = async (prisma: PrismaClient, inventoryId: string) => {
-  const products = await prisma.product.findMany({ where: { inventoryId } });
+export const getAllProducts = async (prisma: PrismaClient) => {
+  const products = await prisma.product.findMany({});
   return products.map((product: Product) => ({
     id: product.id,
     name: product.name,
@@ -40,9 +38,9 @@ export const getProductById = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const createProduct = (prisma: PrismaClient, inventoryId: string, product: Product) => {
+export const createProduct = (prisma: PrismaClient, product: Product) => {
   return prisma.product.create({
-    data: { ...product, inventoryId },
+    data: product,
   });
 };
 
@@ -65,7 +63,6 @@ export const deleteProduct = (prisma: PrismaClient, id: string) => {
 
 export const getAllProductBatchesPaginated = async (
   prisma: PrismaClient,
-  inventoryId: string,
   {
     page,
     orderDirection,
@@ -85,15 +82,8 @@ export const getAllProductBatchesPaginated = async (
       : { [orderProperty]: orderDirection }
     : undefined;
 
-  const where = {
-    AND: [
-      { product: { inventoryId } },
-      ...(filter ? [filter as ProductBatchWhereInput] : []),
-    ],
-  };
-
   const batches = await prisma.productBatch.findMany({
-    where,
+    where: { AND: filter },
     orderBy,
     skip: (page - 1) * 10,
     take: 10,
@@ -108,14 +98,13 @@ export const getAllProductBatchesPaginated = async (
     productId: batch.product.id,
   }));
 
-  const total = (await prisma.productBatch.count({ where })) as number;
+  const total = (await prisma.productBatch.count()) as number;
 
   return { data, total };
 };
 
-export const getAllProductBatches = (prisma: PrismaClient, inventoryId: string) => {
+export const getAllProductBatches = (prisma: PrismaClient) => {
   return prisma.productBatch.findMany({
-    where: { product: { inventoryId } },
     include: {
       product: true,
     },
@@ -133,7 +122,6 @@ export const getProductBatch = (prisma: PrismaClient, id: string) => {
 
 export const createProductBatch = async (
   prisma: PrismaClient,
-  inventoryId: string,
   productBatch: Product & ProductBatch,
 ) => {
   if (productBatch.productId) {
@@ -159,7 +147,6 @@ export const createProductBatch = async (
       data: {
         name: productBatch.name,
         description: productBatch.description,
-        inventoryId,
       },
     });
     return prisma.productBatch.create({
@@ -178,25 +165,22 @@ export const updateProductBatch = async (
   id: string,
   productBatch: Product & ProductBatch,
 ) => {
-  const [, updatedBatch] = await prisma.$transaction([
-    prisma.product.update({
-      where: { id: productBatch.productId },
-      data: {
-        name: productBatch.name,
-        description: productBatch.description,
-      },
-    }),
-    prisma.productBatch.update({
-      where: { id },
-      data: {
-        quantity: productBatch.quantity,
-        productionDate: productBatch.productionDate,
-        expirationDate: productBatch.expirationDate,
-      },
-    }),
-  ]);
+  await prisma.product.update({
+    where: { id: productBatch.productId },
+    data: {
+      name: productBatch.name,
+      description: productBatch.description,
+    },
+  });
 
-  return updatedBatch;
+  return prisma.productBatch.update({
+    where: { id },
+    data: {
+      quantity: productBatch.quantity,
+      productionDate: productBatch.productionDate,
+      expirationDate: productBatch.expirationDate,
+    },
+  });
 };
 
 export const deleteProductBatch = (prisma: PrismaClient, id: string) => {

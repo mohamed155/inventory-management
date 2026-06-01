@@ -1,4 +1,4 @@
-// @ts-expect-error -- @prisma/client types are resolved at runtime in the Electron main process
+// @ts-ignore
 import type { PrismaClient } from '@prisma/client';
 import type {
   Product,
@@ -52,7 +52,6 @@ const buildPurchaseOrderBy = (
 
 export const getAllPurchasesPaginated = async (
   prisma: PrismaClient,
-  inventoryId: string,
   {
     page,
     orderDirection,
@@ -85,7 +84,6 @@ export const getAllPurchasesPaginated = async (
 
   const where = {
     AND: [
-      { inventoryId },
       filter as PurchaseWhereInput,
       ...(filteredIds ? [{ id: { in: filteredIds } }] : []),
     ],
@@ -218,18 +216,14 @@ const getPurchaseIdsByRemainingCost = async (
   return rows.map((r: PurchaseItem) => r.purchaseId);
 };
 
-export const getAllPurchases = async (
-  prisma: PrismaClient,
-  inventoryId: string,
-) => {
+export const getAllPurchases = async (prisma: PrismaClient) => {
   const purchases = await prisma.purchase.findMany({
-    where: { inventoryId },
     include: { user: true, provider: true },
   });
   return purchases.map(
-    (purchase: Purchase & { user: User; provider: Provider | null }) => ({
+    (purchase: Purchase & { user: User; provider: Provider }) => ({
       id: purchase.id,
-      name: purchase.provider?.name ?? '',
+      name: purchase.provider.name,
     }),
   );
 };
@@ -242,9 +236,9 @@ export const getPurchaseById = (prisma: PrismaClient, id: string) => {
 
 export const createPurchase = async (
   prisma: PrismaClient,
-  inventoryId: string,
   body: PurchaseFormData,
 ) => {
+  console.log(body);
   return prisma.$transaction(async (tx: PrismaClient) => {
     let providerId: string;
     if (body.providerId) {
@@ -255,7 +249,6 @@ export const createPurchase = async (
           name: body.providerName,
           phone: body.providerPhone,
           address: body.providerAddress,
-          inventoryId,
         },
       });
       providerId = newProvider.id;
@@ -266,7 +259,6 @@ export const createPurchase = async (
         paidAmount: body.paidAmount,
         payDueDate: body.payDueDate,
         date: body.date,
-        inventoryId,
         user: { connect: { id: body.userId } },
         provider: { connect: { id: providerId } },
       },
@@ -277,7 +269,6 @@ export const createPurchase = async (
         const newProduct = await tx.product.create({
           data: {
             name: product.name || 'Unnamed Product',
-            inventoryId,
           },
         });
         product.id = newProduct.id;
@@ -337,38 +328,24 @@ export const updatePurchase = (
   });
 };
 
-export const deletePurchase = async (prisma: PrismaClient, id: string) => {
-  const items = await prisma.purchaseItem.findMany({
-    where: { purchaseId: id },
-    select: { batchId: true, quantity: true },
+export const deletePurchase = (prisma: PrismaClient, id: string) => {
+  return prisma.purchase.delete({
+    where: { id },
   });
-
-  return prisma.$transaction([
-    ...items.map((item: { batchId: string; quantity: number }) =>
-      prisma.productBatch.update({
-        where: { id: item.batchId },
-        data: { quantity: { increment: item.quantity } },
-      }),
-    ),
-    prisma.purchase.delete({ where: { id } }),
-  ]);
 };
 
 export const getPurchasesByProviderId = async (
   prisma: PrismaClient,
-  inventoryId: string,
   providerId: string,
 ) => {
   const purchases = await prisma.purchase.findMany({
-    where: { providerId, inventoryId },
+    where: { providerId },
     include: { items: { include: { product: true } } },
     orderBy: { date: 'desc' },
   });
 
   return purchases.map(
-    (
-      purchase: Purchase & { items: (PurchaseItem & { product: Product })[] },
-    ) => {
+    (purchase: Purchase & { items: (PurchaseItem & { product: Product })[] }) => {
       const totalCost = purchase.items.reduce(
         (sum, item) => sum + item.unitPrice * item.quantity,
         0,
@@ -398,18 +375,18 @@ export const getAllPurchaseItems = async (
     where: { purchaseId },
     include: {
       product: true,
-      batch: true,
+			batch: true,
     },
   });
 
   return items.map(
     (
       item: PurchaseItem & { product: Product } & {
-        batch: ProductBatch;
+        productBatch: ProductBatch;
       },
     ) => ({
       ...item.product,
-      ...item.batch,
+      ...item.productBatch,
       ...item,
     }),
   );

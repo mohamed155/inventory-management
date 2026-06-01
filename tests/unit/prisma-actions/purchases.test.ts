@@ -1,41 +1,41 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import type { PrismaClient } from '../../../generated/prisma/client.ts'
 import {
   createPurchase,
   deletePurchase,
   getAllPurchaseItems,
   getAllPurchasesPaginated,
   updatePurchase,
-} from '@/prisma-actions/purchases.action.ts';
-import type { PrismaClient } from '../../../generated/prisma/client.ts';
-import { seedProduct } from '../../fixtures/products.ts';
-import { seedProvider } from '../../fixtures/providers.ts';
-import { seedUser } from '../../fixtures/users.ts';
-import { clearDatabase, createTestPrisma } from '../../setup/db.ts';
+} from '../../../src/prisma-actions/purchases.action.ts'
+import { clearDatabase, createTestPrisma } from '../../setup/db.ts'
+import { seedProvider } from '../../fixtures/providers.ts'
+import { seedProduct } from '../../fixtures/products.ts'
+import { seedUser } from '../../fixtures/users.ts'
 
-let prisma: PrismaClient;
-let closeDb: () => void;
+let prisma: PrismaClient
+let closeDb: () => void
 
 beforeAll(async () => {
-  const db = await createTestPrisma();
-  prisma = db.prisma;
-  closeDb = db.close;
-});
+  const db = await createTestPrisma()
+  prisma = db.prisma
+  closeDb = db.close
+})
 
 afterAll(() => {
-  closeDb();
-});
+  closeDb()
+})
 
 afterEach(async () => {
-  await clearDatabase(prisma);
-});
+  await clearDatabase(prisma)
+})
 
 describe('createPurchase - batch management', () => {
   it('creates new batch when no matching batch exists', async () => {
-    const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const user = await seedUser(prisma)
+    const provider = await seedProvider(prisma)
+    const product = await seedProduct(prisma)
 
-    const batchCountBefore = await prisma.productBatch.count();
+    const batchCountBefore = await prisma.productBatch.count()
 
     await createPurchase(prisma, {
       userId: user.id,
@@ -52,24 +52,24 @@ describe('createPurchase - batch management', () => {
           expirationDate: new Date('2026-12-31'),
         },
       ],
-    });
+    })
 
-    const batchCountAfter = await prisma.productBatch.count();
-    expect(batchCountAfter).toBe(batchCountBefore + 1);
+    const batchCountAfter = await prisma.productBatch.count()
+    expect(batchCountAfter).toBe(batchCountBefore + 1)
 
     const batch = await prisma.productBatch.findFirst({
       where: { productId: product.id },
-    });
-    expect(batch?.quantity).toBe(30);
-  });
+    })
+    expect(batch?.quantity).toBe(30)
+  })
 
   it('merges into existing batch with matching dates', async () => {
-    const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const user = await seedUser(prisma)
+    const provider = await seedProvider(prisma)
+    const product = await seedProduct(prisma)
 
-    const prodDate = new Date('2025-01-01');
-    const expDate = new Date('2026-12-31');
+    const prodDate = new Date('2025-01-01')
+    const expDate = new Date('2026-12-31')
 
     const existingBatch = await prisma.productBatch.create({
       data: {
@@ -78,7 +78,7 @@ describe('createPurchase - batch management', () => {
         expirationDate: expDate,
         quantity: 20,
       },
-    });
+    })
 
     await createPurchase(prisma, {
       userId: user.id,
@@ -95,19 +95,19 @@ describe('createPurchase - batch management', () => {
           expirationDate: expDate,
         },
       ],
-    });
+    })
 
     const updatedBatch = await prisma.productBatch.findUnique({
       where: { id: existingBatch.id },
-    });
-    expect(updatedBatch?.quantity).toBe(35);
-    expect(await prisma.productBatch.count()).toBe(1);
-  });
+    })
+    expect(updatedBatch?.quantity).toBe(35)
+    expect(await prisma.productBatch.count()).toBe(1)
+  })
 
   it('creates inline provider when no providerId given', async () => {
-    const user = await seedUser(prisma);
-    const product = await seedProduct(prisma);
-    const countBefore = await prisma.provider.count();
+    const user = await seedUser(prisma)
+    const product = await seedProduct(prisma)
+    const countBefore = await prisma.provider.count()
 
     await createPurchase(prisma, {
       userId: user.id,
@@ -127,16 +127,16 @@ describe('createPurchase - batch management', () => {
           expirationDate: new Date('2026-12-31'),
         },
       ],
-    });
+    })
 
-    const countAfter = await prisma.provider.count();
-    expect(countAfter).toBe(countBefore + 1);
-  });
+    const countAfter = await prisma.provider.count()
+    expect(countAfter).toBe(countBefore + 1)
+  })
 
   it('creates inline product when no product id given', async () => {
-    const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const productCountBefore = await prisma.product.count();
+    const user = await seedUser(prisma)
+    const provider = await seedProvider(prisma)
+    const productCountBefore = await prisma.product.count()
 
     await createPurchase(prisma, {
       userId: user.id,
@@ -154,23 +154,23 @@ describe('createPurchase - batch management', () => {
           expirationDate: new Date('2026-12-31'),
         },
       ],
-    });
+    })
 
-    const productCountAfter = await prisma.product.count();
-    expect(productCountAfter).toBe(productCountBefore + 1);
+    const productCountAfter = await prisma.product.count()
+    expect(productCountAfter).toBe(productCountBefore + 1)
 
     const newProduct = await prisma.product.findFirst({
       where: { name: 'Brand New Product' },
-    });
-    expect(newProduct).toBeDefined();
-  });
-});
+    })
+    expect(newProduct).toBeDefined()
+  })
+})
 
 describe('updatePurchase', () => {
   it('updates paidAmount on an existing purchase', async () => {
-    const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const user = await seedUser(prisma)
+    const provider = await seedProvider(prisma)
+    const product = await seedProduct(prisma)
 
     const purchase = await createPurchase(prisma, {
       userId: user.id,
@@ -187,22 +187,22 @@ describe('updatePurchase', () => {
           expirationDate: new Date('2026-12-31'),
         },
       ],
-    });
+    })
 
-    await updatePurchase(prisma, purchase.id, { paidAmount: 300 });
+    await updatePurchase(prisma, purchase.id, { paidAmount: 300 })
 
     const updated = await prisma.purchase.findUnique({
       where: { id: purchase.id },
-    });
-    expect(updated?.paidAmount).toBe(300);
-  });
-});
+    })
+    expect(updated?.paidAmount).toBe(300)
+  })
+})
 
 describe('deletePurchase', () => {
   it('removes the purchase record', async () => {
-    const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const user = await seedUser(prisma)
+    const provider = await seedProvider(prisma)
+    const product = await seedProduct(prisma)
 
     const purchase = await createPurchase(prisma, {
       userId: user.id,
@@ -219,27 +219,23 @@ describe('deletePurchase', () => {
           expirationDate: new Date('2026-12-31'),
         },
       ],
-    });
+    })
 
-    await prisma.purchaseItem.deleteMany({
-      where: { purchaseId: purchase.id },
-    });
-    await deletePurchase(prisma, purchase.id);
+    await prisma.purchaseItem.deleteMany({ where: { purchaseId: purchase.id } })
+    await deletePurchase(prisma, purchase.id)
 
     const found = await prisma.purchase.findUnique({
       where: { id: purchase.id },
-    });
-    expect(found).toBeNull();
-  });
-});
+    })
+    expect(found).toBeNull()
+  })
+})
 
 describe('getAllPurchaseItems', () => {
   it('returns joined product and batch data for each item', async () => {
-    const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma, {
-      name: 'Purchase Item Product',
-    });
+    const user = await seedUser(prisma)
+    const provider = await seedProvider(prisma)
+    const product = await seedProduct(prisma, { name: 'Purchase Item Product' })
 
     const purchase = await createPurchase(prisma, {
       userId: user.id,
@@ -256,23 +252,23 @@ describe('getAllPurchaseItems', () => {
           expirationDate: new Date('2026-12-31'),
         },
       ],
-    });
+    })
 
-    const items = await getAllPurchaseItems(prisma, purchase.id);
+    const items = await getAllPurchaseItems(prisma, purchase.id)
 
-    expect(items).toHaveLength(1);
-    expect(items[0].name).toBe('Purchase Item Product');
-    expect(items[0].quantity).toBe(8);
-  });
-});
+    expect(items).toHaveLength(1)
+    expect(items[0].name).toBe('Purchase Item Product')
+    expect(items[0].quantity).toBe(8)
+  })
+})
 
 describe('getAllPurchasesPaginated', () => {
   it('returns page 1 of 10 with correct total', async () => {
-    const user = await seedUser(prisma);
+    const user = await seedUser(prisma)
 
     for (let i = 0; i < 15; i++) {
-      const provider = await seedProvider(prisma);
-      const product = await seedProduct(prisma);
+      const provider = await seedProvider(prisma)
+      const product = await seedProduct(prisma)
 
       await createPurchase(prisma, {
         userId: user.id,
@@ -289,15 +285,15 @@ describe('getAllPurchasesPaginated', () => {
             expirationDate: new Date('2026-12-31'),
           },
         ],
-      });
+      })
     }
 
     const result = await getAllPurchasesPaginated(prisma, {
       page: 1,
       filter: {},
-    } as any);
+    } as any)
 
-    expect(result.data).toHaveLength(10);
-    expect(result.total).toBe(15);
-  });
-});
+    expect(result.data).toHaveLength(10)
+    expect(result.total).toBe(15)
+  })
+})

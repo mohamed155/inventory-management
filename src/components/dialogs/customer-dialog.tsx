@@ -130,9 +130,6 @@ function CustomerDialog({
                       aria-invalid={fieldState.invalid}
                       autoComplete="off"
                     />
-                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
-                      <FieldError errors={[fieldState.error]} />
-                    </Activity>
                   </Field>
                 )}
               />
@@ -173,7 +170,12 @@ function CustomerDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button onClick={() => form.handleSubmit(onSubmit)()}>
+            <Button
+              onClick={() => {
+                console.log(form.formState.errors);
+                form.handleSubmit(onSubmit)();
+              }}
+            >
               {t('Save')}
             </Button>
           </DialogFooter>

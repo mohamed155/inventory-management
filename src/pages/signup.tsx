@@ -18,7 +18,9 @@ import { useCurrentUserStore } from '@/store/user.store.ts';
 function Signup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const setCurrentUser = useCurrentUserStore((state) => state.setCurrentUser);
+  const setCurrentUser = useCurrentUserStore(
+    (state: any) => state.setCurrentUser,
+  );
 
   const formSchema = useMemo(
     () =>
@@ -54,30 +56,32 @@ function Signup() {
 
   const onSubmit = async () => {
     const user = form.getValues();
-    try {
-      const createdUser = await createUser({
-        firstname: user.firstname,
-        lastname: user.lastname,
-        username: user.username,
-        password: user.password,
-        role: 'admin',
-      });
-      setCurrentUser({
-        id: createdUser.id,
-        firstname: createdUser.firstname,
-        lastname: createdUser.lastname,
-        username: createdUser.username,
-        role: createdUser.role,
-      });
-      navigate('/');
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('username')) {
-        form.setError('username', {
-          type: 'manual',
-          message: t('Username is already taken, please use another username'),
-        });
-      }
-    }
+    await createUser({
+      firstname: user.firstname,
+      lastname: user.lastname,
+      username: user.username,
+      password: user.password,
+    })
+      .catch((error: any) => {
+        if (error.message.indexOf('username') > 0) {
+          form.setError('username', {
+            type: 'manual',
+            message: t(
+              'Username is already taken, please user another username',
+            ),
+          });
+        }
+      })
+      .then((createdUser) => {
+        if (createdUser)
+          setCurrentUser({
+            id: createdUser.id,
+            firstname: createdUser.firstname,
+            lastname: createdUser.lastname,
+            username: createdUser.username,
+          });
+      })
+      .then(() => navigate('/'));
   };
 
   return (

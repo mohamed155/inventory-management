@@ -1,24 +1,24 @@
 const createLocalStorageMock = () => {
-  let store: Record<string, string> = {};
+  let store: Record<string, string> = {}
   return {
     getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, value: string) => {
-      store[key] = String(value);
+      store[key] = String(value)
     },
     removeItem: (key: string) => {
-      delete store[key];
+      delete store[key]
     },
     clear: () => {
-      store = {};
+      store = {}
     },
     get length() {
-      return Object.keys(store).length;
+      return Object.keys(store).length
     },
     key: (index: number) => Object.keys(store)[index] ?? null,
-  };
-};
+  }
+}
 
 Object.defineProperty(globalThis, 'localStorage', {
   value: createLocalStorageMock(),
   writable: true,
-});
+})
