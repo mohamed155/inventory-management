@@ -29,6 +29,7 @@ import type { ProductBatchWhereInput } from '../../generated/prisma/models/Produ
 function Inventory() {
   const { t } = useTranslation();
   const dateFormat = useCurrentSettings((s) => s.dateFormat);
+  const currency = useCurrentSettings((s) => s.currency);
   const lowStockThreshold = useCurrentSettings((s) => s.lowStockThreshold);
   const { confirm } = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -125,6 +126,17 @@ function Inventory() {
     () => [
       { accessorKey: 'name', header: () => t('Name') },
       { accessorKey: 'description', header: () => t('Description') },
+      {
+        id: 'unitPrice',
+        accessorFn: (row) => (row as Product & ProductBatch & { unitPrice: number }).unitPrice ?? 0,
+        header: () => t('Unit Price'),
+        enableSorting: false,
+        enableColumnFilter: false,
+        cell: (info) => {
+          const price = info.getValue() as number;
+          return `${price} ${t(currency)}`;
+        },
+      },
       {
         accessorKey: 'quantity',
         header: () => t('Batch Quantity'),
@@ -227,7 +239,7 @@ function Inventory() {
         ),
       },
     ],
-    [t, dateFormat, lowStockThreshold, editProduct, deleteProduct],
+    [t, dateFormat, currency, lowStockThreshold, editProduct, deleteProduct],
   );
 
   const handleDialogClose = (

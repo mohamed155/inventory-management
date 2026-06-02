@@ -81,7 +81,7 @@ const initWindow = async () => {
       : join(__dirname, 'preload.js');
 
     const window = new BrowserWindow({
-      width: 1200,
+      width: 1400,
       height: 800,
       frame: false,
       show: false,

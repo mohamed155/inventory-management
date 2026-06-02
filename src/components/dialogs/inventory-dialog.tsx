@@ -68,6 +68,7 @@ function InventoryDialog({
             : {
                 productId: z.string().min(1, t('Product is required')),
               }),
+          unitPrice: z.number().min(0, t('Unit Price must be positive')),
           quantity: z.number().min(1, t('Quantity can not be zero or less')),
           productionDate: z.date(),
           expirationDate: z.date(),
@@ -85,6 +86,7 @@ function InventoryDialog({
       productId: !product && status === 'add' ? '' : undefined,
       name: status === 'new' ? '' : undefined,
       description: status === 'new' ? '' : undefined,
+      unitPrice: 0,
       quantity: 0,
       productionDate: new Date(),
       expirationDate: new Date(),
@@ -109,6 +111,7 @@ function InventoryDialog({
         : status === 'new'
           ? ''
           : undefined,
+      unitPrice: product ? (product.unitPrice ?? 0) : 0,
       quantity: product ? product.quantity : 0,
       productionDate: product ? product.productionDate : new Date(),
       expirationDate: product ? product.expirationDate : new Date(),
@@ -216,6 +219,30 @@ function InventoryDialog({
                 )}
               />
             </Activity>
+            <Controller
+              name="unitPrice"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>{t('Unit Price')}</FieldLabel>
+                  <Input
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange({
+                        ...e,
+                        target: { ...e.target, value: Number(e.target.value) },
+                      })
+                    }
+                    aria-invalid={fieldState.invalid}
+                    autoComplete="off"
+                    type="number"
+                  />
+                  <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                    <FieldError errors={[fieldState.error]} />
+                  </Activity>
+                </Field>
+              )}
+            />
             <Controller
               name="quantity"
               control={form.control}

@@ -172,6 +172,7 @@ export const createProductBatch = async (
       data: {
         name: productBatch.name,
         description: productBatch.description,
+        unitPrice: productBatch.unitPrice ?? 0,
         inventoryId,
       },
     });
@@ -197,6 +198,7 @@ export const updateProductBatch = async (
       data: {
         name: productBatch.name,
         description: productBatch.description,
+        unitPrice: productBatch.unitPrice ?? 0,
       },
     }),
     prisma.productBatch.update({
