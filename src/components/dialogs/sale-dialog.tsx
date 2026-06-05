@@ -27,6 +27,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field.tsx';
+import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import type { SaleFormData } from '@/models/sales-form.ts';
 import { getAllCustomers } from '@/services/customers.ts';
@@ -379,21 +380,14 @@ function SaleDialog({
                           render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
                               <FieldLabel>{t('Quantity')}</FieldLabel>
-                              <Input
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange({
-                                    ...e,
-                                    target: {
-                                      ...e.target,
-                                      value: Number(e.target.value),
-                                    },
-                                  })
-                                }
+                              <ArithmeticInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
                                 aria-invalid={fieldState.invalid}
                                 autoComplete="off"
-                                type="number"
-                                max={stock}
                               />
                               <Activity
                                 mode={fieldState.invalid ? 'visible' : 'hidden'}
