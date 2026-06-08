@@ -23,6 +23,7 @@ import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import type { SalesListResult } from '@/models/sales-list-result.ts';
 import { getAllPurchaseItems } from '@/services/purchases.ts';
 import { getAllSaleItems } from '@/services/sales.ts';
+import { useCurrentUserStore } from '@/store/user.store.ts';
 import { printContent } from '@/util/print.ts';
 
 type InvoiceData =
@@ -39,6 +40,7 @@ type InvoiceDialogProps = {
 function InvoiceDialog({ open, type, data, close }: InvoiceDialogProps) {
   const { t } = useTranslation();
   const contentRef = useRef<HTMLDivElement>(null);
+  const currentUser = useCurrentUserStore((s) => s.currentUser);
 
   const { data: items } = useQuery({
     queryKey: ['invoice-items', type, data?.id],
@@ -94,6 +96,10 @@ function InvoiceDialog({ open, type, data, close }: InvoiceDialogProps) {
                 <Badge>
                   {totalCost - paidAmount > 0 ? t('Partial') : t('Paid')}
                 </Badge>
+              </div>
+              <div>
+                <h6>{t('Created By')}</h6>
+                <p>{currentUser ? `${currentUser.firstname} ${currentUser.lastname}` : ''}</p>
               </div>
             </div>
             <div>

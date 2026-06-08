@@ -160,6 +160,7 @@ export default {
   'Select an option': 'اختر خيارًا',
   Settings: 'الإعدادات',
   Status: 'الحالة',
+  'Created By': 'أنشئ بواسطة',
   'Stock alerts': 'تنبيهات المخزون',
   Submit: 'إرسال',
   'This feature will be available soon!': 'هذه الميزة ستكون متاحة قريبًا!',

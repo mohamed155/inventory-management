@@ -160,6 +160,7 @@ export default {
   'Select an option': 'Select an option',
   Settings: 'Settings',
   Status: 'Status',
+  'Created By': 'Created By',
   'Stock alerts': 'Stock alerts',
   Submit: 'Submit',
   'This feature will be available soon!':
