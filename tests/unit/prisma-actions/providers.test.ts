@@ -12,11 +12,14 @@ import { clearDatabase, createTestPrisma } from '../../setup/db.ts';
 
 let prisma: PrismaClient;
 let closeDb: () => void;
+let inventoryId: string;
 
 beforeAll(async () => {
   const db = await createTestPrisma();
   prisma = db.prisma;
   closeDb = db.close;
+  const inv = await prisma.inventory.create({ data: { name: 'Test' } });
+  inventoryId = inv.id;
 });
 
 afterAll(() => {
@@ -34,11 +37,12 @@ describe('getAllProvidersPaginated', () => {
         data: {
           name: `Provider ${i}`,
           phone: `010${String(i).padStart(8, '0')}`,
+          inventoryId,
         },
       });
     }
 
-    const result = await getAllProvidersPaginated(prisma, {
+    const result = await getAllProvidersPaginated(prisma, inventoryId, {
       page: 1,
       filter: [],
     } as any);
@@ -54,11 +58,12 @@ describe('getAllProvidersPaginated', () => {
         data: {
           name: names[i],
           phone: `012${String(i).padStart(8, '0')}`,
+          inventoryId,
         },
       });
     }
 
-    const result = await getAllProvidersPaginated(prisma, {
+    const result = await getAllProvidersPaginated(prisma, inventoryId, {
       page: 1,
       orderProperty: 'name',
       orderDirection: 'asc',
@@ -72,10 +77,10 @@ describe('getAllProvidersPaginated', () => {
 describe('getAllProviders', () => {
   it('returns only id and name fields', async () => {
     await prisma.provider.create({
-      data: { name: 'Minimal Provider', phone: '01099999990' },
+      data: { name: 'Minimal Provider', phone: '01099999990', inventoryId },
     });
 
-    const providers = await getAllProviders(prisma);
+    const providers = await getAllProviders(prisma, inventoryId);
 
     expect(providers.length).toBeGreaterThan(0);
     const provider = providers[0];
@@ -87,7 +92,7 @@ describe('getAllProviders', () => {
 
 describe('CRUD round-trip', () => {
   it('creates, updates, and deletes a provider', async () => {
-    const created = await createProvider(prisma, {
+    const created = await createProvider(prisma, inventoryId, {
       name: 'Create Me',
       phone: '01022222222',
     } as any);

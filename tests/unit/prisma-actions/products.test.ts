@@ -11,11 +11,14 @@ import { clearDatabase, createTestPrisma } from '../../setup/db.ts';
 
 let prisma: PrismaClient;
 let closeDb: () => void;
+let inventoryId: string;
 
 beforeAll(async () => {
   const db = await createTestPrisma();
   prisma = db.prisma;
   closeDb = db.close;
+  const inv = await prisma.inventory.create({ data: { name: 'Test' } });
+  inventoryId = inv.id;
 });
 
 afterAll(() => {
@@ -28,7 +31,7 @@ afterEach(async () => {
 
 describe('createProductBatch', () => {
   it('creates a new product when no productId is provided', async () => {
-    const batch = await createProductBatch(prisma, {
+    const batch = await createProductBatch(prisma, inventoryId, {
       name: 'New Product',
       description: 'desc',
       productionDate: new Date('2025-01-01'),
@@ -47,10 +50,10 @@ describe('createProductBatch', () => {
 
   it('links to existing product when productId is provided', async () => {
     const product = await prisma.product.create({
-      data: { name: 'Existing Product' },
+      data: { name: 'Existing Product', inventoryId },
     });
 
-    const batch = await createProductBatch(prisma, {
+    const batch = await createProductBatch(prisma, inventoryId, {
       productId: product.id,
       productionDate: new Date('2025-03-01'),
       expirationDate: new Date('2026-06-30'),
@@ -63,7 +66,7 @@ describe('createProductBatch', () => {
 
   it('throws when productId refers to a non-existent product', async () => {
     await expect(
-      createProductBatch(prisma, {
+      createProductBatch(prisma, inventoryId, {
         productId: 'non-existent-id',
         productionDate: new Date(),
         expirationDate: new Date(),
@@ -75,7 +78,7 @@ describe('createProductBatch', () => {
 
 describe('updateProductBatch', () => {
   it('updates product name and batch fields', async () => {
-    const product = await prisma.product.create({ data: { name: 'Original' } });
+    const product = await prisma.product.create({ data: { name: 'Original', inventoryId } });
     const batch = await prisma.productBatch.create({
       data: {
         productId: product.id,
@@ -108,7 +111,7 @@ describe('updateProductBatch', () => {
 describe('deleteProductBatch', () => {
   it('removes the batch record', async () => {
     const product = await prisma.product.create({
-      data: { name: 'To Delete' },
+      data: { name: 'To Delete', inventoryId },
     });
     const batch = await prisma.productBatch.create({
       data: {
@@ -132,7 +135,7 @@ describe('getAllProductBatchesPaginated', () => {
   it('returns page 1 of 10 with correct total', async () => {
     for (let i = 0; i < 15; i++) {
       const product = await prisma.product.create({
-        data: { name: `Product ${i}` },
+        data: { name: `Product ${i}`, inventoryId },
       });
       await prisma.productBatch.create({
         data: {
@@ -144,7 +147,7 @@ describe('getAllProductBatchesPaginated', () => {
       });
     }
 
-    const result = await getAllProductBatchesPaginated(prisma, {
+    const result = await getAllProductBatchesPaginated(prisma, inventoryId, {
       page: 1,
       filter: [],
     } as any);
@@ -156,7 +159,7 @@ describe('getAllProductBatchesPaginated', () => {
   it('returns page 2 with remaining records', async () => {
     for (let i = 0; i < 15; i++) {
       const product = await prisma.product.create({
-        data: { name: `Batch Product ${i}` },
+        data: { name: `Batch Product ${i}`, inventoryId },
       });
       await prisma.productBatch.create({
         data: {
@@ -168,7 +171,7 @@ describe('getAllProductBatchesPaginated', () => {
       });
     }
 
-    const result = await getAllProductBatchesPaginated(prisma, {
+    const result = await getAllProductBatchesPaginated(prisma, inventoryId, {
       page: 2,
       filter: [],
     } as any);
@@ -181,7 +184,7 @@ describe('getAllProductBatchesPaginated', () => {
 describe('getProductBatch', () => {
   it('returns batch with joined product data', async () => {
     const product = await prisma.product.create({
-      data: { name: 'Joined Product' },
+      data: { name: 'Joined Product', inventoryId },
     });
     const batch = await prisma.productBatch.create({
       data: {

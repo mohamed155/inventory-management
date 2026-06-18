@@ -21,7 +21,8 @@ export function makePurchaseFormData(
 
 export async function seedPurchase(
   prisma: PrismaClient,
+  inventoryId: string,
   formData: PurchaseFormData,
 ) {
-  return createPurchase(prisma, formData);
+  return createPurchase(prisma, inventoryId, formData);
 }
