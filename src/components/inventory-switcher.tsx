@@ -33,7 +33,7 @@ function InventorySwitcher() {
         <SelectTrigger className="w-[180px] h-8 text-sm">
           <SelectValue placeholder={t('Select Inventory')} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" side="bottom" sideOffset={4}>
           {inventories.map((inv) => (
             <SelectItem key={inv.id} value={inv.id}>
               {inv.name}

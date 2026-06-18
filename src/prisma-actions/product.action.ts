@@ -102,10 +102,23 @@ export const getAllProductBatchesPaginated = async (
     },
   });
 
+  const productIds = [...new Set(batches.map((b: ProductBatch) => b.productId))];
+  const totals = await prisma.productBatch.groupBy({
+    by: ['productId'],
+    where: { productId: { in: productIds } },
+    _sum: { quantity: true },
+  });
+  const totalMap = new Map(
+    (totals as { productId: string; _sum: { quantity: number | null } }[]).map(
+      (t) => [t.productId, t._sum.quantity ?? 0],
+    ),
+  );
+
   const data = batches.map((batch: ProductBatch & { product: Product }) => ({
     ...batch.product,
     ...batch,
     productId: batch.product.id,
+    totalQuantity: totalMap.get(batch.productId) ?? 0,
   }));
 
   const total = (await prisma.productBatch.count({ where })) as number;
@@ -159,6 +172,7 @@ export const createProductBatch = async (
       data: {
         name: productBatch.name,
         description: productBatch.description,
+        unitPrice: productBatch.unitPrice ?? 0,
         inventoryId,
       },
     });
@@ -184,6 +198,7 @@ export const updateProductBatch = async (
       data: {
         name: productBatch.name,
         description: productBatch.description,
+        unitPrice: productBatch.unitPrice ?? 0,
       },
     }),
     prisma.productBatch.update({

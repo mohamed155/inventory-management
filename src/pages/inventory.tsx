@@ -29,6 +29,8 @@ import type { ProductBatchWhereInput } from '../../generated/prisma/models/Produ
 function Inventory() {
   const { t } = useTranslation();
   const dateFormat = useCurrentSettings((s) => s.dateFormat);
+  const currency = useCurrentSettings((s) => s.currency);
+  const lowStockThreshold = useCurrentSettings((s) => s.lowStockThreshold);
   const { confirm } = useConfirm();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<
@@ -125,20 +127,50 @@ function Inventory() {
       { accessorKey: 'name', header: () => t('Name') },
       { accessorKey: 'description', header: () => t('Description') },
       {
+        id: 'unitPrice',
+        accessorFn: (row) => (row as Product & ProductBatch & { unitPrice: number }).unitPrice ?? 0,
+        header: () => t('Unit Price'),
+        enableSorting: false,
+        enableColumnFilter: false,
+        cell: (info) => {
+          const price = info.getValue() as number;
+          return `${price} ${t(currency)}`;
+        },
+      },
+      {
         accessorKey: 'quantity',
-        header: () => t('Quantity'),
-        cell: (info) => (
-          <Badge
-            variant={
-              (info.getValue() as number) < 10 ? 'destructive' : 'default'
-            }
-          >
-            {info.getValue() as number}{' '}
-            {(info.getValue() as number) > 1 ? t('Units') : t('Unit')}
-          </Badge>
-        ),
+        header: () => t('Batch Quantity'),
+        cell: (info) => {
+          const qty = info.getValue() as number;
+          return (
+            <Badge variant="default">
+              {qty} {qty > 1 ? t('Units') : t('Unit')}
+            </Badge>
+          );
+        },
         meta: {
           filterVariant: 'number',
+        },
+      },
+      {
+        id: 'totalQuantity',
+        accessorFn: (row) => (row as Product & ProductBatch & { totalQuantity: number }).totalQuantity,
+        header: () => t('Total Quantity'),
+        enableSorting: false,
+        enableColumnFilter: false,
+        cell: (info) => {
+          const qty = info.getValue() as number;
+          const className =
+            qty <= lowStockThreshold
+              ? 'border-transparent bg-red-500 text-white'
+              : qty <= lowStockThreshold * 3
+                ? 'border-transparent bg-orange-500 text-white'
+                : '';
+          return (
+            <Badge className={className}>
+              {qty} {qty > 1 ? t('Units') : t('Unit')}
+            </Badge>
+          );
         },
       },
       {
@@ -207,7 +239,7 @@ function Inventory() {
         ),
       },
     ],
-    [t, dateFormat, editProduct, deleteProduct],
+    [t, dateFormat, currency, lowStockThreshold, editProduct, deleteProduct],
   );
 
   const handleDialogClose = (

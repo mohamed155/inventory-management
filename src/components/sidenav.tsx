@@ -1,4 +1,5 @@
 import {
+  BarChart2,
   DollarSign,
   LayoutDashboard,
   LogOut,
@@ -93,6 +94,12 @@ function Sidenav() {
         title: t('Providers'),
         icon: <Truck size={18} />,
         onClick: () => navigate('/providers'),
+      },
+      {
+        name: 'reports',
+        title: t('Reports'),
+        icon: <BarChart2 size={18} />,
+        onClick: () => navigate('/reports'),
       },
     ],
     [t, navigate],

@@ -264,46 +264,38 @@ export const createSale = async (prisma: PrismaClient, inventoryId: string, body
     });
 
     for (const product of body.products) {
-      let productBatch = await tx.productBatch.findFirst({
-        where: {
-          productId: product.id,
-        },
-        orderBy: {
-          expirationDate: 'asc',
-        },
+      const batches = await tx.productBatch.findMany({
+        where: { productId: product.id, quantity: { gt: 0 } },
+        orderBy: { productionDate: 'asc' },
       });
 
-      if (!productBatch || productBatch.quantity < product.quantity) {
+      const totalAvailable = batches.reduce((sum: number, b: ProductBatch) => sum + b.quantity, 0);
+      if (totalAvailable < product.quantity) {
         throw new Error(`Insufficient stock for product`);
       }
 
-      if (productBatch.quantity === product.quantity) {
-        productBatch = await tx.productBatch.update({
-          where: { id: productBatch.id },
-          data: {
-            quantity: 0,
-          },
-        });
-      } else {
-        productBatch = await tx.productBatch.update({
-          where: { id: productBatch.id },
-          data: {
-            quantity: {
-              decrement: product.quantity,
-            },
-          },
-        });
-      }
+      let remaining = product.quantity;
+      for (const batch of batches as ProductBatch[]) {
+        if (remaining <= 0) break;
+        const deduct = Math.min(batch.quantity, remaining);
 
-      await tx.saleItem.create({
-        data: {
-          quantity: product.quantity,
-          unitPrice: product.unitPrice,
-          sale: { connect: { id: sale.id } },
-          product: { connect: { id: product.id } },
-          batch: { connect: { id: productBatch.id } },
-        },
-      });
+        await tx.productBatch.update({
+          where: { id: batch.id },
+          data: { quantity: { decrement: deduct } },
+        });
+
+        await tx.saleItem.create({
+          data: {
+            quantity: deduct,
+            unitPrice: product.unitPrice,
+            sale: { connect: { id: sale.id } },
+            product: { connect: { id: product.id } },
+            batch: { connect: { id: batch.id } },
+          },
+        });
+
+        remaining -= deduct;
+      }
     }
 
     return sale;

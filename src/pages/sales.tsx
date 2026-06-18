@@ -7,8 +7,9 @@ import type {
 } from '@tanstack/react-table';
 import { endOfDay, startOfDay } from 'date-fns';
 import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
-import { Activity, useCallback, useMemo, useState } from 'react';
+import { Activity, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import SaleDialog from '@/components/dialogs/sale-dialog.tsx';
@@ -34,7 +35,15 @@ function Sales() {
   const currency = useCurrentSettings((s) => s.currency);
   const dateFormat = useCurrentSettings((s) => s.dateFormat);
   const { confirm } = useConfirm();
+  const location = useLocation();
   const [saleDialogOpen, setSaleDialogOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (location.state?.openDialog) {
+      setSaleDialogOpen(true);
+      window.history.replaceState({}, '');
+    }
+  }, [location.state?.openDialog]);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState<boolean>(false);
   const [updatePaymentOpen, setUpdatePaymentOpen] = useState<boolean>(false);
   const [selectedSale, setSelectedSale] = useState<Sale>();

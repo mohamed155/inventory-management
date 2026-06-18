@@ -5,6 +5,7 @@ import Dashboard from '@/pages/dashboard.tsx';
 import Inventory from '@/pages/inventory.tsx';
 import Login from '@/pages/login.tsx';
 import Providers from '@/pages/providers.tsx';
+import Reports from '@/pages/reports.tsx';
 import Purchases from '@/pages/purchases.tsx';
 import Sales from '@/pages/sales.tsx';
 import Settings from '@/pages/settings.tsx';
@@ -102,6 +103,10 @@ const router = createHashRouter([
       {
         path: 'providers',
         element: <Providers />,
+      },
+      {
+        path: 'reports',
+        element: <Reports />,
       },
       {
         path: 'settings',

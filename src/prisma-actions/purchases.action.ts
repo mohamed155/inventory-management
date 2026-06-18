@@ -320,6 +320,11 @@ export const createPurchase = async (
           batch: { connect: { id: productBatch.id } },
         },
       });
+
+      await tx.product.update({
+        where: { id: product.id },
+        data: { unitPrice: product.unitPrice },
+      });
     }
 
     return purchase;
