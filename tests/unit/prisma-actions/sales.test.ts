@@ -14,11 +14,14 @@ import { clearDatabase, createTestPrisma } from '../../setup/db.ts';
 
 let prisma: PrismaClient;
 let closeDb: () => void;
+let inventoryId: string;
 
 beforeAll(async () => {
   const db = await createTestPrisma();
   prisma = db.prisma;
   closeDb = db.close;
+  const inv = await prisma.inventory.create({ data: { name: 'Test' } });
+  inventoryId = inv.id;
 });
 
 afterAll(() => {
@@ -36,7 +39,7 @@ describe('createSale - inventory deduction (FIFO)', () => {
     const product = await seedProduct(prisma);
     const batch = await seedProductBatch(prisma, product.id, { quantity: 50 });
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 100,
@@ -66,7 +69,7 @@ describe('createSale - inventory deduction (FIFO)', () => {
       quantity: 30,
     });
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 100,
@@ -93,7 +96,7 @@ describe('createSale - inventory deduction (FIFO)', () => {
     await seedProductBatch(prisma, product.id, { quantity: 5 });
 
     await expect(
-      createSale(prisma, {
+      createSale(prisma, inventoryId, {
         userId: user.id,
         customerId: customer.id,
         paidAmount: 100,
@@ -112,7 +115,7 @@ describe('createSale - inventory deduction (FIFO)', () => {
 
     const countBefore = await prisma.customer.count();
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: undefined,
       customerFirstname: 'Inline',
@@ -136,7 +139,7 @@ describe('createSale - inventory deduction (FIFO)', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
-    const sale = await createSale(prisma, {
+    const sale = await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 50,
@@ -160,7 +163,7 @@ describe('updateSale', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 20 });
 
-    const sale = await createSale(prisma, {
+    const sale = await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 0,
@@ -184,7 +187,7 @@ describe('deleteSale', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 20 });
 
-    const sale = await createSale(prisma, {
+    const sale = await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 50,
@@ -209,7 +212,7 @@ describe('getAllSaleItems', () => {
     const product = await seedProduct(prisma, { name: 'Item Product' });
     await seedProductBatch(prisma, product.id, { quantity: 20 });
 
-    const sale = await createSale(prisma, {
+    const sale = await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 50,
@@ -235,7 +238,7 @@ describe('getAllSalesPaginated', () => {
       const customer = await seedCustomer(prisma);
       const product = await seedProduct(prisma);
       await seedProductBatch(prisma, product.id, { quantity: 100 });
-      await createSale(prisma, {
+      await createSale(prisma, inventoryId, {
         userId: user.id,
         customerId: customer.id,
         paidAmount: 50,
@@ -246,7 +249,7 @@ describe('getAllSalesPaginated', () => {
       });
     }
 
-    const result = await getAllSalesPaginated(prisma, {
+    const result = await getAllSalesPaginated(prisma, inventoryId, {
       page: 1,
       filter: {},
     } as any);

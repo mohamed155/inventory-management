@@ -22,11 +22,14 @@ import { clearDatabase, createTestPrisma } from '../../setup/db.ts';
 
 let prisma: PrismaClient;
 let closeDb: () => void;
+let inventoryId: string;
 
 beforeAll(async () => {
   const db = await createTestPrisma();
   prisma = db.prisma;
   closeDb = db.close;
+  const inv = await prisma.inventory.create({ data: { name: 'Test' } });
+  inventoryId = inv.id;
 });
 
 afterAll(() => {
@@ -39,7 +42,7 @@ afterEach(async () => {
 
 describe('getTotalSalesAmount', () => {
   it('returns 0 when no sales exist', async () => {
-    const result = await getTotalSalesAmount(prisma);
+    const result = await getTotalSalesAmount(prisma, inventoryId);
     expect(Number(result)).toBe(0);
   });
 
@@ -49,7 +52,7 @@ describe('getTotalSalesAmount', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 80,
@@ -59,14 +62,14 @@ describe('getTotalSalesAmount', () => {
       products: [{ id: product.id, quantity: 5, unitPrice: 20 }],
     });
 
-    const result = await getTotalSalesAmount(prisma);
+    const result = await getTotalSalesAmount(prisma, inventoryId);
     expect(Number(result)).toBe(70); // 80 - 10
   });
 });
 
 describe('getTotalPurchasesAmount', () => {
   it('returns 0 when no purchases exist', async () => {
-    const result = await getTotalPurchasesAmount(prisma);
+    const result = await getTotalPurchasesAmount(prisma, inventoryId);
     expect(Number(result)).toBe(0);
   });
 
@@ -75,7 +78,7 @@ describe('getTotalPurchasesAmount', () => {
     const provider = await seedProvider(prisma);
     const product = await seedProduct(prisma);
 
-    await createPurchase(prisma, {
+    await createPurchase(prisma, inventoryId, {
       userId: user.id,
       providerId: provider.id,
       paidAmount: 300,
@@ -92,7 +95,7 @@ describe('getTotalPurchasesAmount', () => {
       ],
     });
 
-    const result = await getTotalPurchasesAmount(prisma);
+    const result = await getTotalPurchasesAmount(prisma, inventoryId);
     expect(Number(result)).toBe(300);
   });
 });
@@ -105,7 +108,7 @@ describe('getTotalProfit', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 500,
@@ -115,7 +118,7 @@ describe('getTotalProfit', () => {
       products: [{ id: product.id, quantity: 10, unitPrice: 50 }],
     });
 
-    await createPurchase(prisma, {
+    await createPurchase(prisma, inventoryId, {
       userId: user.id,
       providerId: provider.id,
       paidAmount: 200,
@@ -132,14 +135,14 @@ describe('getTotalProfit', () => {
       ],
     });
 
-    const profit = await getTotalProfit(prisma);
+    const profit = await getTotalProfit(prisma, inventoryId);
     expect(Number(profit)).toBe(300); // 500 - 200
   });
 });
 
 describe('getDueFromCustomers', () => {
   it('returns 0 when no sales exist', async () => {
-    const result = await getDueFromCustomers(prisma);
+    const result = await getDueFromCustomers(prisma, inventoryId);
     expect(Number(result)).toBe(0);
   });
 
@@ -149,7 +152,7 @@ describe('getDueFromCustomers', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 30,
@@ -160,14 +163,14 @@ describe('getDueFromCustomers', () => {
     });
 
     // totalValue = 100, discount = 10, paidAmount = 30, due = 100 - 10 - 30 = 60
-    const due = await getDueFromCustomers(prisma);
+    const due = await getDueFromCustomers(prisma, inventoryId);
     expect(Number(due)).toBe(60);
   });
 });
 
 describe('getDueToProviders', () => {
   it('returns 0 when no purchases exist', async () => {
-    const result = await getDueToProviders(prisma);
+    const result = await getDueToProviders(prisma, inventoryId);
     expect(Number(result)).toBe(0);
   });
 
@@ -176,7 +179,7 @@ describe('getDueToProviders', () => {
     const provider = await seedProvider(prisma);
     const product = await seedProduct(prisma);
 
-    await createPurchase(prisma, {
+    await createPurchase(prisma, inventoryId, {
       userId: user.id,
       providerId: provider.id,
       paidAmount: 100,
@@ -194,7 +197,7 @@ describe('getDueToProviders', () => {
     });
 
     // totalValue = 500, paidAmount = 100, due = 400
-    const due = await getDueToProviders(prisma);
+    const due = await getDueToProviders(prisma, inventoryId);
     expect(Number(due)).toBe(400);
   });
 });
@@ -206,7 +209,7 @@ describe('getAllOverduePayments', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 20,
@@ -216,7 +219,7 @@ describe('getAllOverduePayments', () => {
       products: [{ id: product.id, quantity: 5, unitPrice: 30 }],
     });
 
-    const result = await getAllOverduePayments(prisma);
+    const result = await getAllOverduePayments(prisma, inventoryId);
     expect(Number(result.count)).toBeGreaterThanOrEqual(1);
     expect(Number(result.totalRemainingAmount)).toBeGreaterThan(0);
   });
@@ -228,7 +231,7 @@ describe('getAllOverduePayments', () => {
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
     // Fully paid sale: paidAmount = total cost
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 150,
@@ -238,7 +241,7 @@ describe('getAllOverduePayments', () => {
       products: [{ id: product.id, quantity: 5, unitPrice: 30 }],
     });
 
-    const result = await getAllOverduePayments(prisma);
+    const result = await getAllOverduePayments(prisma, inventoryId);
     expect(Number(result.count)).toBe(0);
   });
 });
@@ -254,7 +257,7 @@ describe('getExpiringProducts', () => {
       quantity: 20,
     });
 
-    const results = await getExpiringProducts(prisma, 10);
+    const results = await getExpiringProducts(prisma, inventoryId, 10);
     const found = results.find((r) => r.name === 'Expiring Soon');
     expect(found).toBeDefined();
   });
@@ -269,7 +272,7 @@ describe('getExpiringProducts', () => {
       quantity: 20,
     });
 
-    const results = await getExpiringProducts(prisma, 10);
+    const results = await getExpiringProducts(prisma, inventoryId, 10);
     const found = results.find((r) => r.name === 'Far Future');
     expect(found).toBeUndefined();
   });
@@ -280,7 +283,7 @@ describe('getLowStockProducts', () => {
     const product = await seedProduct(prisma, { name: 'Low Stock Item' });
     await seedProductBatch(prisma, product.id, { quantity: 5 });
 
-    const results = await getLowStockProducts(prisma, 10);
+    const results = await getLowStockProducts(prisma, inventoryId, 10);
     const found = results.find((r) => r.name === 'Low Stock Item');
     expect(found).toBeDefined();
     expect(Number(found?.totalQuantity)).toBe(5);
@@ -290,7 +293,7 @@ describe('getLowStockProducts', () => {
     const product = await seedProduct(prisma, { name: 'Well Stocked' });
     await seedProductBatch(prisma, product.id, { quantity: 50 });
 
-    const results = await getLowStockProducts(prisma, 10);
+    const results = await getLowStockProducts(prisma, inventoryId, 10);
     const found = results.find((r) => r.name === 'Well Stocked');
     expect(found).toBeUndefined();
   });
@@ -306,7 +309,7 @@ describe('getTopUpcomingPayingCustomers', () => {
       const customer = await seedCustomer(prisma);
       const due = new Date();
       due.setDate(due.getDate() + i + 1);
-      await createSale(prisma, {
+      await createSale(prisma, inventoryId, {
         userId: user.id,
         customerId: customer.id,
         paidAmount: 0,
@@ -317,7 +320,7 @@ describe('getTopUpcomingPayingCustomers', () => {
       });
     }
 
-    const results = await getTopUpcomingPayingCustomers(prisma);
+    const results = await getTopUpcomingPayingCustomers(prisma, inventoryId);
     expect(results).toHaveLength(5);
     // First result should have the earliest due date
     expect(new Date(results[0].payDueDate).getTime()).toBeLessThan(
@@ -331,7 +334,7 @@ describe('getTopUpcomingPayingCustomers', () => {
     const product = await seedProduct(prisma);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
-    await createSale(prisma, {
+    await createSale(prisma, inventoryId, {
       userId: user.id,
       customerId: customer.id,
       paidAmount: 50,
@@ -341,7 +344,7 @@ describe('getTopUpcomingPayingCustomers', () => {
       products: [{ id: product.id, quantity: 1, unitPrice: 50 }],
     });
 
-    const results = await getTopUpcomingPayingCustomers(prisma);
+    const results = await getTopUpcomingPayingCustomers(prisma, inventoryId);
     expect(results).toHaveLength(0);
   });
 });
@@ -355,7 +358,7 @@ describe('getTopUpcomingPayingProviders', () => {
       const provider = await seedProvider(prisma);
       const due = new Date();
       due.setDate(due.getDate() + i + 1);
-      await createPurchase(prisma, {
+      await createPurchase(prisma, inventoryId, {
         userId: user.id,
         providerId: provider.id,
         paidAmount: 0,
@@ -373,7 +376,7 @@ describe('getTopUpcomingPayingProviders', () => {
       });
     }
 
-    const results = await getTopUpcomingPayingProviders(prisma);
+    const results = await getTopUpcomingPayingProviders(prisma, inventoryId);
     expect(results).toHaveLength(5);
   });
 });

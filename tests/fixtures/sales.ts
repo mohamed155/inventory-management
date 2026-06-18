@@ -20,6 +20,10 @@ export function makeSaleFormData(
   };
 }
 
-export async function seedSale(prisma: PrismaClient, formData: SaleFormData) {
-  return createSale(prisma, formData);
+export async function seedSale(
+  prisma: PrismaClient,
+  inventoryId: string,
+  formData: SaleFormData,
+) {
+  return createSale(prisma, inventoryId, formData);
 }

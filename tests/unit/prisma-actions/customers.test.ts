@@ -12,11 +12,14 @@ import { clearDatabase, createTestPrisma } from '../../setup/db.ts';
 
 let prisma: PrismaClient;
 let closeDb: () => void;
+let inventoryId: string;
 
 beforeAll(async () => {
   const db = await createTestPrisma();
   prisma = db.prisma;
   closeDb = db.close;
+  const inv = await prisma.inventory.create({ data: { name: 'Test' } });
+  inventoryId = inv.id;
 });
 
 afterAll(() => {
@@ -35,11 +38,12 @@ describe('getAllCustomersPaginated', () => {
           firstname: `First${i}`,
           lastname: `Last${i}`,
           phone: `010${String(i).padStart(8, '0')}`,
+          inventoryId,
         },
       });
     }
 
-    const result = await getAllCustomersPaginated(prisma, {
+    const result = await getAllCustomersPaginated(prisma, inventoryId, {
       page: 1,
       filter: [],
     } as any);
@@ -55,11 +59,12 @@ describe('getAllCustomersPaginated', () => {
           firstname: `First${i}`,
           lastname: `Last${i}`,
           phone: `011${String(i).padStart(8, '0')}`,
+          inventoryId,
         },
       });
     }
 
-    const result = await getAllCustomersPaginated(prisma, {
+    const result = await getAllCustomersPaginated(prisma, inventoryId, {
       page: 2,
       filter: [],
     } as any);
@@ -76,11 +81,12 @@ describe('getAllCustomersPaginated', () => {
           firstname: names[i],
           lastname: 'Test',
           phone: `012${String(i).padStart(8, '0')}`,
+          inventoryId,
         },
       });
     }
 
-    const result = await getAllCustomersPaginated(prisma, {
+    const result = await getAllCustomersPaginated(prisma, inventoryId, {
       page: 1,
       orderProperty: 'firstname',
       orderDirection: 'asc',
@@ -99,10 +105,11 @@ describe('getAllCustomers', () => {
         lastname: 'Return',
         phone: '01099999999',
         address: 'Some Street',
+        inventoryId,
       },
     });
 
-    const customers = await getAllCustomers(prisma);
+    const customers = await getAllCustomers(prisma, inventoryId);
 
     expect(customers.length).toBeGreaterThan(0);
     const customer = customers[0];
@@ -116,7 +123,7 @@ describe('getAllCustomers', () => {
 
 describe('CRUD round-trip', () => {
   it('creates, updates, and deletes a customer', async () => {
-    const created = await createCustomer(prisma, {
+    const created = await createCustomer(prisma, inventoryId, {
       firstname: 'Create',
       lastname: 'Me',
       phone: '01011111111',
