@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { Truck, Users } from 'lucide-react';
+import { Plus, Users, Truck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
+import { Button } from '@/components/ui/button.tsx';
 import {
   Alert,
   AlertBadge,
@@ -19,6 +21,7 @@ import { useCurrentSettings } from '@/store/settings.store.ts';
 
 function Dashboard() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const expiryWarningDays = useCurrentSettings((s) => s.expiryWarningDays);
   const lowStockThreshold = useCurrentSettings((s) => s.lowStockThreshold);
   const currency = useCurrentSettings((s) => s.currency);
@@ -48,6 +51,22 @@ function Dashboard() {
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold pb-2">{t('Dashboard')}</h2>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Button
+          className="h-16 text-base font-semibold gap-2 bg-primary text-white"
+          onClick={() => navigate('/sales', { state: { openDialog: true } })}
+        >
+          <Plus size={20} />
+          {t('Add Sale Invoice')}
+        </Button>
+        <Button
+          className="h-16 text-base font-semibold gap-2 bg-primary text-white"
+          onClick={() => navigate('/purchases', { state: { openDialog: true } })}
+        >
+          <Plus size={20} />
+          {t('Add Purchase Invoice')}
+        </Button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="flex flex-col gap-4 bg-white rounded-lg p-4 border border-solid">
