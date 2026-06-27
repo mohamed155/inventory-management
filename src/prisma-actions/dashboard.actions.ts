@@ -92,7 +92,8 @@ export const getExpiringProducts = async (
     SELECT p."name", pb."expirationDate", pb."quantity"
     FROM "ProductBatch" pb
     JOIN "Product" p ON p."id" = pb."productId"
-    WHERE pb."expirationDate" <= datetime('now', '+' || ${days} || ' days')
+    WHERE pb."expirationDate" IS NOT NULL
+      AND pb."expirationDate" <= datetime('now', '+' || ${days} || ' days')
       AND pb."expirationDate" >= datetime('now')
       AND p."inventoryId" = ${inventoryId}
     ORDER BY pb."expirationDate"

@@ -12,7 +12,7 @@ export type PurchaseFormData = {
     name?: string;
     quantity: number;
     unitPrice: number;
-    productionDate: Date;
-    expirationDate: Date;
+    productionDate?: Date;
+    expirationDate?: Date;
   }[];
 };

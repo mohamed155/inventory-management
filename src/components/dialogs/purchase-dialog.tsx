@@ -80,15 +80,21 @@ function PurchaseDialog({
                 status: z.enum(['exist', 'add']),
                 id: z.string().optional(),
                 name: z.string().optional(),
-                productionDate: z.date(),
-                expirationDate: z.date(),
+                productionDate: z.date().optional(),
+                expirationDate: z.date().optional(),
                 quantity: z.number().min(1, t('Quantity must be at least 1')),
                 unitPrice: z.number().min(0, t('Unit Price must be positive')),
               })
-              .refine((data) => data.expirationDate > data.productionDate, {
-                message: t('Expiration date can not be before production date'),
-                path: ['expirationDate'],
-              }),
+              .refine(
+                (data) =>
+                  !data.expirationDate ||
+                  !data.productionDate ||
+                  data.expirationDate > data.productionDate,
+                {
+                  message: t('Expiration date can not be before production date'),
+                  path: ['expirationDate'],
+                },
+              ),
           ),
           paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
           payDueDate: z.date(),
@@ -114,8 +120,8 @@ function PurchaseDialog({
           name: '',
           quantity: 0,
           unitPrice: 0,
-          productionDate: new Date(),
-          expirationDate: new Date(),
+          productionDate: undefined,
+          expirationDate: undefined,
         },
       ],
       paidAmount: 0,
@@ -157,8 +163,8 @@ function PurchaseDialog({
           name: '',
           quantity: 0,
           unitPrice: 0,
-          productionDate: new Date(),
-          expirationDate: new Date(),
+          productionDate: undefined,
+          expirationDate: undefined,
         },
       ],
       paidAmount: 0,
@@ -189,8 +195,8 @@ function PurchaseDialog({
       name: '',
       quantity: 0,
       unitPrice: 0,
-      productionDate: new Date(),
-      expirationDate: new Date(),
+      productionDate: undefined,
+      expirationDate: undefined,
     });
   };
 
@@ -458,6 +464,7 @@ function PurchaseDialog({
                                 <FieldLabel>{t('Production Date')}</FieldLabel>
                                 <DatePicker
                                   {...field}
+                                  dismissable
                                   onChange={(date) =>
                                     field.onChange({ target: { value: date } })
                                   }
@@ -480,6 +487,7 @@ function PurchaseDialog({
                                 <FieldLabel>{t('Expiration Date')}</FieldLabel>
                                 <DatePicker
                                   {...field}
+                                  dismissable
                                   onChange={(date) =>
                                     field.onChange({ target: { value: date } })
                                   }

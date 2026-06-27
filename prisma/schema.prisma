@@ -54,8 +54,8 @@ model Product {
 model ProductBatch {
   id             String         @id @default(uuid())
   productId      String
-  productionDate DateTime
-  expirationDate DateTime
+  productionDate DateTime?
+  expirationDate DateTime?
   quantity       Int
   createdAt      DateTime       @default(now())
   product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)

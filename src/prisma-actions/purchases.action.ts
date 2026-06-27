@@ -286,8 +286,8 @@ export const createPurchase = async (
       let productBatch = await tx.productBatch.findFirst({
         where: {
           productId: product.id,
-          productionDate: product.productionDate,
-          expirationDate: product.expirationDate,
+          productionDate: product.productionDate ?? null,
+          expirationDate: product.expirationDate ?? null,
         },
       });
 
@@ -295,8 +295,8 @@ export const createPurchase = async (
         productBatch = await tx.productBatch.create({
           data: {
             productId: product.id,
-            productionDate: product.productionDate,
-            expirationDate: product.expirationDate,
+            productionDate: product.productionDate ?? null,
+            expirationDate: product.expirationDate ?? null,
             quantity: product.quantity,
           },
         });
