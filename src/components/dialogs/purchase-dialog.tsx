@@ -529,12 +529,12 @@ function PurchaseDialog({
                     </div>
                   );
                 })}
-                <Button type="button" variant="outline" className="w-full" onClick={addProduct}>
+                <Button type="button" className="w-full" onClick={addProduct}>
                   <Plus size={16} />
                   {t('Add Product')}
                 </Button>
-                <div className="flex justify-between items-center px-1 text-sm font-medium">
-                  <span className="text-muted-foreground">{t('Total')}</span>
+                <div className="flex justify-between items-center text-sm font-medium px-3 py-2 border-2 rounded-md">
+                  <span>{t('Total')}</span>
                   <span>{total.toFixed(2)}</span>
                 </div>
                 <Controller
