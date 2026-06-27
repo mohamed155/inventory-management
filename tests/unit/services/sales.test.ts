@@ -13,7 +13,7 @@ describe('sales service', () => {
     );
     const params = { page: 1, filter: {} } as any;
     await getAllSalesPaginated(params);
-    expect(mock.getAllSalesPaginated).toHaveBeenCalledWith(params);
+    expect(mock.getAllSalesPaginated).toHaveBeenCalledWith('', params);
   });
 
   it('getAllSales delegates to electronAPI', async () => {
@@ -40,7 +40,7 @@ describe('sales service', () => {
       products: [],
     } as any;
     await createSale(formData);
-    expect(mock.createSale).toHaveBeenCalledWith(formData);
+    expect(mock.createSale).toHaveBeenCalledWith('', formData);
   });
 
   it('updateSale delegates with id and partial data', async () => {

@@ -55,7 +55,11 @@ export async function createTestPrisma(): Promise<{
   return {
     prisma,
     close: () => {
-      rmSync(tmpDir, { recursive: true, force: true });
+      try {
+        rmSync(tmpDir, { recursive: true, force: true });
+      } catch {
+        // Windows may keep SQLite WAL files locked briefly after disconnect
+      }
     },
   };
 }

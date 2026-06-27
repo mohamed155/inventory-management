@@ -13,7 +13,7 @@ describe('customers service', () => {
     );
     const params = { page: 1, filter: [] } as any;
     await getAllCustomersPaginated(params);
-    expect(mock.getAllCustomersPaginated).toHaveBeenCalledWith(params);
+    expect(mock.getAllCustomersPaginated).toHaveBeenCalledWith('', params);
   });
 
   it('getAllCustomers delegates to electronAPI', async () => {
@@ -41,7 +41,7 @@ describe('customers service', () => {
     );
     const payload = { firstname: 'Test', phone: '010' } as any;
     await createCustomer(payload);
-    expect(mock.createCustomer).toHaveBeenCalledWith(payload);
+    expect(mock.createCustomer).toHaveBeenCalledWith('', payload);
   });
 
   it('updateCustomer delegates with id and customer data', async () => {

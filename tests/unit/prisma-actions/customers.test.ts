@@ -45,7 +45,7 @@ describe('getAllCustomersPaginated', () => {
 
     const result = await getAllCustomersPaginated(prisma, inventoryId, {
       page: 1,
-      filter: [],
+      filter: {},
     } as any);
 
     expect(result.data).toHaveLength(10);
@@ -66,7 +66,7 @@ describe('getAllCustomersPaginated', () => {
 
     const result = await getAllCustomersPaginated(prisma, inventoryId, {
       page: 2,
-      filter: [],
+      filter: {},
     } as any);
 
     expect(result.data).toHaveLength(5);
@@ -90,7 +90,7 @@ describe('getAllCustomersPaginated', () => {
       page: 1,
       orderProperty: 'firstname',
       orderDirection: 'asc',
-      filter: [],
+      filter: {},
     } as any);
 
     expect(result.data[0].firstname).toBe('Alice');

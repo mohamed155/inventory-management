@@ -13,7 +13,7 @@ describe('providers service', () => {
     );
     const params = { page: 1, filter: [] } as any;
     await getAllProvidersPaginated(params);
-    expect(mock.getAllProvidersPaginated).toHaveBeenCalledWith(params);
+    expect(mock.getAllProvidersPaginated).toHaveBeenCalledWith('', params);
   });
 
   it('getAllProviders delegates to electronAPI', async () => {
@@ -41,7 +41,7 @@ describe('providers service', () => {
     );
     const payload = { name: 'New Prov' } as any;
     await createProvider(payload);
-    expect(mock.createProvider).toHaveBeenCalledWith(payload);
+    expect(mock.createProvider).toHaveBeenCalledWith('', payload);
   });
 
   it('updateProvider delegates with id and data', async () => {

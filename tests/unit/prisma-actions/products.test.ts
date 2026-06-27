@@ -149,7 +149,7 @@ describe('getAllProductBatchesPaginated', () => {
 
     const result = await getAllProductBatchesPaginated(prisma, inventoryId, {
       page: 1,
-      filter: [],
+      filter: {},
     } as any);
 
     expect(result.data).toHaveLength(10);
@@ -173,7 +173,7 @@ describe('getAllProductBatchesPaginated', () => {
 
     const result = await getAllProductBatchesPaginated(prisma, inventoryId, {
       page: 2,
-      filter: [],
+      filter: {},
     } as any);
 
     expect(result.data).toHaveLength(5);

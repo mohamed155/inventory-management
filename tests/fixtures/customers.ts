@@ -16,8 +16,9 @@ export function makeCustomer(overrides: Record<string, unknown> = {}) {
 export async function seedCustomer(
   prisma: PrismaClient,
   overrides: Record<string, unknown> = {},
+  inventoryId?: string,
 ) {
-  const data = makeCustomer(overrides);
+  const data = { ...makeCustomer(overrides), ...(inventoryId ? { inventoryId } : {}) };
   return prisma.customer.create({
     data: data as Parameters<typeof prisma.customer.create>[0]['data'],
   });

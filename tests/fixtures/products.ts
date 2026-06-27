@@ -29,8 +29,9 @@ export function makeProductBatch(
 export async function seedProduct(
   prisma: PrismaClient,
   overrides: Record<string, unknown> = {},
+  inventoryId?: string,
 ) {
-  const data = makeProduct(overrides);
+  const data = { ...makeProduct(overrides), ...(inventoryId ? { inventoryId } : {}) };
   return prisma.product.create({
     data: data as Parameters<typeof prisma.product.create>[0]['data'],
   });
