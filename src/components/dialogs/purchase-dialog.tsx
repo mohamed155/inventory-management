@@ -97,13 +97,29 @@ function PurchaseDialog({
               ),
           ),
           paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
-          payDueDate: z.date(),
+          payDueDate: z.date().optional(),
           date: z.date(),
         })
-        .refine((data) => data.payDueDate >= data.date, {
-          message: t('Payment due date cannot be before the transaction date'),
-          path: ['payDueDate'],
-        }),
+        .refine(
+          (data) => {
+            const total = data.products.reduce(
+              (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
+              0,
+            );
+            return data.paidAmount >= total || !!data.payDueDate;
+          },
+          {
+            message: t('Payment due date is required for partial payments'),
+            path: ['payDueDate'],
+          },
+        )
+        .refine(
+          (data) => !data.payDueDate || data.payDueDate >= data.date,
+          {
+            message: t('Payment due date cannot be before the transaction date'),
+            path: ['payDueDate'],
+          },
+        ),
     [t, providerStatus],
   );
 
@@ -125,7 +141,7 @@ function PurchaseDialog({
         },
       ],
       paidAmount: 0,
-      payDueDate: new Date(),
+      payDueDate: undefined,
       date: new Date(),
     },
   });
@@ -168,16 +184,26 @@ function PurchaseDialog({
         },
       ],
       paidAmount: 0,
-      payDueDate: new Date(),
+      payDueDate: undefined,
       date: new Date(),
     });
   }, [providerStatus, form]);
 
+  const watchedProducts = form.watch('products');
+  const watchedPaidAmount = form.watch('paidAmount');
+  const total = watchedProducts.reduce(
+    (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
+    0,
+  );
+  const isPartial = watchedPaidAmount < total;
+
   const onSubmit = async () => {
     if (onClose) {
+      const values = form.getValues();
       const result: PurchaseFormData = {
-        ...form.getValues(),
+        ...values,
         userId: currentUser!.id,
+        payDueDate: values.payDueDate ?? values.date,
       };
       onClose(result);
     }
@@ -429,20 +455,14 @@ function PurchaseDialog({
                             render={({ field, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel>{t('Unit Cost')}</FieldLabel>
-                                <Input
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange({
-                                      ...e,
-                                      target: {
-                                        ...e.target,
-                                        value: Number(e.target.value),
-                                      },
-                                    })
-                                  }
+                                <ArithmeticInput
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
                                   aria-invalid={fieldState.invalid}
                                   autoComplete="off"
-                                  type="number"
                                 />
                                 <Activity
                                   mode={
@@ -509,36 +529,44 @@ function PurchaseDialog({
                     </div>
                   );
                 })}
-                <div className="grid grid-cols-2 gap-4">
-                  <Controller
-                    name="paidAmount"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>{t('Paid Amount')}</FieldLabel>
-                        <Input
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange({
-                              ...e,
-                              target: {
-                                ...e.target,
-                                value: Number(e.target.value),
-                              },
-                            })
-                          }
-                          aria-invalid={fieldState.invalid}
-                          autoComplete="off"
-                          type="number"
-                        />
-                        <Activity
-                          mode={fieldState.invalid ? 'visible' : 'hidden'}
-                        >
-                          <FieldError errors={[fieldState.error]} />
-                        </Activity>
-                      </Field>
-                    )}
-                  />
+                <Button type="button" variant="outline" className="w-full" onClick={addProduct}>
+                  <Plus size={16} />
+                  {t('Add Product')}
+                </Button>
+                <div className="flex justify-between items-center px-1 text-sm font-medium">
+                  <span className="text-muted-foreground">{t('Total')}</span>
+                  <span>{total.toFixed(2)}</span>
+                </div>
+                <Controller
+                  name="paidAmount"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Paid Amount')}</FieldLabel>
+                      <Input
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange({
+                            ...e,
+                            target: {
+                              ...e.target,
+                              value: Number(e.target.value),
+                            },
+                          })
+                        }
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                        type="number"
+                      />
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+                <Activity mode={isPartial ? 'visible' : 'hidden'}>
                   <Controller
                     name="payDueDate"
                     control={form.control}
@@ -560,7 +588,7 @@ function PurchaseDialog({
                       </Field>
                     )}
                   />
-                </div>
+                </Activity>
                 <Controller
                   name="date"
                   control={form.control}

@@ -96,13 +96,30 @@ function SaleDialog({
             .number()
             .min(0, t('Discount cannot be negative'))
             .optional(),
-          payDueDate: z.date(),
+          payDueDate: z.date().optional(),
           date: z.date(),
         })
-        .refine((data) => data.payDueDate >= data.date, {
-          message: t('Payment due date cannot be before the transaction date'),
-          path: ['payDueDate'],
-        }),
+        .refine(
+          (data) => {
+            const total =
+              data.products.reduce(
+                (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
+                0,
+              ) - (data.discount ?? 0);
+            return data.paidAmount >= total || !!data.payDueDate;
+          },
+          {
+            message: t('Payment due date is required for partial payments'),
+            path: ['payDueDate'],
+          },
+        )
+        .refine(
+          (data) => !data.payDueDate || data.payDueDate >= data.date,
+          {
+            message: t('Payment due date cannot be before the transaction date'),
+            path: ['payDueDate'],
+          },
+        ),
     [t, customerStatus],
   );
 
@@ -123,7 +140,7 @@ function SaleDialog({
       ],
       paidAmount: 0,
       discount: 0,
-      payDueDate: new Date(),
+      payDueDate: undefined,
       date: new Date(),
     },
   });
@@ -157,10 +174,20 @@ function SaleDialog({
       products: [{ id: '', quantity: 1, unitPrice: 0 }],
       paidAmount: 0,
       discount: 0,
-      payDueDate: new Date(),
+      payDueDate: undefined,
       date: new Date(),
     });
   }, [customerStatus, form]);
+
+  const watchedProducts = form.watch('products');
+  const watchedPaidAmount = form.watch('paidAmount');
+  const watchedDiscount = form.watch('discount');
+  const total =
+    watchedProducts.reduce(
+      (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
+      0,
+    ) - (watchedDiscount ?? 0);
+  const isPartial = watchedPaidAmount < total;
 
   const onSubmit = async () => {
     if (onClose) {
@@ -177,6 +204,7 @@ function SaleDialog({
       const result: SaleFormData = {
         ...values,
         userId: currentUser!.id,
+        payDueDate: values.payDueDate ?? values.date,
       };
       onClose(result);
     }
@@ -403,20 +431,14 @@ function SaleDialog({
                           render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
                               <FieldLabel>{t('Unit Price')}</FieldLabel>
-                              <Input
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange({
-                                    ...e,
-                                    target: {
-                                      ...e.target,
-                                      value: Number(e.target.value),
-                                    },
-                                  })
-                                }
+                              <ArithmeticInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
                                 aria-invalid={fieldState.invalid}
                                 autoComplete="off"
-                                type="number"
                               />
                               <Activity
                                 mode={fieldState.invalid ? 'visible' : 'hidden'}
@@ -430,6 +452,14 @@ function SaleDialog({
                     </div>
                   );
                 })}
+                <Button type="button" variant="outline" className="w-full" onClick={addProduct}>
+                  <Plus size={16} />
+                  {t('Add Product')}
+                </Button>
+                <div className="flex justify-between items-center px-1 text-sm font-medium">
+                  <span className="text-muted-foreground">{t('Total')}</span>
+                  <span>{total.toFixed(2)}</span>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Controller
                     name="paidAmount"
@@ -485,7 +515,7 @@ function SaleDialog({
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <Activity mode={isPartial ? 'visible' : 'hidden'}>
                   <Controller
                     name="payDueDate"
                     control={form.control}
@@ -507,28 +537,28 @@ function SaleDialog({
                       </Field>
                     )}
                   />
-                  <Controller
-                    name="date"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>{t('Sale Date')}</FieldLabel>
-                        <DatePicker
-                          {...field}
-                          onChange={(date) =>
-                            field.onChange({ target: { value: date } })
-                          }
-                          aria-invalid={fieldState.invalid}
-                        ></DatePicker>
-                        <Activity
-                          mode={fieldState.invalid ? 'visible' : 'hidden'}
-                        >
-                          <FieldError errors={[fieldState.error]} />
-                        </Activity>
-                      </Field>
-                    )}
-                  />
-                </div>
+                </Activity>
+                <Controller
+                  name="date"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Sale Date')}</FieldLabel>
+                      <DatePicker
+                        {...field}
+                        onChange={(date) =>
+                          field.onChange({ target: { value: date } })
+                        }
+                        aria-invalid={fieldState.invalid}
+                      ></DatePicker>
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
               </div>
             </FieldGroup>
           </div>
