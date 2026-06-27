@@ -255,7 +255,7 @@ export const createPurchase = async (
           name: body.providerName,
           phone: body.providerPhone,
           address: body.providerAddress,
-          inventoryId,
+          inventory: { connect: { id: inventoryId } },
         },
       });
       providerId = newProvider.id;
@@ -266,7 +266,7 @@ export const createPurchase = async (
         paidAmount: body.paidAmount,
         payDueDate: body.payDueDate,
         date: body.date,
-        inventoryId,
+        inventory: { connect: { id: inventoryId } },
         user: { connect: { id: body.userId } },
         provider: { connect: { id: providerId } },
       },
@@ -277,7 +277,7 @@ export const createPurchase = async (
         const newProduct = await tx.product.create({
           data: {
             name: product.name || 'Unnamed Product',
-            inventoryId,
+            inventory: { connect: { id: inventoryId } },
           },
         });
         product.id = newProduct.id;
