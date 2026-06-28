@@ -235,4 +235,5 @@ export default {
   'Failed to rename inventory': 'فشل إعادة تسمية المخزن',
   'Failed to add inventory': 'فشل إضافة المخزن',
   'Failed to delete inventory': 'فشل حذف المخزن',
+  'Database error': 'خطأ في قاعدة البيانات',
 };

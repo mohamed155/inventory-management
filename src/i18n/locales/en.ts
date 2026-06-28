@@ -236,4 +236,5 @@ export default {
   'Failed to rename inventory': 'Failed to rename inventory',
   'Failed to add inventory': 'Failed to add inventory',
   'Failed to delete inventory': 'Failed to delete inventory',
+  'Database error': 'Database error',
 };

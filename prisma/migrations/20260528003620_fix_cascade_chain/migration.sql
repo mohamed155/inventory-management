@@ -1,6 +1,7 @@
 -- RedefineTables
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
+DROP TABLE IF EXISTS "new_Customer";
 CREATE TABLE "new_Customer" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "firstname" TEXT NOT NULL,
@@ -17,6 +18,7 @@ DROP TABLE "Customer";
 ALTER TABLE "new_Customer" RENAME TO "Customer";
 CREATE INDEX "Customer_inventoryId_idx" ON "Customer"("inventoryId");
 CREATE UNIQUE INDEX "Customer_inventoryId_phone_key" ON "Customer"("inventoryId", "phone");
+DROP TABLE IF EXISTS "new_Product";
 CREATE TABLE "new_Product" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -30,6 +32,7 @@ INSERT INTO "new_Product" ("createdAt", "description", "id", "inventoryId", "nam
 DROP TABLE "Product";
 ALTER TABLE "new_Product" RENAME TO "Product";
 CREATE INDEX "Product_inventoryId_idx" ON "Product"("inventoryId");
+DROP TABLE IF EXISTS "new_ProductBatch";
 CREATE TABLE "new_ProductBatch" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "productId" TEXT NOT NULL,
@@ -43,6 +46,7 @@ INSERT INTO "new_ProductBatch" ("createdAt", "expirationDate", "id", "productId"
 DROP TABLE "ProductBatch";
 ALTER TABLE "new_ProductBatch" RENAME TO "ProductBatch";
 CREATE INDEX "ProductBatch_productId_idx" ON "ProductBatch"("productId");
+DROP TABLE IF EXISTS "new_Provider";
 CREATE TABLE "new_Provider" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -58,6 +62,7 @@ DROP TABLE "Provider";
 ALTER TABLE "new_Provider" RENAME TO "Provider";
 CREATE INDEX "Provider_inventoryId_idx" ON "Provider"("inventoryId");
 CREATE UNIQUE INDEX "Provider_inventoryId_phone_key" ON "Provider"("inventoryId", "phone");
+DROP TABLE IF EXISTS "new_Purchase";
 CREATE TABLE "new_Purchase" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
@@ -78,6 +83,7 @@ ALTER TABLE "new_Purchase" RENAME TO "Purchase";
 CREATE INDEX "Purchase_userId_idx" ON "Purchase"("userId");
 CREATE INDEX "Purchase_providerId_idx" ON "Purchase"("providerId");
 CREATE INDEX "Purchase_inventoryId_idx" ON "Purchase"("inventoryId");
+DROP TABLE IF EXISTS "new_PurchaseItem";
 CREATE TABLE "new_PurchaseItem" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "purchaseId" TEXT NOT NULL,
@@ -95,6 +101,7 @@ ALTER TABLE "new_PurchaseItem" RENAME TO "PurchaseItem";
 CREATE INDEX "PurchaseItem_purchaseId_idx" ON "PurchaseItem"("purchaseId");
 CREATE INDEX "PurchaseItem_productId_idx" ON "PurchaseItem"("productId");
 CREATE INDEX "PurchaseItem_batchId_idx" ON "PurchaseItem"("batchId");
+DROP TABLE IF EXISTS "new_Sale";
 CREATE TABLE "new_Sale" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
@@ -116,6 +123,7 @@ ALTER TABLE "new_Sale" RENAME TO "Sale";
 CREATE INDEX "Sale_userId_idx" ON "Sale"("userId");
 CREATE INDEX "Sale_customerId_idx" ON "Sale"("customerId");
 CREATE INDEX "Sale_inventoryId_idx" ON "Sale"("inventoryId");
+DROP TABLE IF EXISTS "new_SaleItem";
 CREATE TABLE "new_SaleItem" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "saleId" TEXT NOT NULL,

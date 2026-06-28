@@ -34,6 +34,19 @@ const ensureDatabase = async (dbUrl: string): Promise<void> => {
       `CREATE TABLE IF NOT EXISTS "_applied_migrations" ("name" TEXT NOT NULL PRIMARY KEY)`,
     );
 
+    // Recovery: if Purchase exists but lacks inventoryId, the multi_inventory migration
+    // was silently marked applied despite failing — remove stale records so they re-run.
+    const { rows: purchaseCols } = await client.execute(`PRAGMA table_info("Purchase")`);
+    if (
+      purchaseCols.length > 0 &&
+      !purchaseCols.some((r) => (r as Record<string, unknown>).name === 'inventoryId')
+    ) {
+      await client.execute({
+        sql: `DELETE FROM "_applied_migrations" WHERE name IN (?, ?)`,
+        args: ['20260528001455_multi_inventory', '20260528003620_fix_cascade_chain'],
+      });
+    }
+
     const migrationsDir = getMigrationsDir();
     const migrations = readdirSync(migrationsDir)
       .sort()
@@ -56,13 +69,8 @@ const ensureDatabase = async (dbUrl: string): Promise<void> => {
         .map((s) => s.trim())
         .filter(Boolean);
 
-      try {
-        for (const stmt of statements) {
-          await client.execute(stmt);
-        }
-      } catch {
-        // Migration was already applied to an existing DB (e.g. table already exists).
-        // Record it so we don't retry on every startup.
+      for (const stmt of statements) {
+        await client.execute(stmt);
       }
 
       await client.execute({
