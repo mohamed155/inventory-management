@@ -169,6 +169,8 @@ app.whenReady().then(() => {
   au.autoUpdater.autoDownload = false;
   au.autoUpdater.checkForUpdates();
 
+  const updateInterval = setInterval(() => au.autoUpdater.checkForUpdates(), 60_000);
+
   au.autoUpdater.on('update-available', () => {
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('update-available');
@@ -176,6 +178,7 @@ app.whenReady().then(() => {
   });
 
   au.autoUpdater.on('update-downloaded', () => {
+    clearInterval(updateInterval);
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('update-downloaded');
     });
