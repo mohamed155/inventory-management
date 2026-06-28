@@ -18,7 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field.tsx';
-import { Input } from '@/components/ui/input.tsx';
+import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import type { SalesListResult } from '@/models/sales-list-result.ts';
 
@@ -95,20 +95,11 @@ function UpdatePaymentDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>{t('New Paid Amount')}</FieldLabel>
-                    <Input
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange({
-                          ...e,
-                          target: {
-                            ...e.target,
-                            value: Number(e.target.value),
-                          },
-                        })
-                      }
+                    <ArithmeticInput
+                      value={field.value}
+                      onChange={field.onChange}
                       aria-invalid={fieldState.invalid}
                       autoComplete="off"
-                      type="number"
                     />
                     <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
                       <FieldError errors={[fieldState.error]} />

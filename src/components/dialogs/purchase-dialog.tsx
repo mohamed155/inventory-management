@@ -543,20 +543,11 @@ function PurchaseDialog({
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>{t('Paid Amount')}</FieldLabel>
-                      <Input
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange({
-                            ...e,
-                            target: {
-                              ...e.target,
-                              value: Number(e.target.value),
-                            },
-                          })
-                        }
+                      <ArithmeticInput
+                        value={field.value}
+                        onChange={field.onChange}
                         aria-invalid={fieldState.invalid}
                         autoComplete="off"
-                        type="number"
                       />
                       <Activity
                         mode={fieldState.invalid ? 'visible' : 'hidden'}

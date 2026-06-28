@@ -5,7 +5,7 @@ import { ColorSwatch } from '@/components/color-swatch.tsx';
 import UserManagement from '@/components/settings/user-management/user-management.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input.tsx';
+import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import {
   Select,
   SelectContent,
@@ -51,37 +51,21 @@ function Settings() {
   );
   const resetSettings = useCurrentSettings((s) => s.resetSettings);
 
-  const [expiryInput, setExpiryInput] = useState(String(expiryWarningDays));
   const [expiryError, setExpiryError] = useState('');
-  const [stockInput, setStockInput] = useState(String(lowStockThreshold));
   const [stockError, setStockError] = useState('');
 
-  function handleExpiryChange(value: string) {
-    setExpiryInput(value);
-    const n = Number.parseInt(value, 10);
-    if (Number.isNaN(n) || n < 1) {
-      setExpiryError(t('Must be at least 1'));
-    } else {
-      setExpiryError('');
-      setExpiryWarningDays(n);
-    }
+  function handleExpiryChange(n: number) {
+    if (n < 1) setExpiryError(t('Must be at least 1'));
+    else { setExpiryError(''); setExpiryWarningDays(n); }
   }
 
-  function handleStockChange(value: string) {
-    setStockInput(value);
-    const n = Number.parseInt(value, 10);
-    if (Number.isNaN(n) || n < 1) {
-      setStockError(t('Must be at least 1'));
-    } else {
-      setStockError('');
-      setLowStockThreshold(n);
-    }
+  function handleStockChange(n: number) {
+    if (n < 1) setStockError(t('Must be at least 1'));
+    else { setStockError(''); setLowStockThreshold(n); }
   }
 
   function handleReset() {
     resetSettings();
-    setExpiryInput('10');
-    setStockInput('10');
     setExpiryError('');
     setStockError('');
   }
@@ -161,11 +145,9 @@ function Settings() {
         <div className="flex flex-wrap gap-4">
           <Field className="w-50">
             <FieldLabel>{t('Expiry Warning (days)')}</FieldLabel>
-            <Input
-              type="number"
-              min={1}
-              value={expiryInput}
-              onChange={(e) => handleExpiryChange(e.target.value)}
+            <ArithmeticInput
+              value={expiryWarningDays}
+              onChange={handleExpiryChange}
             />
             {expiryError && (
               <p className="text-xs text-destructive mt-1">{expiryError}</p>
@@ -173,11 +155,9 @@ function Settings() {
           </Field>
           <Field className="w-50">
             <FieldLabel>{t('Low Stock Threshold (units)')}</FieldLabel>
-            <Input
-              type="number"
-              min={1}
-              value={stockInput}
-              onChange={(e) => handleStockChange(e.target.value)}
+            <ArithmeticInput
+              value={lowStockThreshold}
+              onChange={handleStockChange}
             />
             {stockError && (
               <p className="text-xs text-destructive mt-1">{stockError}</p>
