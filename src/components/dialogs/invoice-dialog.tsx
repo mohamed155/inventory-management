@@ -65,6 +65,10 @@ function InvoiceDialog({ open, type, data, close }: InvoiceDialogProps) {
 
   if (data) {
     const { totalCost, paidAmount, remainingCost } = data;
+    const discount = data.discount ?? 0;
+    // purchases: totalCost is the raw item sum; sales: totalCost already has discount subtracted
+    const rawTotal = data.type === 'purchase' ? totalCost : totalCost + discount;
+    const netTotal = data.type === 'purchase' ? totalCost - discount : totalCost;
     return (
       <Dialog open={open} onOpenChange={close}>
         <DialogContent>
@@ -94,7 +98,7 @@ function InvoiceDialog({ open, type, data, close }: InvoiceDialogProps) {
               <div>
                 <h6>{t('Status')}</h6>
                 <Badge>
-                  {totalCost - paidAmount > 0 ? t('Partial') : t('Paid')}
+                  {remainingCost > 0 ? t('Partial') : t('Paid')}
                 </Badge>
               </div>
               <div>
@@ -127,8 +131,20 @@ function InvoiceDialog({ open, type, data, close }: InvoiceDialogProps) {
             </div>
             <div className="flex justify-between items-center">
               <h6>{t('Total Amount:')}</h6>
-              <p>{totalCost}</p>
+              <p>{rawTotal}</p>
             </div>
+            {discount > 0 && (
+              <>
+                <div className="flex justify-between items-center">
+                  <h6>{t('Discount')}</h6>
+                  <p>{discount}</p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <h6>{t('Total After Discount')}</h6>
+                  <p>{netTotal}</p>
+                </div>
+              </>
+            )}
             <div className="flex justify-between items-center">
               <h6>{t('Paid Amount:')}</h6>
               <p className="text-green-600">{paidAmount}</p>

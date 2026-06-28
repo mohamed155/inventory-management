@@ -1,6 +1,7 @@
 export type PurchaseFormData = {
   userId: string;
   paidAmount: number;
+  discount?: number;
   payDueDate: Date;
   date: Date;
   providerId?: string;

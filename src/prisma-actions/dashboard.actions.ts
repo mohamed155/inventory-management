@@ -46,7 +46,7 @@ export const getDueToProviders = async (
     SELECT SUM(
       (SELECT SUM("quantity" * "unitPrice")
        FROM "PurchaseItem"
-       WHERE "PurchaseItem"."purchaseId" = "Purchase"."id") - "Purchase"."paidAmount"
+       WHERE "PurchaseItem"."purchaseId" = "Purchase"."id") - "Purchase"."discount" - "Purchase"."paidAmount"
     ) as "totalDue"
     FROM "Purchase"
     WHERE "Purchase"."inventoryId" = ${inventoryId}
@@ -218,7 +218,7 @@ export const getTopUpcomingPayingProviders = async (
              p."phone",
              pu."payDueDate",
              (SELECT SUM(pi."quantity" * pi."unitPrice")
-              FROM "PurchaseItem" pi WHERE pi."purchaseId" = pu."id") - pu."paidAmount" as "amountDue"
+              FROM "PurchaseItem" pi WHERE pi."purchaseId" = pu."id") - pu."discount" - pu."paidAmount" as "amountDue"
       FROM "Purchase" pu
       JOIN "Provider" p ON p."id" = pu."providerId"
       WHERE pu."inventoryId" = ${inventoryId}

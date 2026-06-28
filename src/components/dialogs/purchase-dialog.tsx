@@ -99,22 +99,10 @@ function PurchaseDialog({
               ),
           ),
           paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
+          discount: z.number().min(0, t('Discount cannot be negative')).optional(),
           payDueDate: z.date().optional(),
           date: z.date(),
         })
-        .refine(
-          (data) => {
-            const total = data.products.reduce(
-              (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
-              0,
-            );
-            return data.paidAmount >= total || !!data.payDueDate;
-          },
-          {
-            message: t('Payment due date is required for partial payments'),
-            path: ['payDueDate'],
-          },
-        )
         .refine((data) => !data.payDueDate || data.payDueDate >= data.date, {
           message: t('Payment due date cannot be before the transaction date'),
           path: ['payDueDate'],
@@ -140,6 +128,7 @@ function PurchaseDialog({
         },
       ],
       paidAmount: 0,
+      discount: 0,
       payDueDate: undefined,
       date: new Date(),
     },
@@ -183,18 +172,19 @@ function PurchaseDialog({
         },
       ],
       paidAmount: 0,
+      discount: 0,
       payDueDate: undefined,
       date: new Date(),
     });
   }, [providerStatus, form]);
 
   const watchedProducts = form.watch('products');
-  const watchedPaidAmount = form.watch('paidAmount');
+  const watchedDiscount = form.watch('discount');
   const total = watchedProducts.reduce(
     (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
     0,
   );
-  const isPartial = watchedPaidAmount < total;
+  const totalAfterDiscount = total - (watchedDiscount ?? 0);
 
   const onSubmit = async () => {
     if (onClose) {
@@ -203,6 +193,7 @@ function PurchaseDialog({
       const result: PurchaseFormData = {
         ...values,
         userId: currentUser.id,
+        discount: values.discount ?? 0,
         payDueDate: values.payDueDate ?? values.date,
       };
       onClose(result);
@@ -539,6 +530,28 @@ function PurchaseDialog({
                   <span>{total.toFixed(2)}</span>
                 </div>
                 <Controller
+                  name="discount"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Discount')}</FieldLabel>
+                      <ArithmeticInput
+                        value={field.value ?? 0}
+                        onChange={field.onChange}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                      <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+                <div className="flex justify-between items-center text-sm font-medium px-3 py-2 border-2 rounded-md">
+                  <span>{t('Total After Discount')}</span>
+                  <span>{totalAfterDiscount.toFixed(2)}</span>
+                </div>
+                <Controller
                   name="paidAmount"
                   control={form.control}
                   render={({ field, fieldState }) => (
@@ -558,29 +571,28 @@ function PurchaseDialog({
                     </Field>
                   )}
                 />
-                <Activity mode={isPartial ? 'visible' : 'hidden'}>
-                  <Controller
-                    name="payDueDate"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>{t('Payment Due Date')}</FieldLabel>
-                        <DatePicker
-                          {...field}
-                          onChange={(date) =>
-                            field.onChange({ target: { value: date } })
-                          }
-                          aria-invalid={fieldState.invalid}
-                        ></DatePicker>
-                        <Activity
-                          mode={fieldState.invalid ? 'visible' : 'hidden'}
-                        >
-                          <FieldError errors={[fieldState.error]} />
-                        </Activity>
-                      </Field>
-                    )}
-                  />
-                </Activity>
+                <Controller
+                  name="payDueDate"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Payment Due Date')}</FieldLabel>
+                      <DatePicker
+                        {...field}
+                        dismissable
+                        onChange={(date) =>
+                          field.onChange({ target: { value: date } })
+                        }
+                        aria-invalid={fieldState.invalid}
+                      ></DatePicker>
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
                 <Controller
                   name="date"
                   control={form.control}
@@ -611,7 +623,7 @@ function PurchaseDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button type="submit">{t('Save')}</Button>
+						<Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>
