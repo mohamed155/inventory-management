@@ -2,6 +2,7 @@ import {
   BarChart2,
   DollarSign,
   LayoutDashboard,
+  Loader2,
   LogOut,
   Package,
   Settings,
@@ -16,6 +17,8 @@ import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button.tsx';
 import { cn } from '@/lib/utils.ts';
 import { logout } from '@/services/auth.ts';
+
+type UpdateStatus = 'idle' | 'available' | 'downloading' | 'downloaded';
 
 function MenuItem({
   name,
@@ -45,17 +48,21 @@ function MenuItem({
 function Sidenav() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [updateReady, setUpdateReady] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
 
   useEffect(() => {
-    let active = true;
-    window.electronAPI.onUpdateDownloaded(() => {
-      if (active) setUpdateReady(true);
-    });
-    return () => {
-      active = false;
-    };
+    window.electronAPI.onUpdateAvailable(() => setUpdateStatus('available'));
+    window.electronAPI.onUpdateDownloaded(() => setUpdateStatus('downloaded'));
   }, []);
+
+  const handleUpdateClick = () => {
+    if (updateStatus === 'available') {
+      setUpdateStatus('downloading');
+      window.electronAPI.downloadUpdate();
+    } else if (updateStatus === 'downloaded') {
+      window.electronAPI.installUpdate();
+    }
+  };
 
   const menuItems = useMemo(
     () => [
@@ -123,7 +130,7 @@ function Sidenav() {
         </div>
       </div>
       <div>
-        {updateReady && (
+        {updateStatus !== 'idle' && (
           <div className="mb-2 p-3 bg-primary/10 rounded-md">
             <p className="text-xs text-primary font-semibold mb-2">
               {t('A new version available')}
@@ -131,9 +138,13 @@ function Sidenav() {
             <Button
               size="sm"
               className="w-full"
-              onClick={() => window.electronAPI.installUpdate()}
+              disabled={updateStatus === 'downloading'}
+              onClick={handleUpdateClick}
             >
-              {t('Update now')}
+              {updateStatus === 'downloading' && <Loader2 className="animate-spin" />}
+              {updateStatus === 'available' && t('Download update')}
+              {updateStatus === 'downloading' && t('Downloading...')}
+              {updateStatus === 'downloaded' && t('Update now')}
             </Button>
           </div>
         )}

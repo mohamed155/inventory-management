@@ -1,7 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18n from 'i18next';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 import WindowFrame from '@/components/window-frame.tsx';
+import { Toaster } from '@/components/ui/sonner.tsx';
 import { ConfirmProvider } from '@/context/confirm-context.tsx';
 import { applyPrimaryColor } from '@/lib/color-theme.ts';
 import Router from '@/router.tsx';
@@ -14,7 +16,14 @@ import '@/i18n/i18n.ts';
 // Apply persisted color before first render (prevents flash)
 applyPrimaryColor(useCurrentSettings.getState().primaryColor);
 
-const queryClient = new QueryClient();
+const onDbError = (error: Error) => {
+  toast.error(i18n.t('Database error'), { description: error.message });
+};
+
+const queryClient = new QueryClient({
+  mutationCache: new MutationCache({ onError: onDbError }),
+  queryCache: new QueryCache({ onError: onDbError }),
+});
 
 function App() {
   const lang = useCurrentLang((s) => s.lang);
@@ -37,6 +46,7 @@ function App() {
           <Router />
         </QueryClientProvider>
       </WindowFrame>
+      <Toaster />
     </ConfirmProvider>
   );
 }

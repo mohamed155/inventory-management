@@ -9,7 +9,7 @@
 
 */
 -- CreateTable
-CREATE TABLE "Inventory" (
+CREATE TABLE IF NOT EXISTS "Inventory" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -17,12 +17,13 @@ CREATE TABLE "Inventory" (
 );
 
 -- Seed default inventory (must happen before inventoryId FK columns are populated)
-INSERT INTO "Inventory" ("id", "name", "createdAt", "updatedAt")
+INSERT OR IGNORE INTO "Inventory" ("id", "name", "createdAt", "updatedAt")
 VALUES ('default', 'المخزن الرئيسي', datetime('now'), datetime('now'));
 
 -- RedefineTables
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
+DROP TABLE IF EXISTS "new_Customer";
 CREATE TABLE "new_Customer" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "firstname" TEXT NOT NULL,
@@ -39,6 +40,7 @@ DROP TABLE "Customer";
 ALTER TABLE "new_Customer" RENAME TO "Customer";
 CREATE INDEX "Customer_inventoryId_idx" ON "Customer"("inventoryId");
 CREATE UNIQUE INDEX "Customer_inventoryId_phone_key" ON "Customer"("inventoryId", "phone");
+DROP TABLE IF EXISTS "new_Product";
 CREATE TABLE "new_Product" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -52,6 +54,7 @@ INSERT INTO "new_Product" ("createdAt", "description", "id", "inventoryId", "nam
 DROP TABLE "Product";
 ALTER TABLE "new_Product" RENAME TO "Product";
 CREATE INDEX "Product_inventoryId_idx" ON "Product"("inventoryId");
+DROP TABLE IF EXISTS "new_Provider";
 CREATE TABLE "new_Provider" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -67,6 +70,7 @@ DROP TABLE "Provider";
 ALTER TABLE "new_Provider" RENAME TO "Provider";
 CREATE INDEX "Provider_inventoryId_idx" ON "Provider"("inventoryId");
 CREATE UNIQUE INDEX "Provider_inventoryId_phone_key" ON "Provider"("inventoryId", "phone");
+DROP TABLE IF EXISTS "new_Purchase";
 CREATE TABLE "new_Purchase" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
@@ -87,6 +91,7 @@ ALTER TABLE "new_Purchase" RENAME TO "Purchase";
 CREATE INDEX "Purchase_userId_idx" ON "Purchase"("userId");
 CREATE INDEX "Purchase_providerId_idx" ON "Purchase"("providerId");
 CREATE INDEX "Purchase_inventoryId_idx" ON "Purchase"("inventoryId");
+DROP TABLE IF EXISTS "new_Sale";
 CREATE TABLE "new_Sale" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
