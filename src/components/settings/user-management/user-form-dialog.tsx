@@ -239,7 +239,7 @@ function UserFormDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button type="submit">{t('Save')}</Button>
+						<Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>

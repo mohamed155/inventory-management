@@ -133,7 +133,7 @@ export const getAllPurchasesPaginated = async (
         providerName: purchase.provider?.name ?? '',
         itemsCount: purchase._count.items,
         totalCost,
-        remainingCost: totalCost - purchase.paidAmount,
+        remainingCost: totalCost - purchase.discount - purchase.paidAmount,
       };
     },
   );
@@ -207,8 +207,8 @@ const getPurchaseIdsByRemainingCost = async (
   const rows = await prisma.$queryRaw<
     { purchaseId: string; remainingCost: number }[]
   >`
-		SELECT p.id                                          as purchaseId,
-					 SUM(pi.unitPrice * pi.quantity) - p.paidAmount AS remainingCost
+		SELECT p.id                                                              as purchaseId,
+					 SUM(pi.unitPrice * pi.quantity) - p.discount - p.paidAmount AS remainingCost
 		FROM Purchase p
 					 JOIN PurchaseItem pi ON pi.purchaseId = p.id
 		WHERE (${remainingCost ?? null} IS NULL OR remainingCost = ${remainingCost ?? 0})
@@ -275,6 +275,7 @@ export const createPurchase = async (
     const purchase = await tx.purchase.create({
       data: {
         paidAmount: body.paidAmount,
+        discount: body.discount ?? 0,
         payDueDate: body.payDueDate,
         date: body.date,
         inventory: { connect: { id: inventoryId } },

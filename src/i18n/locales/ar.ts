@@ -169,6 +169,7 @@ export default {
   'Top 5 Providers About to Get Paid': 'أقرب 5 موردين للاستحقاق',
   'Top 5 customers about to pay': 'أقرب 5 عملاء للدفع',
   Total: 'الإجمالي',
+  'Total After Discount': 'الإجمالي بعد الخصم',
   'Total Amount:': 'المبلغ الإجمالي:',
   'Total Cost': 'التكلفة الإجمالية',
   'Total Purchases': 'إجمالي المشتريات',

@@ -99,20 +99,6 @@ function SaleDialog({
           payDueDate: z.date().optional(),
           date: z.date(),
         })
-        .refine(
-          (data) => {
-            const total =
-              data.products.reduce(
-                (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
-                0,
-              ) - (data.discount ?? 0);
-            return data.paidAmount >= total || !!data.payDueDate;
-          },
-          {
-            message: t('Payment due date is required for partial payments'),
-            path: ['payDueDate'],
-          },
-        )
         .refine((data) => !data.payDueDate || data.payDueDate >= data.date, {
           message: t('Payment due date cannot be before the transaction date'),
           path: ['payDueDate'],
@@ -177,14 +163,12 @@ function SaleDialog({
   }, [customerStatus, form]);
 
   const watchedProducts = form.watch('products');
-  const watchedPaidAmount = form.watch('paidAmount');
   const watchedDiscount = form.watch('discount');
-  const total =
-    watchedProducts.reduce(
-      (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
-      0,
-    ) - (watchedDiscount ?? 0);
-  const isPartial = watchedPaidAmount < total;
+  const subtotal = watchedProducts.reduce(
+    (sum, p) => sum + (p.unitPrice || 0) * (p.quantity || 0),
+    0,
+  );
+  const totalAfterDiscount = subtotal - (watchedDiscount ?? 0);
 
   const onSubmit = async () => {
     if (onClose) {
@@ -457,68 +441,72 @@ function SaleDialog({
                 </Button>
                 <div className="flex justify-between items-center text-sm font-medium px-3 py-2 border-2 rounded-md">
                   <span>{t('Total')}</span>
-                  <span>{total.toFixed(2)}</span>
+                  <span>{subtotal.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Controller
-                    name="paidAmount"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>{t('Paid Amount')}</FieldLabel>
-                        <ArithmeticInput
-                          value={field.value}
-                          onChange={field.onChange}
-                          aria-invalid={fieldState.invalid}
-                          autoComplete="off"
-                        />
-                        <Activity
-                          mode={fieldState.invalid ? 'visible' : 'hidden'}
-                        >
-                          <FieldError errors={[fieldState.error]} />
-                        </Activity>
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    name="discount"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>{t('Discount')}</FieldLabel>
-                        <ArithmeticInput
-                          value={field.value ?? 0}
-                          onChange={field.onChange}
-                          aria-invalid={fieldState.invalid}
-                          autoComplete="off"
-                        />
-                      </Field>
-                    )}
-                  />
+                <Controller
+                  name="discount"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Discount')}</FieldLabel>
+                      <ArithmeticInput
+                        value={field.value ?? 0}
+                        onChange={field.onChange}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                      <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+                <div className="flex justify-between items-center text-sm font-medium px-3 py-2 border-2 rounded-md">
+                  <span>{t('Total After Discount')}</span>
+                  <span>{totalAfterDiscount.toFixed(2)}</span>
                 </div>
-                <Activity mode={isPartial ? 'visible' : 'hidden'}>
-                  <Controller
-                    name="payDueDate"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>{t('Payment Due Date')}</FieldLabel>
-                        <DatePicker
-                          {...field}
-                          onChange={(date) =>
-                            field.onChange({ target: { value: date } })
-                          }
-                          aria-invalid={fieldState.invalid}
-                        ></DatePicker>
-                        <Activity
-                          mode={fieldState.invalid ? 'visible' : 'hidden'}
-                        >
-                          <FieldError errors={[fieldState.error]} />
-                        </Activity>
-                      </Field>
-                    )}
-                  />
-                </Activity>
+                <Controller
+                  name="paidAmount"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Paid Amount')}</FieldLabel>
+                      <ArithmeticInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="payDueDate"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>{t('Payment Due Date')}</FieldLabel>
+                      <DatePicker
+                        {...field}
+                        dismissable
+                        onChange={(date) =>
+                          field.onChange({ target: { value: date } })
+                        }
+                        aria-invalid={fieldState.invalid}
+                      ></DatePicker>
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
+                        <FieldError errors={[fieldState.error]} />
+                      </Activity>
+                    </Field>
+                  )}
+                />
                 <Controller
                   name="date"
                   control={form.control}
@@ -549,7 +537,7 @@ function SaleDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button type="submit">{t('Save')}</Button>
+						<Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>

@@ -102,6 +102,7 @@ model Purchase {
   providerId  String
   inventoryId String
   paidAmount  Float
+  discount    Float          @default(0)
   date        DateTime
   payDueDate  DateTime
   createdAt   DateTime       @default(now())

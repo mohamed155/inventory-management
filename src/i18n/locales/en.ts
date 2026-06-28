@@ -170,6 +170,7 @@ export default {
   'Top 5 Providers About to Get Paid': 'Top 5 Providers About to Get Paid',
   'Top 5 customers about to pay': 'Top 5 customers about to pay',
   Total: 'Total',
+  'Total After Discount': 'Total After Discount',
   'Total Amount:': 'Total Amount:',
   'Total Cost': 'Total Cost',
   'Total Purchases': 'Total Purchases',
