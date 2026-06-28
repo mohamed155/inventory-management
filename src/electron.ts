@@ -47,7 +47,7 @@ const ensureDatabase = async (dbUrl: string): Promise<void> => {
         .split('\n')
         .filter((line) => !line.trim().startsWith('--'))
         .join('\n')
-        .split(';')
+				.split(';')
         .map((s) => s.trim())
         .filter(Boolean);
       for (const stmt of statements) {
@@ -124,6 +124,7 @@ const initWindow = async () => {
 
     ipcMain.handle('is-maximized', () => window?.isMaximized());
     ipcMain.handle('platform', () => process.platform);
+    ipcMain.on('download-update', () => au.autoUpdater.downloadUpdate());
     ipcMain.on('install-update', () => au.autoUpdater.quitAndInstall());
 
     // window controls
@@ -141,11 +142,20 @@ const initWindow = async () => {
 };
 
 app.whenReady().then(() => {
-  au.autoUpdater.checkForUpdatesAndNotify();
+  au.autoUpdater.autoDownload = false;
+  au.autoUpdater.checkForUpdates();
+
+  au.autoUpdater.on('update-available', () => {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('update-available');
+    });
+  });
+
   au.autoUpdater.on('update-downloaded', () => {
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('update-downloaded');
     });
   });
+
   initWindow();
 });

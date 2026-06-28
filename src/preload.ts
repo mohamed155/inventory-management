@@ -27,8 +27,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('window-maximized', (_, isMaximized) =>
       callback(isMaximized),
     ),
+  onUpdateAvailable: (callback: () => void) =>
+    ipcRenderer.on('update-available', () => callback()),
   onUpdateDownloaded: (callback: () => void) =>
     ipcRenderer.on('update-downloaded', () => callback()),
+  downloadUpdate: () => ipcRenderer.send('download-update'),
   installUpdate: () => ipcRenderer.send('install-update'),
 
   // window methods
