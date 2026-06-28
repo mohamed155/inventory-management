@@ -3,7 +3,7 @@
   "description": "A simple inventory management app",
   "author": "Mohamed Ramadan",
   "private": true,
-  "version": "2.1.5",
+  "version": "2.1.6",
   "type": "module",
   "main": "dist-electron/electron.js",
   "scripts": {
