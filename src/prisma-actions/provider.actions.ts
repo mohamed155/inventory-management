@@ -56,7 +56,7 @@ export const createProvider = (
       name: provider.name,
       phone: provider.phone,
       address: provider.address,
-      inventoryId,
+      inventory: { connect: { id: inventoryId } },
     },
   });
 };

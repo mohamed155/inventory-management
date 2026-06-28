@@ -48,8 +48,8 @@ describe('getTotalSalesAmount', () => {
 
   it('equals sum of (paidAmount - discount) across all sales', async () => {
     const user = await seedUser(prisma);
-    const customer = await seedCustomer(prisma);
-    const product = await seedProduct(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
     await createSale(prisma, inventoryId, {
@@ -75,8 +75,8 @@ describe('getTotalPurchasesAmount', () => {
 
   it('equals sum of paidAmount across all purchases', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
 
     await createPurchase(prisma, inventoryId, {
       userId: user.id,
@@ -103,9 +103,9 @@ describe('getTotalPurchasesAmount', () => {
 describe('getTotalProfit', () => {
   it('equals sales amount minus purchases amount', async () => {
     const user = await seedUser(prisma);
-    const customer = await seedCustomer(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
     await createSale(prisma, inventoryId, {
@@ -148,8 +148,8 @@ describe('getDueFromCustomers', () => {
 
   it('calculates outstanding customer amount correctly', async () => {
     const user = await seedUser(prisma);
-    const customer = await seedCustomer(prisma);
-    const product = await seedProduct(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
     await createSale(prisma, inventoryId, {
@@ -176,8 +176,8 @@ describe('getDueToProviders', () => {
 
   it('calculates outstanding provider amount correctly', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
 
     await createPurchase(prisma, inventoryId, {
       userId: user.id,
@@ -205,8 +205,8 @@ describe('getDueToProviders', () => {
 describe('getAllOverduePayments', () => {
   it('includes sale with past due date and outstanding balance', async () => {
     const user = await seedUser(prisma);
-    const customer = await seedCustomer(prisma);
-    const product = await seedProduct(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
     await createSale(prisma, inventoryId, {
@@ -226,8 +226,8 @@ describe('getAllOverduePayments', () => {
 
   it('excludes fully-paid sale even if past due date', async () => {
     const user = await seedUser(prisma);
-    const customer = await seedCustomer(prisma);
-    const product = await seedProduct(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
     // Fully paid sale: paidAmount = total cost
@@ -248,7 +248,7 @@ describe('getAllOverduePayments', () => {
 
 describe('getExpiringProducts', () => {
   it('returns products expiring within the warning window', async () => {
-    const product = await seedProduct(prisma, { name: 'Expiring Soon' });
+    const product = await seedProduct(prisma, { name: 'Expiring Soon' }, inventoryId);
     const soonDate = new Date();
     soonDate.setDate(soonDate.getDate() + 5); // expires in 5 days
 
@@ -263,7 +263,7 @@ describe('getExpiringProducts', () => {
   });
 
   it('does not return products expiring beyond the window', async () => {
-    const product = await seedProduct(prisma, { name: 'Far Future' });
+    const product = await seedProduct(prisma, { name: 'Far Future' }, inventoryId);
     const farDate = new Date();
     farDate.setDate(farDate.getDate() + 60); // expires in 60 days
 
@@ -280,7 +280,7 @@ describe('getExpiringProducts', () => {
 
 describe('getLowStockProducts', () => {
   it('returns product with total quantity at or below threshold', async () => {
-    const product = await seedProduct(prisma, { name: 'Low Stock Item' });
+    const product = await seedProduct(prisma, { name: 'Low Stock Item' }, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 5 });
 
     const results = await getLowStockProducts(prisma, inventoryId, 10);
@@ -290,7 +290,7 @@ describe('getLowStockProducts', () => {
   });
 
   it('does not return product above the threshold', async () => {
-    const product = await seedProduct(prisma, { name: 'Well Stocked' });
+    const product = await seedProduct(prisma, { name: 'Well Stocked' }, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 50 });
 
     const results = await getLowStockProducts(prisma, inventoryId, 10);
@@ -302,11 +302,11 @@ describe('getLowStockProducts', () => {
 describe('getTopUpcomingPayingCustomers', () => {
   it('returns at most 5 customers with outstanding balances, ordered by payDueDate', async () => {
     const user = await seedUser(prisma);
-    const product = await seedProduct(prisma);
+    const product = await seedProduct(prisma, {}, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 1000 });
 
     for (let i = 0; i < 6; i++) {
-      const customer = await seedCustomer(prisma);
+      const customer = await seedCustomer(prisma, {}, inventoryId);
       const due = new Date();
       due.setDate(due.getDate() + i + 1);
       await createSale(prisma, inventoryId, {
@@ -330,8 +330,8 @@ describe('getTopUpcomingPayingCustomers', () => {
 
   it('excludes fully-paid sales from upcoming customers', async () => {
     const user = await seedUser(prisma);
-    const customer = await seedCustomer(prisma);
-    const product = await seedProduct(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
     await seedProductBatch(prisma, product.id, { quantity: 100 });
 
     await createSale(prisma, inventoryId, {
@@ -352,10 +352,10 @@ describe('getTopUpcomingPayingCustomers', () => {
 describe('getTopUpcomingPayingProviders', () => {
   it('returns at most 5 providers with outstanding balances, ordered by payDueDate', async () => {
     const user = await seedUser(prisma);
-    const product = await seedProduct(prisma);
+    const product = await seedProduct(prisma, {}, inventoryId);
 
     for (let i = 0; i < 6; i++) {
-      const provider = await seedProvider(prisma);
+      const provider = await seedProvider(prisma, {}, inventoryId);
       const due = new Date();
       due.setDate(due.getDate() + i + 1);
       await createPurchase(prisma, inventoryId, {

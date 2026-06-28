@@ -15,8 +15,9 @@ export function makeProvider(overrides: Record<string, unknown> = {}) {
 export async function seedProvider(
   prisma: PrismaClient,
   overrides: Record<string, unknown> = {},
+  inventoryId?: string,
 ) {
-  const data = makeProvider(overrides);
+  const data = { ...makeProvider(overrides), ...(inventoryId ? { inventoryId } : {}) };
   return prisma.provider.create({
     data: data as Parameters<typeof prisma.provider.create>[0]['data'],
   });

@@ -44,7 +44,7 @@ describe('getAllProvidersPaginated', () => {
 
     const result = await getAllProvidersPaginated(prisma, inventoryId, {
       page: 1,
-      filter: [],
+      filter: {},
     } as any);
 
     expect(result.data).toHaveLength(10);
@@ -67,7 +67,7 @@ describe('getAllProvidersPaginated', () => {
       page: 1,
       orderProperty: 'name',
       orderDirection: 'asc',
-      filter: [],
+      filter: {},
     } as any);
 
     expect(result.data[0].name).toBe('Alpha Co');

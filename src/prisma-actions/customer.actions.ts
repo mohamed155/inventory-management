@@ -49,7 +49,7 @@ export const createCustomer = (prisma: PrismaClient, inventoryId: string, custom
       lastname: customer.lastname,
       phone: customer.phone,
       address: customer.address,
-      inventoryId,
+      inventory: { connect: { id: inventoryId } },
     },
   });
 };

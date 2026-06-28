@@ -35,8 +35,8 @@ afterEach(async () => {
 describe('createPurchase - batch management', () => {
   it('creates new batch when no matching batch exists', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
 
     const batchCountBefore = await prisma.productBatch.count();
 
@@ -68,8 +68,8 @@ describe('createPurchase - batch management', () => {
 
   it('merges into existing batch with matching dates', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
 
     const prodDate = new Date('2025-01-01');
     const expDate = new Date('2026-12-31');
@@ -109,7 +109,7 @@ describe('createPurchase - batch management', () => {
 
   it('creates inline provider when no providerId given', async () => {
     const user = await seedUser(prisma);
-    const product = await seedProduct(prisma);
+    const product = await seedProduct(prisma, {}, inventoryId);
     const countBefore = await prisma.provider.count();
 
     await createPurchase(prisma, inventoryId, {
@@ -138,7 +138,7 @@ describe('createPurchase - batch management', () => {
 
   it('creates inline product when no product id given', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
     const productCountBefore = await prisma.product.count();
 
     await createPurchase(prisma, inventoryId, {
@@ -172,8 +172,8 @@ describe('createPurchase - batch management', () => {
 describe('updatePurchase', () => {
   it('updates paidAmount on an existing purchase', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
 
     const purchase = await createPurchase(prisma, inventoryId, {
       userId: user.id,
@@ -204,8 +204,8 @@ describe('updatePurchase', () => {
 describe('deletePurchase', () => {
   it('removes the purchase record', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
-    const product = await seedProduct(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
 
     const purchase = await createPurchase(prisma, inventoryId, {
       userId: user.id,
@@ -239,10 +239,10 @@ describe('deletePurchase', () => {
 describe('getAllPurchaseItems', () => {
   it('returns joined product and batch data for each item', async () => {
     const user = await seedUser(prisma);
-    const provider = await seedProvider(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
     const product = await seedProduct(prisma, {
       name: 'Purchase Item Product',
-    });
+    }, inventoryId);
 
     const purchase = await createPurchase(prisma, inventoryId, {
       userId: user.id,
@@ -274,8 +274,8 @@ describe('getAllPurchasesPaginated', () => {
     const user = await seedUser(prisma);
 
     for (let i = 0; i < 15; i++) {
-      const provider = await seedProvider(prisma);
-      const product = await seedProduct(prisma);
+      const provider = await seedProvider(prisma, {}, inventoryId);
+      const product = await seedProduct(prisma, {}, inventoryId);
 
       await createPurchase(prisma, inventoryId, {
         userId: user.id,

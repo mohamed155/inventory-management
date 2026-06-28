@@ -83,7 +83,7 @@ describe('dashboard service', () => {
       '../../../src/services/dashboard.ts'
     );
     await getExpiringProducts(30);
-    expect(mock.getExpiringProducts).toHaveBeenCalledWith(30);
+    expect(mock.getExpiringProducts).toHaveBeenCalledWith('', 30);
   });
 
   it('getLowStockProducts passes threshold argument through', async () => {
@@ -92,7 +92,7 @@ describe('dashboard service', () => {
       '../../../src/services/dashboard.ts'
     );
     await getLowStockProducts(5);
-    expect(mock.getLowStockProducts).toHaveBeenCalledWith(5);
+    expect(mock.getLowStockProducts).toHaveBeenCalledWith('', 5);
   });
 
   it('getTopUpcomingPayingCustomers delegates to electronAPI', async () => {

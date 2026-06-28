@@ -245,7 +245,7 @@ export const createSale = async (prisma: PrismaClient, inventoryId: string, body
           lastname: body.customerLastname,
           phone: body.customerPhone,
           address: body.customerAddress,
-          inventoryId,
+          inventory: { connect: { id: inventoryId } },
         },
       });
       customerId = newCustomer.id;
@@ -257,7 +257,7 @@ export const createSale = async (prisma: PrismaClient, inventoryId: string, body
         payDueDate: body.payDueDate,
         date: body.date,
         discount: body.discount || 0,
-        inventoryId,
+        inventory: { connect: { id: inventoryId } },
         user: { connect: { id: body.userId } },
         customer: { connect: { id: customerId } },
       },

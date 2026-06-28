@@ -38,7 +38,9 @@ declare global {
       // window properties
       isMaximized: () => Promise<boolean>;
       onWindowMaximized: (callback: (isMaximized: boolean) => void) => void;
+      onUpdateAvailable: (callback: () => void) => void;
       onUpdateDownloaded: (callback: () => void) => void;
+      downloadUpdate: () => void;
       installUpdate: () => void;
 
       // window actions

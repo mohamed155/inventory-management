@@ -13,7 +13,7 @@ describe('products service', () => {
     );
     const params = { page: 1, filter: [] } as any;
     await getAllProductsPaginated(params);
-    expect(mock.getAllProductsPaginated).toHaveBeenCalledWith(params);
+    expect(mock.getAllProductsPaginated).toHaveBeenCalledWith('', params);
   });
 
   it('getAllProducts delegates to electronAPI', async () => {
@@ -39,7 +39,7 @@ describe('products service', () => {
     const { createProduct } = await import('../../../src/services/products.ts');
     const payload = { name: 'New Product' } as any;
     await createProduct(payload);
-    expect(mock.createProduct).toHaveBeenCalledWith(payload);
+    expect(mock.createProduct).toHaveBeenCalledWith('', payload);
   });
 
   it('updateProduct delegates with id and data', async () => {
@@ -64,7 +64,7 @@ describe('products service', () => {
     );
     const params = { page: 1, filter: [] } as any;
     await getAllProductBatchesPaginated(params);
-    expect(mock.getAllProductBatchesPaginated).toHaveBeenCalledWith(params);
+    expect(mock.getAllProductBatchesPaginated).toHaveBeenCalledWith('', params);
   });
 
   it('getAllProductBatches delegates to electronAPI', async () => {
@@ -83,7 +83,7 @@ describe('products service', () => {
     );
     const payload = { name: 'Batch', quantity: 10 } as any;
     await createProductBatch(payload);
-    expect(mock.createProductBatch).toHaveBeenCalledWith(payload);
+    expect(mock.createProductBatch).toHaveBeenCalledWith('', payload);
   });
 
   it('updateProductBatch delegates with id and data', async () => {

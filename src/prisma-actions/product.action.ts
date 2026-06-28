@@ -173,7 +173,7 @@ export const createProductBatch = async (
         name: productBatch.name,
         description: productBatch.description,
         unitPrice: productBatch.unitPrice ?? 0,
-        inventoryId,
+        inventory: { connect: { id: inventoryId } },
       },
     });
     return prisma.productBatch.create({

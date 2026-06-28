@@ -71,13 +71,19 @@ function InventoryDialog({
               }),
           unitPrice: z.number().min(0, t('Unit Price must be positive')),
           quantity: z.number().min(1, t('Quantity can not be zero or less')),
-          productionDate: z.date(),
-          expirationDate: z.date(),
+          productionDate: z.date().optional(),
+          expirationDate: z.date().optional(),
         })
-        .refine((data) => data.expirationDate > data.productionDate, {
-          message: t('Expiration date can not be before production date'),
-          path: ['expirationDate'],
-        }),
+        .refine(
+          (data) =>
+            !data.expirationDate ||
+            !data.productionDate ||
+            data.expirationDate > data.productionDate,
+          {
+            message: t('Expiration date can not be before production date'),
+            path: ['expirationDate'],
+          },
+        ),
     [t, status, product],
   );
 
@@ -89,8 +95,8 @@ function InventoryDialog({
       description: status === 'new' ? '' : undefined,
       unitPrice: 0,
       quantity: 0,
-      productionDate: new Date(),
-      expirationDate: new Date(),
+      productionDate: undefined,
+      expirationDate: undefined,
     },
   });
 
@@ -114,8 +120,8 @@ function InventoryDialog({
           : undefined,
       unitPrice: product ? (product.unitPrice ?? 0) : 0,
       quantity: product ? product.quantity : 0,
-      productionDate: product ? product.productionDate : new Date(),
-      expirationDate: product ? product.expirationDate : new Date(),
+      productionDate: product ? product.productionDate ?? undefined : undefined,
+      expirationDate: product ? product.expirationDate ?? undefined : undefined,
     });
   }, [status, form, product]);
 
@@ -226,17 +232,14 @@ function InventoryDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>{t('Unit Price')}</FieldLabel>
-                  <Input
-                    {...field}
-                    onChange={(e) =>
-                      field.onChange({
-                        ...e,
-                        target: { ...e.target, value: Number(e.target.value) },
-                      })
-                    }
+                  <ArithmeticInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
                     aria-invalid={fieldState.invalid}
                     autoComplete="off"
-                    type="number"
                   />
                   <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
                     <FieldError errors={[fieldState.error]} />
@@ -273,6 +276,7 @@ function InventoryDialog({
                   <FieldLabel>{t('Production Date')}</FieldLabel>
                   <DatePicker
                     {...field}
+                    dismissable
                     onChange={(date) =>
                       field.onChange({ target: { value: date } })
                     }
@@ -291,6 +295,7 @@ function InventoryDialog({
                   <FieldLabel>{t('Expiration Date')}</FieldLabel>
                   <DatePicker
                     {...field}
+                    dismissable
                     onChange={(date) =>
                       field.onChange({ target: { value: date } })
                     }
