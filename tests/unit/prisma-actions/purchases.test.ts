@@ -234,15 +234,97 @@ describe('deletePurchase', () => {
     });
     expect(found).toBeNull();
   });
+
+  it('reverses purchased stock when deleting a purchase', async () => {
+    const user = await seedUser(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
+
+    const purchase = await createPurchase(prisma, inventoryId, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date(),
+      products: [
+        {
+          id: product.id,
+          quantity: 5,
+          unitPrice: 20,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+
+    const batchBeforeDelete = await prisma.productBatch.findFirst({
+      where: { productId: product.id },
+    });
+    expect(batchBeforeDelete).not.toBeNull();
+    if (!batchBeforeDelete) throw new Error('Expected purchase batch');
+    expect(batchBeforeDelete.quantity).toBe(5);
+
+    await deletePurchase(prisma, purchase.id);
+
+    const batchAfterDelete = await prisma.productBatch.findUnique({
+      where: { id: batchBeforeDelete.id },
+    });
+    expect(batchAfterDelete?.quantity).toBe(0);
+  });
+
+  it('does not delete a purchase when its stock has already been sold', async () => {
+    const user = await seedUser(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
+
+    const purchase = await createPurchase(prisma, inventoryId, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date(),
+      products: [
+        {
+          id: product.id,
+          quantity: 5,
+          unitPrice: 20,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+    const batch = await prisma.productBatch.findFirst({
+      where: { productId: product.id },
+    });
+    expect(batch).not.toBeNull();
+    if (!batch) throw new Error('Expected purchase batch');
+    await prisma.productBatch.update({
+      where: { id: batch.id },
+      data: { quantity: 2 },
+    });
+
+    await expect(deletePurchase(prisma, purchase.id)).rejects.toThrow(
+      'already been sold',
+    );
+
+    const found = await prisma.purchase.findUnique({
+      where: { id: purchase.id },
+    });
+    expect(found).not.toBeNull();
+  });
 });
 
 describe('getAllPurchaseItems', () => {
   it('returns joined product and batch data for each item', async () => {
     const user = await seedUser(prisma);
     const provider = await seedProvider(prisma, {}, inventoryId);
-    const product = await seedProduct(prisma, {
-      name: 'Purchase Item Product',
-    }, inventoryId);
+    const product = await seedProduct(
+      prisma,
+      {
+        name: 'Purchase Item Product',
+      },
+      inventoryId,
+    );
 
     const purchase = await createPurchase(prisma, inventoryId, {
       userId: user.id,

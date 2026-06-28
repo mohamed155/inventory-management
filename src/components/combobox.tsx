@@ -56,6 +56,7 @@ function Combobox<T>({
     <Popover open={open} onOpenChange={(open) => setOpen(open)}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           role="combobox"
           aria-expanded={open}

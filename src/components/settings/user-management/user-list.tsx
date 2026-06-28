@@ -13,16 +13,18 @@ import {
   TableRow,
 } from '@/components/ui/table.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
+import type { CurrentUser } from '@/models/user.ts';
 import { deleteUser, getUsers } from '@/services/auth.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
-import type { User } from '../../../../generated/prisma/browser.ts';
 import UserFormDialog from './user-form-dialog.tsx';
 
 function UserList() {
   const { t } = useTranslation();
   const { confirm } = useConfirm();
   const currentUser = useCurrentUserStore((s) => s.currentUser);
-  const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
+  const [editingUser, setEditingUser] = useState<CurrentUser | undefined>(
+    undefined,
+  );
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const { data: users, refetch } = useQuery({
@@ -31,12 +33,12 @@ function UserList() {
     refetchOnWindowFocus: false,
   });
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: CurrentUser) => {
     setEditingUser(user);
     setEditDialogOpen(true);
   };
 
-  const handleDelete = async (user: User) => {
+  const handleDelete = async (user: CurrentUser) => {
     const confirmed = await confirm({
       message: t('Are you sure to delete this record?'),
       variant: 'destructive',
@@ -65,16 +67,10 @@ function UserList() {
             <TableHead className="text-white h-7.5">
               {t('First name')}
             </TableHead>
-            <TableHead className="text-white h-7.5">
-              {t('Last name')}
-            </TableHead>
-            <TableHead className="text-white h-7.5">
-              {t('Username')}
-            </TableHead>
+            <TableHead className="text-white h-7.5">{t('Last name')}</TableHead>
+            <TableHead className="text-white h-7.5">{t('Username')}</TableHead>
             <TableHead className="text-white h-7.5">{t('Role')}</TableHead>
-            <TableHead className="text-white h-7.5">
-              {t('Actions')}
-            </TableHead>
+            <TableHead className="text-white h-7.5">{t('Actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

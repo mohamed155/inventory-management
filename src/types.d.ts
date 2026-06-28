@@ -4,7 +4,7 @@ import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import type { SaleFormData } from '@/models/sales-form.ts';
 import type { SalesListResult } from '@/models/sales-list-result.ts';
-import type { UserModel } from '@/models/user.ts';
+import type { CurrentUser, UserModel } from '@/models/user.ts';
 import type {
   Customer,
   Inventory,
@@ -14,7 +14,6 @@ import type {
   PurchaseItem,
   Sale,
   SaleItem,
-  User,
 } from '../generated/prisma/browser.ts';
 import type { CustomerWhereInput } from '../generated/prisma/models/Customer.ts';
 import type { ProductWhereInput } from '../generated/prisma/models/Product.ts';
@@ -54,16 +53,27 @@ declare global {
       getInventoryById: (id: string) => Promise<IpcResponse<Inventory | null>>;
       getInventoriesCount: () => Promise<IpcResponse<number>>;
       createInventory: (name: string) => Promise<IpcResponse<Inventory>>;
-      updateInventory: (id: string, name: string) => Promise<IpcResponse<Inventory>>;
+      updateInventory: (
+        id: string,
+        name: string,
+      ) => Promise<IpcResponse<Inventory>>;
       deleteInventory: (id: string) => Promise<IpcResponse<void>>;
 
       // dashboard actions
-      getDueFromCustomers: (inventoryId: string) => Promise<IpcResponse<number>>;
+      getDueFromCustomers: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<number>>;
       getDueToProviders: (inventoryId: string) => Promise<IpcResponse<number>>;
       getTotalProfit: (inventoryId: string) => Promise<IpcResponse<number>>;
-      getTotalPurchasesAmount: (inventoryId: string) => Promise<IpcResponse<number>>;
-      getTotalSalesAmount: (inventoryId: string) => Promise<IpcResponse<number>>;
-      getAllOverduePayments: (inventoryId: string) => Promise<
+      getTotalPurchasesAmount: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<number>>;
+      getTotalSalesAmount: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<number>>;
+      getAllOverduePayments: (
+        inventoryId: string,
+      ) => Promise<
         IpcResponse<{ totalRemainingAmount: number; count: number }>
       >;
       getExpiringProducts: (
@@ -98,40 +108,45 @@ declare global {
           }[]
         >
       >;
-      getMonthlyChartData: (inventoryId: string) => Promise<
+      getMonthlyChartData: (
+        inventoryId: string,
+      ) => Promise<
         IpcResponse<
           { month: string; sales: number; purchases: number; profit: number }[]
         >
       >;
 
       // users actions
-      getUsers: () => Promise<IpcResponse<User[]>>;
-      getUserById: (id: string) => Promise<IpcResponse<User | null>>;
+      getUsers: () => Promise<IpcResponse<CurrentUser[]>>;
+      getUserById: (id: string) => Promise<IpcResponse<CurrentUser | null>>;
       getUserByUsername: (
         username: string,
-      ) => Promise<IpcResponse<User | null>>;
+      ) => Promise<IpcResponse<CurrentUser | null>>;
       getUsersCount: () => Promise<IpcResponse<number>>;
-      createUser: (user: UserModel) => Promise<IpcResponse<User>>;
+      createUser: (user: UserModel) => Promise<IpcResponse<CurrentUser>>;
       updateUser: (
         id: string,
         data: Partial<UserModel>,
-      ) => Promise<IpcResponse<User>>;
-      deleteUser: (id: string) => Promise<IpcResponse<User>>;
+      ) => Promise<IpcResponse<CurrentUser>>;
+      deleteUser: (id: string) => Promise<IpcResponse<CurrentUser>>;
       signIn: (
         username: string,
         password: string,
-      ) => Promise<IpcResponse<User | null>>;
+      ) => Promise<IpcResponse<CurrentUser | null>>;
 
       // products actions
       getAllProductsPaginated: (
         inventoryId: string,
         params: DataParams<Product, ProductWhereInput>,
       ) => Promise<IpcResponse<{ data: Product[]; total: number }>>;
-      getAllProducts: (inventoryId: string) => Promise<
-        IpcResponse<Pick<Product, 'id' | 'name'>[]>
-      >;
+      getAllProducts: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<Pick<Product, 'id' | 'name'>[]>>;
       getProductById: (id: string) => Promise<IpcResponse<Product | null>>;
-      createProduct: (inventoryId: string, product: Product) => Promise<IpcResponse<Product>>;
+      createProduct: (
+        inventoryId: string,
+        product: Product,
+      ) => Promise<IpcResponse<Product>>;
       updateProduct: (
         id: string,
         product: Product,
@@ -148,9 +163,9 @@ declare global {
       ) => Promise<
         IpcResponse<{ data: (Product & ProductBatch)[]; total: number }>
       >;
-      getAllProductBatches: (inventoryId: string) => Promise<
-        IpcResponse<(Product & ProductBatch)[]>
-      >;
+      getAllProductBatches: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<(Product & ProductBatch)[]>>;
       getProductBatchById: (
         id: string,
       ) => Promise<IpcResponse<(Product & ProductBatch) | null>>;
@@ -171,11 +186,16 @@ declare global {
         inventoryId: string,
         params: DataParams<Customer, CustomerWhereInput>,
       ) => Promise<IpcResponse<{ data: Customer[]; total: number }>>;
-      getAllCustomers: (inventoryId: string) => Promise<
+      getAllCustomers: (
+        inventoryId: string,
+      ) => Promise<
         IpcResponse<Pick<Customer, 'id' | 'firstname' | 'lastname'>[]>
       >;
       getCustomerById: (id: string) => Promise<IpcResponse<Customer | null>>;
-      createCustomer: (inventoryId: string, customer: Customer) => Promise<IpcResponse<Customer>>;
+      createCustomer: (
+        inventoryId: string,
+        customer: Customer,
+      ) => Promise<IpcResponse<Customer>>;
       updateCustomer: (
         id: string,
         customer: Customer,
@@ -187,11 +207,14 @@ declare global {
         inventoryId: string,
         params: DataParams<Provider, ProviderWhereInput>,
       ) => Promise<IpcResponse<{ data: Provider[]; total: number }>>;
-      getAllProviders: (inventoryId: string) => Promise<
-        IpcResponse<Pick<Provider, 'id' | 'name'>[]>
-      >;
+      getAllProviders: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<Pick<Provider, 'id' | 'name'>[]>>;
       getProviderById: (id: string) => Promise<IpcResponse<Provider | null>>;
-      createProvider: (inventoryId: string, provider: Provider) => Promise<IpcResponse<Provider>>;
+      createProvider: (
+        inventoryId: string,
+        provider: Provider,
+      ) => Promise<IpcResponse<Provider>>;
       updateProvider: (
         id: string,
         provider: Provider,
@@ -210,9 +233,9 @@ declare global {
           }
         >,
       ) => Promise<IpcResponse<{ data: PurchasesListResult[]; total: number }>>;
-      getAllPurchases: (inventoryId: string) => Promise<
-        IpcResponse<Pick<Purchase, 'id' | 'name'>[]>
-      >;
+      getAllPurchases: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<Pick<Purchase, 'id' | 'name'>[]>>;
       getPurchaseById: (id: string) => Promise<IpcResponse<Purchase | null>>;
       createPurchase: (
         inventoryId: string,
@@ -226,7 +249,10 @@ declare global {
       getAllPurchaseItems: (
         purchaseId: string,
       ) => Promise<IpcResponse<(PurchaseItem & Product & ProductBatch)[]>>;
-      getPurchasesByProviderId: (inventoryId: string, providerId: string) => Promise<
+      getPurchasesByProviderId: (
+        inventoryId: string,
+        providerId: string,
+      ) => Promise<
         IpcResponse<
           {
             id: string;
@@ -252,9 +278,14 @@ declare global {
           }
         >,
       ) => Promise<IpcResponse<{ data: SalesListResult[]; total: number }>>;
-      getAllSales: (inventoryId: string) => Promise<IpcResponse<Pick<Sale, 'id' | 'name'>[]>>;
+      getAllSales: (
+        inventoryId: string,
+      ) => Promise<IpcResponse<Pick<Sale, 'id' | 'name'>[]>>;
       getSaleById: (id: string) => Promise<IpcResponse<Sale | null>>;
-      createSale: (inventoryId: string, sale: SaleFormData) => Promise<IpcResponse<Sale>>;
+      createSale: (
+        inventoryId: string,
+        sale: SaleFormData,
+      ) => Promise<IpcResponse<Sale>>;
       updateSale: (
         id: string,
         sale: Partial<Sale>,
@@ -263,7 +294,10 @@ declare global {
       getAllSaleItems: (
         saleId: string,
       ) => Promise<IpcResponse<(SaleItem & Product & ProductBatch)[]>>;
-      getSalesByCustomerId: (inventoryId: string, customerId: string) => Promise<
+      getSalesByCustomerId: (
+        inventoryId: string,
+        customerId: string,
+      ) => Promise<
         IpcResponse<
           {
             id: string;

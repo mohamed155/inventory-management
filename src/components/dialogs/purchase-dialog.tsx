@@ -12,6 +12,7 @@ import {
 } from '@/components/animate-ui/components/animate/tabs.tsx';
 import Combobox from '@/components/combobox.tsx';
 import DatePicker from '@/components/date-picker.tsx';
+import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
@@ -27,7 +28,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field.tsx';
-import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import type { PurchaseFormData } from '@/models/purchase-form.ts';
 import { getAllProducts } from '@/services/products.ts';
@@ -91,7 +91,9 @@ function PurchaseDialog({
                   !data.productionDate ||
                   data.expirationDate > data.productionDate,
                 {
-                  message: t('Expiration date can not be before production date'),
+                  message: t(
+                    'Expiration date can not be before production date',
+                  ),
                   path: ['expirationDate'],
                 },
               ),
@@ -113,13 +115,10 @@ function PurchaseDialog({
             path: ['payDueDate'],
           },
         )
-        .refine(
-          (data) => !data.payDueDate || data.payDueDate >= data.date,
-          {
-            message: t('Payment due date cannot be before the transaction date'),
-            path: ['payDueDate'],
-          },
-        ),
+        .refine((data) => !data.payDueDate || data.payDueDate >= data.date, {
+          message: t('Payment due date cannot be before the transaction date'),
+          path: ['payDueDate'],
+        }),
     [t, providerStatus],
   );
 
@@ -199,10 +198,11 @@ function PurchaseDialog({
 
   const onSubmit = async () => {
     if (onClose) {
+      if (!currentUser) return;
       const values = form.getValues();
       const result: PurchaseFormData = {
         ...values,
-        userId: currentUser!.id,
+        userId: currentUser.id,
         payDueDate: values.payDueDate ?? values.date,
       };
       onClose(result);
@@ -324,7 +324,7 @@ function PurchaseDialog({
               <div className="flex flex-col gap-2 mt-4">
                 <div className="flex justify-between items-center">
                   <h6>{t('Products')}</h6>
-                  <Button onClick={addProduct}>
+                  <Button type="button" onClick={addProduct}>
                     <Plus size={30} />
                     {t('Add Product')}
                   </Button>
@@ -345,6 +345,7 @@ function PurchaseDialog({
                             }
                           >
                             <Button
+                              type="button"
                               variant="ghost"
                               onClick={() => removeProduct(index)}
                             >
@@ -423,7 +424,7 @@ function PurchaseDialog({
                             )}
                           />
                         </Activity>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <Controller
                             name={`products.${index}.quantity` as const}
                             control={form.control}
@@ -475,7 +476,7 @@ function PurchaseDialog({
                             )}
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <Controller
                             name={`products.${index}.productionDate` as const}
                             control={form.control}
@@ -606,11 +607,11 @@ function PurchaseDialog({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" className="bg">
+              <Button type="button" variant="outline" className="bg">
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
+            <Button type="submit">{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>

@@ -216,7 +216,10 @@ const getSaleIdsByRemainingCost = async (
   return rows.map((r: SaleItem) => r.saleId);
 };
 
-export const getAllSales = async (prisma: PrismaClient, inventoryId: string) => {
+export const getAllSales = async (
+  prisma: PrismaClient,
+  inventoryId: string,
+) => {
   const sales = await prisma.sale.findMany({
     where: { inventoryId },
     include: { user: true, customer: true },
@@ -233,14 +236,29 @@ export const getSaleById = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const createSale = async (prisma: PrismaClient, inventoryId: string, body: SaleFormData) => {
+export const createSale = async (
+  prisma: PrismaClient,
+  inventoryId: string,
+  body: SaleFormData,
+) => {
   return prisma.$transaction(async (tx: PrismaClient) => {
     let customerId: string;
     if (body.customerId) {
+      const customer = await tx.customer.findFirst({
+        where: { id: body.customerId, inventoryId },
+        select: { id: true },
+      });
+      if (!customer) {
+        throw new Error('Customer not found in selected inventory');
+      }
       customerId = body.customerId;
     } else {
-      const newCustomer = await tx.customer.create({
-        data: {
+      const customer = await tx.customer.upsert({
+        where: {
+          inventoryId_phone: { inventoryId, phone: body.customerPhone },
+        },
+        update: {},
+        create: {
           firstname: body.customerFirstname,
           lastname: body.customerLastname,
           phone: body.customerPhone,
@@ -248,7 +266,7 @@ export const createSale = async (prisma: PrismaClient, inventoryId: string, body
           inventory: { connect: { id: inventoryId } },
         },
       });
-      customerId = newCustomer.id;
+      customerId = customer.id;
     }
 
     const sale = await tx.sale.create({
@@ -264,12 +282,27 @@ export const createSale = async (prisma: PrismaClient, inventoryId: string, body
     });
 
     for (const product of body.products) {
+      const existingProduct = await tx.product.findFirst({
+        where: { id: product.id, inventoryId },
+        select: { id: true },
+      });
+      if (!existingProduct) {
+        throw new Error('Product not found in selected inventory');
+      }
+
       const batches = await tx.productBatch.findMany({
         where: { productId: product.id, quantity: { gt: 0 } },
-        orderBy: { productionDate: 'asc' },
+        orderBy: [
+          { expirationDate: { sort: 'asc', nulls: 'last' } },
+          { productionDate: { sort: 'asc', nulls: 'last' } },
+          { createdAt: 'asc' },
+        ],
       });
 
-      const totalAvailable = batches.reduce((sum: number, b: ProductBatch) => sum + b.quantity, 0);
+      const totalAvailable = batches.reduce(
+        (sum: number, b: ProductBatch) => sum + b.quantity,
+        0,
+      );
       if (totalAvailable < product.quantity) {
         throw new Error(`Insufficient stock for product`);
       }

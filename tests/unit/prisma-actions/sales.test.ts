@@ -89,6 +89,28 @@ describe('createSale - inventory deduction (FIFO)', () => {
     expect(late?.quantity).toBe(30);
   });
 
+  it('rejects products from another inventory', async () => {
+    const otherInventory = await prisma.inventory.create({
+      data: { name: 'Other' },
+    });
+    const user = await seedUser(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, otherInventory.id);
+    await seedProductBatch(prisma, product.id, { quantity: 20 });
+
+    await expect(
+      createSale(prisma, inventoryId, {
+        userId: user.id,
+        customerId: customer.id,
+        paidAmount: 100,
+        payDueDate: new Date('2026-12-31'),
+        date: new Date(),
+        discount: 0,
+        products: [{ id: product.id, quantity: 5, unitPrice: 20 }],
+      }),
+    ).rejects.toThrow('selected inventory');
+  });
+
   it('throws when requested quantity exceeds stock', async () => {
     const user = await seedUser(prisma);
     const customer = await seedCustomer(prisma, {}, inventoryId);
@@ -209,7 +231,11 @@ describe('getAllSaleItems', () => {
   it('returns joined product and batch data for each item', async () => {
     const user = await seedUser(prisma);
     const customer = await seedCustomer(prisma, {}, inventoryId);
-    const product = await seedProduct(prisma, { name: 'Item Product' }, inventoryId);
+    const product = await seedProduct(
+      prisma,
+      { name: 'Item Product' },
+      inventoryId,
+    );
     await seedProductBatch(prisma, product.id, { quantity: 20 });
 
     const sale = await createSale(prisma, inventoryId, {

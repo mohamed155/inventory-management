@@ -12,6 +12,7 @@ import {
 } from '@/components/animate-ui/components/animate/tabs.tsx';
 import Combobox from '@/components/combobox.tsx';
 import DatePicker from '@/components/date-picker.tsx';
+import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
@@ -27,7 +28,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field.tsx';
-import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import type { SaleFormData } from '@/models/sales-form.ts';
 import { getAllCustomers } from '@/services/customers.ts';
@@ -113,13 +113,10 @@ function SaleDialog({
             path: ['payDueDate'],
           },
         )
-        .refine(
-          (data) => !data.payDueDate || data.payDueDate >= data.date,
-          {
-            message: t('Payment due date cannot be before the transaction date'),
-            path: ['payDueDate'],
-          },
-        ),
+        .refine((data) => !data.payDueDate || data.payDueDate >= data.date, {
+          message: t('Payment due date cannot be before the transaction date'),
+          path: ['payDueDate'],
+        }),
     [t, customerStatus],
   );
 
@@ -191,6 +188,7 @@ function SaleDialog({
 
   const onSubmit = async () => {
     if (onClose) {
+      if (!currentUser) return;
       const values = form.getValues();
       const totalCost =
         values.products.reduce((sum, p) => sum + p.unitPrice * p.quantity, 0) -
@@ -203,7 +201,7 @@ function SaleDialog({
       }
       const result: SaleFormData = {
         ...values,
-        userId: currentUser!.id,
+        userId: currentUser.id,
         payDueDate: values.payDueDate ?? values.date,
       };
       onClose(result);
@@ -347,7 +345,7 @@ function SaleDialog({
               <div className="flex flex-col gap-2 mt-4">
                 <div className="flex justify-between items-center">
                   <h6>{t('Products')}</h6>
-                  <Button onClick={addProduct}>
+                  <Button type="button" onClick={addProduct}>
                     <Plus size={30} />
                     {t('Add Product')}
                   </Button>
@@ -368,6 +366,7 @@ function SaleDialog({
                             }
                           >
                             <Button
+                              type="button"
                               variant="ghost"
                               onClick={() => removeProduct(index)}
                             >
@@ -401,7 +400,7 @@ function SaleDialog({
                           </Field>
                         )}
                       />
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Controller
                           name={`products.${index}.quantity` as const}
                           control={form.control}
@@ -460,7 +459,7 @@ function SaleDialog({
                   <span>{t('Total')}</span>
                   <span>{total.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Controller
                     name="paidAmount"
                     control={form.control}
@@ -546,11 +545,11 @@ function SaleDialog({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" className="bg">
+              <Button type="button" variant="outline" className="bg">
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
+            <Button type="submit">{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>

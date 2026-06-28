@@ -40,6 +40,7 @@ function DatePicker({
     <Popover open={open} onOpenChange={(open) => setOpen(open)}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           id="date"
           className={`w-full flex justify-between ${className ?? ''}`}

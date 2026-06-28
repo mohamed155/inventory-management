@@ -27,15 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.tsx';
-import type { UserRole } from '@/models/user.ts';
+import type { CurrentUser, UserRole } from '@/models/user.ts';
 import { createUser, updateUser } from '@/services/auth.ts';
-import type { User } from '../../../../generated/prisma/browser.ts';
 
 type UserFormDialogProps = {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  user?: User;
+  user?: CurrentUser;
 };
 
 function UserFormDialog({
@@ -240,9 +239,7 @@ function UserFormDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-            <Button onClick={() => form.handleSubmit(onSubmit)()}>
-              {t('Save')}
-            </Button>
+            <Button type="submit">{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>
