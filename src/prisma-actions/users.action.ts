@@ -3,17 +3,45 @@ import type { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import type { User } from '../../generated/prisma/client.ts';
 
+export type SafeUser = Omit<User, 'password'>;
+
+const selectSafeUser = {
+  id: true,
+  firstname: true,
+  lastname: true,
+  username: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+const sanitizeUser = (user: User): SafeUser => {
+  const { password: _password, ...safeUser } = user;
+  return safeUser;
+};
+
 export const getAllUsers = (prisma: PrismaClient) => {
-  return prisma.user.findMany();
+  return prisma.user.findMany({ select: selectSafeUser });
 };
 
 export const getUserById = (prisma: PrismaClient, id: string) => {
   return prisma.user.findUnique({
     where: { id },
+    select: selectSafeUser,
   });
 };
 
 export const getUserByUsername = (prisma: PrismaClient, username: string) => {
+  return prisma.user.findUnique({
+    where: { username },
+    select: selectSafeUser,
+  });
+};
+
+const getUserByUsernameWithPassword = (
+  prisma: PrismaClient,
+  username: string,
+) => {
   return prisma.user.findUnique({
     where: { username },
   });
@@ -26,7 +54,7 @@ export const getUsersCount = (prisma: PrismaClient) => {
 export const createUser = async (prisma: PrismaClient, user: User) => {
   const hashedPassword = await bcrypt.hash(user.password, 10);
 
-  return prisma.user.create({
+  const createdUser = await prisma.user.create({
     data: {
       firstname: user.firstname,
       lastname: user.lastname,
@@ -35,6 +63,7 @@ export const createUser = async (prisma: PrismaClient, user: User) => {
       password: hashedPassword,
     },
   });
+  return sanitizeUser(createdUser);
 };
 
 export const signIn = async (
@@ -42,10 +71,10 @@ export const signIn = async (
   username: string,
   password: string,
 ) => {
-  const user = await getUserByUsername(prisma, username);
+  const user = await getUserByUsernameWithPassword(prisma, username);
   const isMatch = await bcrypt.compare(password, user?.password || '');
   if (user && isMatch) {
-    return user;
+    return sanitizeUser(user);
   }
   return null;
 };
@@ -70,7 +99,11 @@ export const updateUser = async (
   } else {
     delete updateData.password;
   }
-  return prisma.user.update({ where: { id }, data: updateData });
+  const updatedUser = await prisma.user.update({
+    where: { id },
+    data: updateData,
+  });
+  return sanitizeUser(updatedUser);
 };
 
 export const deleteUser = async (prisma: PrismaClient, id: string) => {
@@ -81,5 +114,6 @@ export const deleteUser = async (prisma: PrismaClient, id: string) => {
       throw new Error('Cannot delete the last admin');
     }
   }
-  return prisma.user.delete({ where: { id } });
+  const deletedUser = await prisma.user.delete({ where: { id } });
+  return sanitizeUser(deletedUser);
 };

@@ -28,7 +28,7 @@ afterEach(async () => {
 });
 
 describe('createUser', () => {
-  it('hashes the password before storing', async () => {
+  it('hashes the password before storing and does not return the hash', async () => {
     const user = await createUser(prisma, {
       firstname: 'Test',
       lastname: 'User',
@@ -36,8 +36,15 @@ describe('createUser', () => {
       password: 'plaintext123',
     } as any);
 
-    expect(user.password).not.toBe('plaintext123');
-    const isHashed = await bcrypt.compare('plaintext123', user.password);
+    expect('password' in user).toBe(false);
+    const storedUser = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+    expect(storedUser?.password).not.toBe('plaintext123');
+    const isHashed = await bcrypt.compare(
+      'plaintext123',
+      storedUser?.password ?? '',
+    );
     expect(isHashed).toBe(true);
   });
 
@@ -66,7 +73,9 @@ describe('signIn', () => {
 
     const result = await signIn(prisma, 'authuser', 'correctpass');
     expect(result).not.toBeNull();
-    expect(result?.username).toBe('authuser');
+    if (!result) throw new Error('Expected sign in to return a user');
+    expect(result.username).toBe('authuser');
+    expect('password' in result).toBe(false);
   });
 
   it('returns null for wrong password', async () => {

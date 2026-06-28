@@ -248,17 +248,28 @@ export const createPurchase = async (
   return prisma.$transaction(async (tx: PrismaClient) => {
     let providerId: string;
     if (body.providerId) {
+      const provider = await tx.provider.findFirst({
+        where: { id: body.providerId, inventoryId },
+        select: { id: true },
+      });
+      if (!provider) {
+        throw new Error('Provider not found in selected inventory');
+      }
       providerId = body.providerId;
     } else {
-      const newProvider = await tx.provider.create({
-        data: {
+      const provider = await tx.provider.upsert({
+        where: {
+          inventoryId_phone: { inventoryId, phone: body.providerPhone },
+        },
+        update: {},
+        create: {
           name: body.providerName,
           phone: body.providerPhone,
           address: body.providerAddress,
           inventory: { connect: { id: inventoryId } },
         },
       });
-      providerId = newProvider.id;
+      providerId = provider.id;
     }
 
     const purchase = await tx.purchase.create({
@@ -281,6 +292,14 @@ export const createPurchase = async (
           },
         });
         product.id = newProduct.id;
+      } else {
+        const existingProduct = await tx.product.findFirst({
+          where: { id: product.id, inventoryId },
+          select: { id: true },
+        });
+        if (!existingProduct) {
+          throw new Error('Product not found in selected inventory');
+        }
       }
 
       let productBatch = await tx.productBatch.findFirst({
@@ -345,14 +364,28 @@ export const updatePurchase = (
 export const deletePurchase = async (prisma: PrismaClient, id: string) => {
   const items = await prisma.purchaseItem.findMany({
     where: { purchaseId: id },
-    select: { batchId: true, quantity: true },
+    select: {
+      batchId: true,
+      quantity: true,
+      batch: { select: { quantity: true } },
+    },
   });
+
+  const consumedItem = items.find(
+    (item: { quantity: number; batch: { quantity: number } }) =>
+      item.batch.quantity < item.quantity,
+  );
+  if (consumedItem) {
+    throw new Error(
+      'Cannot delete purchase because some purchased stock has already been sold',
+    );
+  }
 
   return prisma.$transaction([
     ...items.map((item: { batchId: string; quantity: number }) =>
       prisma.productBatch.update({
         where: { id: item.batchId },
-        data: { quantity: { increment: item.quantity } },
+        data: { quantity: { decrement: item.quantity } },
       }),
     ),
     prisma.purchase.delete({ where: { id } }),

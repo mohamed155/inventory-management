@@ -15,7 +15,9 @@ export const getAllProductsPaginated = async (
     filter,
   }: DataParams<Product, ProductWhereInput>,
 ) => {
-  const where = { AND: [{ inventoryId }, ...(filter ? [filter as ProductWhereInput] : [])] };
+  const where = {
+    AND: [{ inventoryId }, ...(filter ? [filter as ProductWhereInput] : [])],
+  };
   const data = await prisma.product.findMany({
     where,
     orderBy: orderProperty ? { [orderProperty]: orderDirection } : undefined,
@@ -26,7 +28,10 @@ export const getAllProductsPaginated = async (
   return { data, total };
 };
 
-export const getAllProducts = async (prisma: PrismaClient, inventoryId: string) => {
+export const getAllProducts = async (
+  prisma: PrismaClient,
+  inventoryId: string,
+) => {
   const products = await prisma.product.findMany({ where: { inventoryId } });
   return products.map((product: Product) => ({
     id: product.id,
@@ -40,7 +45,11 @@ export const getProductById = (prisma: PrismaClient, id: string) => {
   });
 };
 
-export const createProduct = (prisma: PrismaClient, inventoryId: string, product: Product) => {
+export const createProduct = (
+  prisma: PrismaClient,
+  inventoryId: string,
+  product: Product,
+) => {
   return prisma.product.create({
     data: { ...product, inventoryId },
   });
@@ -102,7 +111,9 @@ export const getAllProductBatchesPaginated = async (
     },
   });
 
-  const productIds = [...new Set(batches.map((b: ProductBatch) => b.productId))];
+  const productIds = [
+    ...new Set(batches.map((b: ProductBatch) => b.productId)),
+  ];
   const totals = await prisma.productBatch.groupBy({
     by: ['productId'],
     where: { productId: { in: productIds } },
@@ -126,7 +137,10 @@ export const getAllProductBatchesPaginated = async (
   return { data, total };
 };
 
-export const getAllProductBatches = (prisma: PrismaClient, inventoryId: string) => {
+export const getAllProductBatches = (
+  prisma: PrismaClient,
+  inventoryId: string,
+) => {
   return prisma.productBatch.findMany({
     where: { product: { inventoryId } },
     include: {
@@ -150,12 +164,12 @@ export const createProductBatch = async (
   productBatch: Product & ProductBatch,
 ) => {
   if (productBatch.productId) {
-    const product = await prisma.product.findUnique({
-      where: { id: productBatch.productId },
+    const product = await prisma.product.findFirst({
+      where: { id: productBatch.productId, inventoryId },
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new Error('Product not found in selected inventory');
     }
 
     return prisma.productBatch.create({
