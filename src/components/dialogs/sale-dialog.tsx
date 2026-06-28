@@ -488,7 +488,7 @@ function SaleDialog({
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel>{t('Discount')}</FieldLabel>
                         <ArithmeticInput
-                          value={field.value}
+                          value={field.value ?? 0}
                           onChange={field.onChange}
                           aria-invalid={fieldState.invalid}
                           autoComplete="off"
