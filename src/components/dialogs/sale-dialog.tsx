@@ -452,12 +452,12 @@ function SaleDialog({
                     </div>
                   );
                 })}
-                <Button type="button" variant="outline" className="w-full" onClick={addProduct}>
+                <Button type="button" className="w-full" onClick={addProduct}>
                   <Plus size={16} />
                   {t('Add Product')}
                 </Button>
-                <div className="flex justify-between items-center px-1 text-sm font-medium">
-                  <span className="text-muted-foreground">{t('Total')}</span>
+                <div className="flex justify-between items-center text-sm font-medium px-3 py-2 border-2 rounded-md">
+                  <span>{t('Total')}</span>
                   <span>{total.toFixed(2)}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -467,20 +467,11 @@ function SaleDialog({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel>{t('Paid Amount')}</FieldLabel>
-                        <Input
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange({
-                              ...e,
-                              target: {
-                                ...e.target,
-                                value: Number(e.target.value),
-                              },
-                            })
-                          }
+                        <ArithmeticInput
+                          value={field.value}
+                          onChange={field.onChange}
                           aria-invalid={fieldState.invalid}
                           autoComplete="off"
-                          type="number"
                         />
                         <Activity
                           mode={fieldState.invalid ? 'visible' : 'hidden'}
@@ -496,20 +487,11 @@ function SaleDialog({
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel>{t('Discount')}</FieldLabel>
-                        <Input
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange({
-                              ...e,
-                              target: {
-                                ...e.target,
-                                value: Number(e.target.value),
-                              },
-                            })
-                          }
+                        <ArithmeticInput
+                          value={field.value}
+                          onChange={field.onChange}
                           aria-invalid={fieldState.invalid}
                           autoComplete="off"
-                          type="number"
                         />
                       </Field>
                     )}

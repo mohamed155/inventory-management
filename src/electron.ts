@@ -30,29 +30,45 @@ const getMigrationsDir = (): string => join(__dirname, '../prisma/migrations');
 const ensureDatabase = async (dbUrl: string): Promise<void> => {
   const client = createClient({ url: dbUrl });
   try {
-    const result = await client.execute(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='User'",
+    await client.execute(
+      `CREATE TABLE IF NOT EXISTS "_applied_migrations" ("name" TEXT NOT NULL PRIMARY KEY)`,
     );
-    if (result.rows.length > 0) return;
 
     const migrationsDir = getMigrationsDir();
     const migrations = readdirSync(migrationsDir)
       .sort()
-      .map((name) => join(migrationsDir, name, 'migration.sql'))
-      .filter(existsSync);
+      .filter((name) => existsSync(join(migrationsDir, name, 'migration.sql')))
+      .map((name) => ({ name, file: join(migrationsDir, name, 'migration.sql') }));
 
-    for (const file of migrations) {
+    for (const { name, file } of migrations) {
+      const { rows } = await client.execute({
+        sql: 'SELECT 1 FROM "_applied_migrations" WHERE name = ?',
+        args: [name],
+      });
+      if (rows.length > 0) continue;
+
       const sql = readFileSync(file, 'utf-8');
       const statements = sql
         .split('\n')
         .filter((line) => !line.trim().startsWith('--'))
         .join('\n')
-				.split(';')
+        .split(';')
         .map((s) => s.trim())
         .filter(Boolean);
-      for (const stmt of statements) {
-        await client.execute(stmt);
+
+      try {
+        for (const stmt of statements) {
+          await client.execute(stmt);
+        }
+      } catch {
+        // Migration was already applied to an existing DB (e.g. table already exists).
+        // Record it so we don't retry on every startup.
       }
+
+      await client.execute({
+        sql: 'INSERT OR IGNORE INTO "_applied_migrations" (name) VALUES (?)',
+        args: [name],
+      });
     }
   } finally {
     client.close();

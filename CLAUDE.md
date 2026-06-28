@@ -77,3 +77,7 @@ After changing `prisma/schema.prisma`, run `bun run db:push` then `bun run db:ge
 - **Linter/formatter**: Biome (2-space indent, single quotes, trailing commas) — ESLint also present for React-specific rules
 - **Path alias**: `@/` resolves to `src/`
 - **shadcn/ui**: New York style; add components via `bunx shadcn add <component>`
+
+## UI rules
+
+- **Never use `<input type="number">` or `<Input type="number">`**. Always use `<ArithmeticInput>` from `@/components/ui/arithmetic-input.tsx` for any numeric field. It accepts `value: number` and `onChange: (value: number) => void`, evaluates arithmetic expressions on blur, and handles display state internally.
