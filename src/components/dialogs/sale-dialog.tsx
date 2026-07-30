@@ -212,6 +212,11 @@ function SaleDialog({
     return batches.reduce((sum: number, b) => sum + (b.quantity || 0), 0);
   };
 
+  const availableProducts = useMemo(
+    () => (products || []).filter((product) => getProductStock(product.id) > 0),
+    [products, productBatches],
+  );
+
   return (
     <Dialog open={open} onOpenChange={openChange}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -367,7 +372,7 @@ function SaleDialog({
                             <FieldLabel>{t('Choose Product')}</FieldLabel>
                             <Combobox
                               {...field}
-                              list={products || []}
+                              list={availableProducts}
                               valueProp="id"
                               labelProp="name"
                             />
@@ -455,7 +460,9 @@ function SaleDialog({
                         aria-invalid={fieldState.invalid}
                         autoComplete="off"
                       />
-                      <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
                         <FieldError errors={[fieldState.error]} />
                       </Activity>
                     </Field>
@@ -537,7 +544,7 @@ function SaleDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-						<Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
+            <Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>
