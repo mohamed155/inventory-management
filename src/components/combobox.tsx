@@ -81,6 +81,9 @@ function Combobox<T>({
                   value={
                     valueProp ? (item[valueProp] as string) : (item as string)
                   }
+                  keywords={[
+                    labelProp ? (item[labelProp] as string) : (item as string),
+                  ]}
                   onSelect={() => {
                     setOpen(false);
                     setSelected(valueProp ? item[valueProp] : item);
