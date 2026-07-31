@@ -33,7 +33,18 @@ No changes to `ProductBatch`. It already stores nullable `productionDate` /
 `(productId, productionDate, expirationDate)` — so a non-expirable product's
 batches naturally collapse into one null/null batch as more stock is added.
 
-After the schema edit: `bun run db:push` then `bun run db:generate`.
+This repo does **not** apply schema changes via `prisma db push` or
+`prisma migrate dev` — both conflict with a custom `_applied_migrations`
+tracking table that `src/electron.ts`'s `ensureDatabase()` maintains (verified:
+`bun run db:push` refuses to run because it wants to drop that table).
+Instead, add a hand-written `prisma/migrations/<timestamp>_<name>/migration.sql`
+file (plain `ALTER TABLE` statements, matching the existing
+`purchase_discount` migration's style) and run `bun run db:generate` to
+regenerate the Prisma client types. Both `tests/setup/db.ts` and
+`src/electron.ts` scan `prisma/migrations/*/migration.sql` directly and apply
+whatever hasn't been recorded yet, so the new file is picked up automatically
+by both the test suite and the running Electron app — no `db push`/`migrate
+dev` step is needed or safe here.
 
 ## Validation rule
 
