@@ -14,6 +14,7 @@ import Combobox from '@/components/combobox.tsx';
 import DatePicker from '@/components/date-picker.tsx';
 import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { Checkbox } from '@/components/ui/checkbox.tsx';
 import {
   Dialog,
   DialogClose,
@@ -80,13 +81,23 @@ function PurchaseDialog({
                 status: z.enum(['exist', 'add']),
                 id: z.string().optional(),
                 name: z.string().optional(),
+                isExpirable: z.boolean(),
                 productionDate: z.date().optional(),
                 expirationDate: z.date().optional(),
                 quantity: z.number().min(1, t('Quantity must be at least 1')),
                 unitPrice: z.number().min(0, t('Unit Price must be positive')),
               })
+              .refine((data) => !data.isExpirable || !!data.productionDate, {
+                message: t('Production Date is required'),
+                path: ['productionDate'],
+              })
+              .refine((data) => !data.isExpirable || !!data.expirationDate, {
+                message: t('Expiration Date is required'),
+                path: ['expirationDate'],
+              })
               .refine(
                 (data) =>
+                  !data.isExpirable ||
                   !data.expirationDate ||
                   !data.productionDate ||
                   data.expirationDate > data.productionDate,
@@ -121,6 +132,7 @@ function PurchaseDialog({
         {
           status: 'exist',
           name: '',
+          isExpirable: true,
           quantity: 0,
           unitPrice: 0,
           productionDate: undefined,
@@ -165,6 +177,7 @@ function PurchaseDialog({
         {
           status: 'exist',
           name: '',
+          isExpirable: true,
           quantity: 0,
           unitPrice: 0,
           productionDate: undefined,
@@ -195,6 +208,12 @@ function PurchaseDialog({
         userId: currentUser.id,
         discount: values.discount ?? 0,
         payDueDate: values.payDueDate ?? values.date,
+        products: values.products.map((product) => ({
+          ...product,
+          ...(product.isExpirable
+            ? {}
+            : { productionDate: undefined, expirationDate: undefined }),
+        })),
       };
       onClose(result);
     }
@@ -210,6 +229,7 @@ function PurchaseDialog({
     appendProduct({
       status: 'exist',
       name: '',
+      isExpirable: true,
       quantity: 0,
       unitPrice: 0,
       productionDate: undefined,
@@ -323,6 +343,8 @@ function PurchaseDialog({
                 {productFields.map((product, index) => {
                   const productStatus =
                     form.watch(`products.${index}.status`) || 'exist';
+                  const productExpirable =
+                    form.watch(`products.${index}.isExpirable`) ?? true;
                   return (
                     <div key={product.id} className="p-3 border-2 rounded-md">
                       <div className="flex justify-between items-center mb-2">
@@ -403,6 +425,18 @@ function PurchaseDialog({
                                   list={products || []}
                                   valueProp="id"
                                   labelProp="name"
+                                  onChange={(value) => {
+                                    field.onChange(value);
+                                    const selected = products?.find(
+                                      (item) => item.id === (value as string),
+                                    );
+                                    if (selected) {
+                                      form.setValue(
+                                        `products.${index}.isExpirable`,
+                                        selected.isExpirable,
+                                      );
+                                    }
+                                  }}
                                 />
                                 <Activity
                                   mode={
@@ -467,56 +501,82 @@ function PurchaseDialog({
                             )}
                           />
                         </div>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <Controller
-                            name={`products.${index}.productionDate` as const}
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                              <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>{t('Production Date')}</FieldLabel>
-                                <DatePicker
-                                  {...field}
-                                  dismissable
-                                  onChange={(date) =>
-                                    field.onChange({ target: { value: date } })
-                                  }
-                                ></DatePicker>
-                                <Activity
-                                  mode={
-                                    fieldState.invalid ? 'visible' : 'hidden'
-                                  }
-                                >
-                                  <FieldError errors={[fieldState.error]} />
-                                </Activity>
-                              </Field>
-                            )}
-                          />
-                          <Controller
-                            name={`products.${index}.expirationDate` as const}
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                              <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>{t('Expiration Date')}</FieldLabel>
-                                <DatePicker
-                                  {...field}
-                                  dismissable
-                                  onChange={(date) =>
-                                    field.onChange({ target: { value: date } })
-                                  }
-                                  aria-invalid={fieldState.invalid}
-                                  maxDate={nextTenYears}
-                                ></DatePicker>
-                                <Activity
-                                  mode={
-                                    fieldState.invalid ? 'visible' : 'hidden'
-                                  }
-                                >
-                                  <FieldError errors={[fieldState.error]} />
-                                </Activity>
-                              </Field>
-                            )}
-                          />
-                        </div>
+                        <Controller
+                          name={`products.${index}.isExpirable` as const}
+                          control={form.control}
+                          render={({ field }) => (
+                            <Field orientation="horizontal">
+                              <Checkbox
+                                id={`isExpirable-${index}`}
+                                checked={field.value}
+                                onCheckedChange={(checked) =>
+                                  field.onChange(checked === true)
+                                }
+                              />
+                              <FieldLabel htmlFor={`isExpirable-${index}`}>
+                                {t('Expirable')}
+                              </FieldLabel>
+                            </Field>
+                          )}
+                        />
+                        <Activity
+                          mode={productExpirable ? 'visible' : 'hidden'}
+                        >
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <Controller
+                              name={`products.${index}.productionDate` as const}
+                              control={form.control}
+                              render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                  <FieldLabel>{t('Production Date')}</FieldLabel>
+                                  <DatePicker
+                                    {...field}
+                                    dismissable
+                                    onChange={(date) =>
+                                      field.onChange({
+                                        target: { value: date },
+                                      })
+                                    }
+                                  ></DatePicker>
+                                  <Activity
+                                    mode={
+                                      fieldState.invalid ? 'visible' : 'hidden'
+                                    }
+                                  >
+                                    <FieldError errors={[fieldState.error]} />
+                                  </Activity>
+                                </Field>
+                              )}
+                            />
+                            <Controller
+                              name={`products.${index}.expirationDate` as const}
+                              control={form.control}
+                              render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                  <FieldLabel>{t('Expiration Date')}</FieldLabel>
+                                  <DatePicker
+                                    {...field}
+                                    dismissable
+                                    onChange={(date) =>
+                                      field.onChange({
+                                        target: { value: date },
+                                      })
+                                    }
+                                    aria-invalid={fieldState.invalid}
+                                    maxDate={nextTenYears}
+                                  ></DatePicker>
+                                  <Activity
+                                    mode={
+                                      fieldState.invalid ? 'visible' : 'hidden'
+                                    }
+                                  >
+                                    <FieldError errors={[fieldState.error]} />
+                                  </Activity>
+                                </Field>
+                              )}
+                            />
+                          </div>
+                        </Activity>
                       </Tabs>
                     </div>
                   );
