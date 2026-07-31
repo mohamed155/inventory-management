@@ -289,6 +289,7 @@ export const createPurchase = async (
         const newProduct = await tx.product.create({
           data: {
             name: product.name || 'Unnamed Product',
+            isExpirable: product.isExpirable ?? true,
             inventory: { connect: { id: inventoryId } },
           },
         });
@@ -343,7 +344,12 @@ export const createPurchase = async (
 
       await tx.product.update({
         where: { id: product.id },
-        data: { unitPrice: product.unitPrice },
+        data: {
+          unitPrice: product.unitPrice,
+          ...(product.isExpirable !== undefined
+            ? { isExpirable: product.isExpirable }
+            : {}),
+        },
       });
     }
 
