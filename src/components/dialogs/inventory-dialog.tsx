@@ -86,6 +86,7 @@ function InventoryDialog({
         })
         .refine(
           (data) =>
+            !data.isExpirable ||
             !data.expirationDate ||
             !data.productionDate ||
             data.expirationDate > data.productionDate,
