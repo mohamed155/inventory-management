@@ -141,7 +141,7 @@ declare global {
       ) => Promise<IpcResponse<{ data: Product[]; total: number }>>;
       getAllProducts: (
         inventoryId: string,
-      ) => Promise<IpcResponse<Pick<Product, 'id' | 'name'>[]>>;
+      ) => Promise<IpcResponse<Pick<Product, 'id' | 'name' | 'isExpirable'>[]>>;
       getProductById: (id: string) => Promise<IpcResponse<Product | null>>;
       createProduct: (
         inventoryId: string,

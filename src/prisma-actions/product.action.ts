@@ -36,6 +36,7 @@ export const getAllProducts = async (
   return products.map((product: Product) => ({
     id: product.id,
     name: product.name,
+    isExpirable: product.isExpirable,
   }));
 };
 
@@ -172,6 +173,13 @@ export const createProductBatch = async (
       throw new Error('Product not found in selected inventory');
     }
 
+    if (productBatch.isExpirable !== undefined) {
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { isExpirable: productBatch.isExpirable },
+      });
+    }
+
     return prisma.productBatch.create({
       data: {
         id: productBatch.id,
@@ -187,6 +195,7 @@ export const createProductBatch = async (
         name: productBatch.name,
         description: productBatch.description,
         unitPrice: productBatch.unitPrice ?? 0,
+        isExpirable: productBatch.isExpirable ?? true,
         inventory: { connect: { id: inventoryId } },
       },
     });
@@ -213,6 +222,9 @@ export const updateProductBatch = async (
         name: productBatch.name,
         description: productBatch.description,
         unitPrice: productBatch.unitPrice ?? 0,
+        ...(productBatch.isExpirable !== undefined
+          ? { isExpirable: productBatch.isExpirable }
+          : {}),
       },
     }),
     prisma.productBatch.update({
