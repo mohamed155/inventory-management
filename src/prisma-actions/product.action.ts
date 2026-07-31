@@ -173,22 +173,27 @@ export const createProductBatch = async (
       throw new Error('Product not found in selected inventory');
     }
 
-    if (productBatch.isExpirable !== undefined) {
-      await prisma.product.update({
-        where: { id: product.id },
-        data: { isExpirable: productBatch.isExpirable },
-      });
-    }
-
-    return prisma.productBatch.create({
-      data: {
-        id: productBatch.id,
-        productId: product.id,
-        productionDate: productBatch.productionDate,
-        expirationDate: productBatch.expirationDate,
-        quantity: productBatch.quantity,
-      },
-    });
+    const operations = [
+      ...(productBatch.isExpirable !== undefined
+        ? [
+            prisma.product.update({
+              where: { id: product.id },
+              data: { isExpirable: productBatch.isExpirable },
+            }),
+          ]
+        : []),
+      prisma.productBatch.create({
+        data: {
+          id: productBatch.id,
+          productId: product.id,
+          productionDate: productBatch.productionDate,
+          expirationDate: productBatch.expirationDate,
+          quantity: productBatch.quantity,
+        },
+      }),
+    ];
+    const results = await prisma.$transaction(operations);
+    return results[results.length - 1] as ProductBatch;
   } else {
     const product = await prisma.product.create({
       data: {

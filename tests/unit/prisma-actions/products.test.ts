@@ -115,6 +115,33 @@ describe('createProductBatch', () => {
     expect(updated?.isExpirable).toBe(false);
   });
 
+  it('returns the created batch (not the product update result) when isExpirable is provided', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Transactional Product', inventoryId, isExpirable: true },
+    });
+
+    const batch = await createProductBatch(prisma, inventoryId, {
+      productId: product.id,
+      isExpirable: false,
+      quantity: 42,
+      productionDate: new Date('2025-01-01'),
+      expirationDate: new Date('2026-12-31'),
+    } as any);
+
+    expect(batch).toBeDefined();
+    expect(batch.productId).toBe(product.id);
+    expect(batch.quantity).toBe(42);
+
+    const persistedBatch = await prisma.productBatch.findUnique({
+      where: { id: batch.id },
+    });
+    expect(persistedBatch).toBeDefined();
+    expect(persistedBatch?.quantity).toBe(42);
+
+    const updatedProduct = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updatedProduct?.isExpirable).toBe(false);
+  });
+
   it('leaves isExpirable unchanged on an existing product when not provided', async () => {
     const product = await prisma.product.create({
       data: { name: 'Untouched Flag', inventoryId, isExpirable: false },
