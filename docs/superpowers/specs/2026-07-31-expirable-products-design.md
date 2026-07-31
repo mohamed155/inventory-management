@@ -11,10 +11,15 @@ forcing users to skip or fabricate dates for non-expirable products.
 
 Add an "Expirable" checkbox (checked by default) to the Inventory dialog and
 Purchase dialog that shows/hides the Production Date and Expiration Date
-inputs. Non-expirable products end up with null dates on their batch(es),
-which — combined with the existing batch dedup logic — means they always
-collapse into a single batch instead of being split across multiple dated
-batches.
+inputs. Non-expirable products end up with null dates on their batch(es).
+
+`createPurchase` (`src/prisma-actions/purchases.action.ts`) already dedupes
+batches by `(productId, productionDate, expirationDate)`, so purchasing a
+non-expirable product repeatedly through that flow collapses into a single
+null/null batch. `createProductBatch` (used by the Inventory dialog's "Add
+Quantity" flow) has no such dedup logic — repeated "Add Quantity" actions on
+a non-expirable product create separate null/null batches each time. This is
+an accepted, documented limitation, not something addressed by this feature.
 
 ## Data model
 
@@ -29,9 +34,9 @@ model Product {
 ```
 
 No changes to `ProductBatch`. It already stores nullable `productionDate` /
-`expirationDate`, and `createPurchase` already dedupes batches by
-`(productId, productionDate, expirationDate)` — so a non-expirable product's
-batches naturally collapse into one null/null batch as more stock is added.
+`expirationDate`. As noted above, only the `createPurchase` path dedupes
+batches by `(productId, productionDate, expirationDate)`; the
+`createProductBatch` ("Add Quantity") path does not.
 
 This repo does **not** apply schema changes via `prisma db push` or
 `prisma migrate dev` — both conflict with a custom `_applied_migrations`

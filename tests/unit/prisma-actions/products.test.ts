@@ -238,6 +238,33 @@ describe('updateProductBatch', () => {
     const updatedProduct = await prisma.product.findUnique({ where: { id: product.id } });
     expect(updatedProduct?.isExpirable).toBe(false);
   });
+
+  it('clears productionDate and expirationDate when they are sent as undefined (Expirable unchecked)', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Toggle Off', inventoryId, isExpirable: true },
+    });
+    const batch = await prisma.productBatch.create({
+      data: {
+        productId: product.id,
+        productionDate: new Date('2025-01-01'),
+        expirationDate: new Date('2026-12-31'),
+        quantity: 100,
+      },
+    });
+
+    await updateProductBatch(prisma, batch.id, {
+      productId: product.id,
+      name: 'Toggle Off',
+      isExpirable: false,
+      quantity: 100,
+      productionDate: undefined,
+      expirationDate: undefined,
+    } as any);
+
+    const updatedBatch = await prisma.productBatch.findUnique({ where: { id: batch.id } });
+    expect(updatedBatch?.productionDate).toBeNull();
+    expect(updatedBatch?.expirationDate).toBeNull();
+  });
 });
 
 describe('deleteProductBatch', () => {
