@@ -1,0 +1,1 @@
+ALTER TABLE "Product" ADD COLUMN "isExpirable" BOOLEAN NOT NULL DEFAULT true;
