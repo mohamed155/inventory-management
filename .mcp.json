@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "webstorm": {
+      "url": "http://127.0.0.1:64542/stream",
+      "type": "http"
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
+    }
+  }
+}

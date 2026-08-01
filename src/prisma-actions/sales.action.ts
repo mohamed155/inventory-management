@@ -12,6 +12,7 @@ import type { SaleWhereInput } from '../../generated/prisma/models/Sale.ts';
 import type { DataParams } from '../models/params.ts';
 import type { SaleFormData } from '../models/sales-form.ts';
 import { intersectIds } from '../util/intersect-ids.ts';
+import { insufficientStockError } from '../util/stock-error.ts';
 
 type SaleOrderKey =
   | keyof Sale
@@ -304,7 +305,7 @@ export const createSale = async (
         0,
       );
       if (totalAvailable < product.quantity) {
-        throw new Error(`Insufficient stock for product`);
+        throw insufficientStockError(product.id, totalAvailable);
       }
 
       let remaining = product.quantity;

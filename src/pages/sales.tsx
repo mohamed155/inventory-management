@@ -10,6 +10,7 @@ import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { Activity, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
+import { toast } from 'sonner';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import SaleDialog from '@/components/dialogs/sale-dialog.tsx';
@@ -27,6 +28,7 @@ import {
   updateSale,
 } from '@/services/sales.ts';
 import { useCurrentSettings } from '@/store/settings.store.ts';
+import { parseInsufficientStockError } from '@/util/stock-error.ts';
 import type { Sale } from '../../generated/prisma/browser.ts';
 import type { SaleWhereInput } from '../../generated/prisma/models/Sale.ts';
 
@@ -37,9 +39,14 @@ function Sales() {
   const { confirm } = useConfirm();
   const location = useLocation();
   const [saleDialogOpen, setSaleDialogOpen] = useState<boolean>(false);
+  const [saleStockError, setSaleStockError] = useState<{
+    productId: string;
+    available: number;
+  } | null>(null);
 
   useEffect(() => {
     if (location.state?.openDialog) {
+      setSaleStockError(null);
       setSaleDialogOpen(true);
       window.history.replaceState({}, '');
     }
@@ -233,11 +240,27 @@ function Sales() {
     ],
   );
 
-  const handleDialogClose = (sale?: SaleFormData) => {
-    if (sale) {
-      createSale(sale).then(() => refetchSales());
+  const handleDialogClose = async (sale?: SaleFormData) => {
+    if (!sale) {
+      setSaleStockError(null);
+      setSaleDialogOpen(false);
+      return;
     }
-    setSaleDialogOpen(false);
+    try {
+      await createSale(sale);
+      setSaleStockError(null);
+      setSaleDialogOpen(false);
+      refetchSales();
+    } catch (error) {
+      const stockError = parseInsufficientStockError(error);
+      if (stockError) {
+        setSaleStockError(stockError);
+        return;
+      }
+      toast.error(
+        error instanceof Error ? error.message : t('Failed to create sale'),
+      );
+    }
   };
 
   const handleUpdatePayment = (data?: {
@@ -255,7 +278,11 @@ function Sales() {
 
   return (
     <div>
-      <SaleDialog open={saleDialogOpen} onClose={handleDialogClose} />
+      <SaleDialog
+        open={saleDialogOpen}
+        onClose={handleDialogClose}
+        stockError={saleStockError}
+      />
       <Activity mode={selectedSale ? 'visible' : 'hidden'}>
         <InvoiceDialog
           open={detailsDialogOpen}
@@ -290,7 +317,10 @@ function Sales() {
           </Button>
           <Button
             className="bg-primary text-white"
-            onClick={() => setSaleDialogOpen(true)}
+            onClick={() => {
+              setSaleStockError(null);
+              setSaleDialogOpen(true);
+            }}
           >
             <Plus size={30} />
             {t('Add Sale')}

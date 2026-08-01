@@ -81,6 +81,7 @@ export default {
   USD: 'دولار',
   Violet: 'بنفسجي',
   Zinc: 'رمادي',
+  'Insufficient stock': 'المخزون غير كافٍ',
   'Invalid username or password': 'اسم المستخدم أو كلمة المرور غير صحيحة',
   Inventory: 'المخزون',
   'Inventory Manager': 'مدير المخزون',
@@ -240,4 +241,5 @@ export default {
   'Failed to add inventory': 'فشل إضافة المخزن',
   'Failed to delete inventory': 'فشل حذف المخزن',
   'Database error': 'خطأ في قاعدة البيانات',
+  'Failed to create sale': 'فشل إنشاء الفاتورة',
 };

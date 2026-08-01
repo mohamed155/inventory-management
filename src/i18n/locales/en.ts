@@ -81,6 +81,7 @@ export default {
   USD: 'USD',
   Violet: 'Violet',
   Zinc: 'Zinc',
+  'Insufficient stock': 'Insufficient stock',
   'Invalid username or password': 'Invalid username or password',
   Inventory: 'Inventory',
   'Inventory Manager': 'Inventory Manager',
@@ -241,4 +242,5 @@ export default {
   'Failed to add inventory': 'Failed to add inventory',
   'Failed to delete inventory': 'Failed to delete inventory',
   'Database error': 'Database error',
+  'Failed to create sale': 'Failed to create sale',
 };
