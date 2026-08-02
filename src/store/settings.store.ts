@@ -10,6 +10,7 @@ export type ColorToken =
   | 'zinc';
 export type CurrencyCode = 'EGP' | 'USD' | 'EUR' | 'SAR' | 'AED' | 'GBP';
 export type DateFormatPattern = 'dd/MM/yyyy' | 'MM/dd/yyyy' | 'yyyy-MM-dd';
+export type PurchaseSaleEditMode = 'paymentOnly' | 'fullEdit';
 
 interface SettingsState {
   primaryColor: ColorToken;
@@ -17,11 +18,13 @@ interface SettingsState {
   dateFormat: DateFormatPattern;
   expiryWarningDays: number;
   lowStockThreshold: number;
+  purchaseSaleEditMode: PurchaseSaleEditMode;
   setPrimaryColor: (color: ColorToken) => void;
   setCurrency: (currency: CurrencyCode) => void;
   setDateFormat: (format: DateFormatPattern) => void;
   setExpiryWarningDays: (days: number) => void;
   setLowStockThreshold: (threshold: number) => void;
+  setPurchaseSaleEditMode: (mode: PurchaseSaleEditMode) => void;
   resetSettings: () => void;
 }
 
@@ -31,6 +34,7 @@ const defaults = {
   dateFormat: 'dd/MM/yyyy' as DateFormatPattern,
   expiryWarningDays: 90,
   lowStockThreshold: 15,
+  purchaseSaleEditMode: 'fullEdit' as PurchaseSaleEditMode,
 };
 
 export const useCurrentSettings = create<SettingsState>()(
@@ -42,6 +46,8 @@ export const useCurrentSettings = create<SettingsState>()(
       setDateFormat: (dateFormat) => set({ dateFormat }),
       setExpiryWarningDays: (expiryWarningDays) => set({ expiryWarningDays }),
       setLowStockThreshold: (lowStockThreshold) => set({ lowStockThreshold }),
+      setPurchaseSaleEditMode: (purchaseSaleEditMode) =>
+        set({ purchaseSaleEditMode }),
       resetSettings: () => set(defaults),
     }),
     {
