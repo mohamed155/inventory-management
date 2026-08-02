@@ -8,7 +8,8 @@ Let users edit an existing purchase or sale record — provider/customer, line i
 
 Both editing modes stay available, controlled by a new admin-only setting:
 
-- `settings.store.ts` gains `purchaseSaleEditMode: 'paymentOnly' | 'fullEdit'` (default `'fullEdit'`), persisted like the rest of the store, with a setter and included in `resetSettings`.
+- `settings.store.ts` gains `purchaseSaleEditMode: 'paymentOnly' | 'fullEdit'` (default `'fullEdit'`), persisted like the rest of the store, with a setter. The key must be added to the module-level `defaults` const (not just the setter list) — `resetSettings()` sets from that object, so omitting it silently drops the field.
+- **Upgrade consequence (stated deliberately):** the persisted zustand blob in existing installs has no key for this setting, so every existing install picks up the `'fullEdit'` default — the pencil icon changes meaning on upgrade. This matches the intent ("replace it"), but it is a behavior change for existing users rather than an opt-in.
 - `settings.tsx` gets a new control for this setting, gated by `currentUser?.role === 'admin'` — the same pattern already used for `<UserManagement />` (`{currentUser?.role === 'admin' && <UserManagement />}`). Non-admins never see the control; they get whichever mode is currently configured.
 - In `purchases.tsx`/`sales.tsx`, the pencil-icon action branches on this setting: `'paymentOnly'` → open `UpdatePaymentDialog` (unchanged, existing behavior); `'fullEdit'` → open `PurchaseDialog`/`SaleDialog` in edit mode (new).
 
@@ -52,7 +53,7 @@ Delta-by-batch-key, not blanket reverse-and-reapply — a purchase's batch may h
 4. Group the submitted `body.products` the same way, resolving new/existing products same as `createPurchase`.
 5. For every batch key in the union of old and new:
    - `delta = newQty - oldQty` (0 if key only exists on one side).
-   - If `delta < 0` and the batch's current quantity `+ delta < 0`: reject the whole transaction with `insufficientStockError(productId, oldQty + currentBatchQuantity - oldQty)` — i.e. the minimum quantity this key could be reduced to given how much is already sold. (Message framing differs from the sales case — see UI below.)
+   - If `delta < 0` and the batch's current quantity `+ delta < 0`: reject the whole transaction with `insufficientStockError(productId, Math.max(0, oldQty - batch.quantity))` — the reported number is the *floor*, i.e. the smallest quantity this line can be reduced to given how much has already been sold. (Derivation: `batch.quantity + (newQty - oldQty) >= 0` → `newQty >= oldQty - batch.quantity`. Worked example: a purchase added 100 units, 70 were later sold so `batch.quantity` is 30; the floor is `100 - 30 = 70`.) Message framing differs from the sales case — see UI below.
    - Otherwise apply the delta to `ProductBatch.quantity` (creating the batch if the key is new, same as `createPurchase`).
    - Update `Product.unitPrice`/`isExpirable` same as `createPurchase` for touched products.
 6. Delete all old `PurchaseItem`s for this purchase, insert new ones from `body.products`.
@@ -72,7 +73,7 @@ If step 5 throws, the transaction rolls back — the reversal in step 3 never co
 ## Error UX
 
 - Reuse `insufficientStockError`/`parseInsufficientStockError` (`src/util/stock-error.ts`) for both directions — it's already generic (`productId`, a number).
-- `PurchaseDialog` gains a `stockError?: { productId: string; available: number } | null` prop, mirroring `SaleDialog`'s existing one: on change, find the matching product line and `form.setError` + `form.setFocus` on its quantity field. Message text: "Cannot reduce below {available} — already sold from this batch" (new key), distinct from `SaleDialog`'s "Insufficient stock" wording.
+- `PurchaseDialog` gains a `stockError?: { productId: string; available: number } | null` prop, mirroring `SaleDialog`'s existing one: on change, find the matching product line and `form.setError` + `form.setFocus` on its quantity field. Message text follows `SaleDialog`'s string-concat style (the codebase does not use i18n interpolation): `` `${t('Cannot reduce below already sold quantity')} (${t('Minimum')}: ${stockError.available})` `` — distinct from `SaleDialog`'s "Insufficient stock" wording. Here `available` carries the *floor*, not remaining stock.
 - `purchases.tsx` catches errors from `updatePurchaseWithItems` the same way `sales.tsx` already catches `createSale` errors — `parseInsufficientStockError`, set `stockError` state, fall back to a toast for anything else.
 
 **Two consequences of this design, worth being explicit about:**
@@ -86,19 +87,31 @@ If step 5 throws, the transaction rolls back — the reversal in step 3 never co
 - `src/prisma-actions.ts`: register both, IPC channel names `updatePurchaseWithItems` / `updateSaleWithItems`.
 - `src/preload.ts`, `src/types.d.ts`: expose `updatePurchaseWithItems(inventoryId, id, PurchaseFormData) => Promise<IpcResponse<Purchase>>` and the sale equivalent.
 - `src/services/purchases.ts`, `src/services/sales.ts`: add corresponding service functions (mirroring `createPurchase`/`createSale`'s `getInventoryId()` pattern).
+- `tests/setup/electron-api.ts`: `createMockElectronAPI` is an explicit whitelist, so both new methods must be added there or the new service tests fail with "undefined is not a function".
 - Existing `updatePurchase`/`updateSale` (payment-only) are untouched.
+
+Because `preload.ts`, `types.d.ts` and `prisma-actions.ts` must agree on the new signatures and only the typechecker catches a mismatch (`bun run test` will not), `bunx tsc -b` is a required verification step for the IPC-wiring work.
 
 ## UI wiring (`purchases.tsx` / `sales.tsx`)
 
 - Pencil-icon handler reads `useCurrentSettings((s) => s.purchaseSaleEditMode)` and branches to the existing `openUpdatePaymentDialog` or a new `openEditDialog` (fetches full item list via `getAllPurchaseItems`/`getAllSaleItems`, builds `initialData`, opens the add dialog in edit mode).
 - `PurchaseDialog`/`SaleDialog` (already always-mounted for "add") gain the `initialData` prop; `onClose` handler branches on whether `initialData` was set (edit → call `updatePurchaseWithItems`/`updateSaleWithItems`; otherwise → existing create path).
 - `SaleDialog`'s existing `stockError` handling (used today for create) is reused as-is for edit-mode insufficient-stock errors.
+- `initialData` must be held in parent `useState` (never built inline in JSX). The dialogs' reset effect depends on it, so a fresh object identity every render would re-reset the form on every render.
+- On every successful save (create *and* edit), invalidate the `['products']` and `['productBatches']` query caches in addition to the existing `refetchPurchases()`/`refetchSales()`. This matters for sale edit specifically: the edit-mode availability baseline is "current batch stock + this sale's own quantities", so a stale `productBatches` cache makes a second consecutive edit of the same sale overstate available stock. It fails safe (the server's FIFO check throws and surfaces via `stockError`), but the dialog would have shown a number the server then rejects.
 
 ## i18n
 
 New keys needed in both `src/i18n/locales/en.ts` and `ar.ts`: "Edit Purchase", "Edit Sale", the purchase-reduction-blocked error message, and the new settings control's label + option labels (e.g. "Payment only" / "Full record").
 
 ## Testing
+
+The repo's vitest config uses `environment: 'node'`, `include: ['tests/**/*.test.ts']` (no `.tsx`), and has no jsdom or testing-library. React component tests are therefore out of scope — adding that infrastructure is a scope expansion this feature doesn't need. Instead, the prefill logic that carries real bug risk (purchase `productId`-vs-`id`, sale FIFO-split grouping) is extracted into pure functions under `src/util/` — already in the coverage `include` list — and tested there:
+
+- `src/util/purchase-edit-data.ts` → `toPurchaseEditData(purchase, items): PurchaseEditData`
+- `src/util/sale-edit-data.ts` → `toSaleEditData(sale, items): SaleEditData` (does the productId grouping)
+
+Dialog and page wiring is verified manually in the running app.
 
 - Unit/integration coverage (wherever existing `createPurchase`/`createSale`/`deletePurchase`/`deleteSale` tests live) for:
   - Purchase edit: quantity increase, quantity decrease within headroom, quantity decrease beyond headroom (rejected), product/date change on an untouched batch, product/date change on a partially-sold batch (rejected).
