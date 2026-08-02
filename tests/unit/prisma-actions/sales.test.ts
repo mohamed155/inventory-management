@@ -5,6 +5,7 @@ import {
   getAllSaleItems,
   getAllSalesPaginated,
   updateSale,
+  updateSaleWithItems,
 } from '@/prisma-actions/sales.action.ts';
 import type { PrismaClient } from '../../../generated/prisma/client.ts';
 import { seedCustomer } from '../../fixtures/customers.ts';
@@ -199,6 +200,196 @@ describe('updateSale', () => {
 
     const updated = await prisma.sale.findUnique({ where: { id: sale.id } });
     expect(updated?.paidAmount).toBe(50);
+  });
+});
+
+describe('updateSaleWithItems', () => {
+  const seedSale = async (quantity = 20, stock = 100) => {
+    const user = await seedUser(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
+    await seedProductBatch(prisma, product.id, { quantity: stock });
+
+    const sale = await createSale(prisma, inventoryId, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 50,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [{ id: product.id, quantity, unitPrice: 10 }],
+    });
+
+    return { user, customer, product, sale };
+  };
+
+  const totalStock = async (productId: string) => {
+    const batches = await prisma.productBatch.findMany({
+      where: { productId },
+    });
+    return batches.reduce(
+      (sum: number, batch: { quantity: number }) => sum + batch.quantity,
+      0,
+    );
+  };
+
+  it('returns stock when the sold quantity is reduced', async () => {
+    const { user, customer, product, sale } = await seedSale(20, 100);
+    expect(await totalStock(product.id)).toBe(80);
+
+    await updateSaleWithItems(prisma, inventoryId, sale.id, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 50,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [{ id: product.id, quantity: 5, unitPrice: 10 }],
+    });
+
+    expect(await totalStock(product.id)).toBe(95);
+  });
+
+  it('consumes more stock when the sold quantity is increased', async () => {
+    const { user, customer, product, sale } = await seedSale(20, 100);
+
+    await updateSaleWithItems(prisma, inventoryId, sale.id, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 50,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [{ id: product.id, quantity: 60, unitPrice: 10 }],
+    });
+
+    expect(await totalStock(product.id)).toBe(40);
+  });
+
+  it('lets an edit use stock the sale itself is holding', async () => {
+    const { user, customer, product, sale } = await seedSale(100, 100);
+    expect(await totalStock(product.id)).toBe(0);
+
+    await updateSaleWithItems(prisma, inventoryId, sale.id, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 50,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [{ id: product.id, quantity: 100, unitPrice: 10 }],
+    });
+
+    expect(await totalStock(product.id)).toBe(0);
+    const items = await prisma.saleItem.findMany({ where: { saleId: sale.id } });
+    expect(
+      items.reduce(
+        (sum: number, item: { quantity: number }) => sum + item.quantity,
+        0,
+      ),
+    ).toBe(100);
+  });
+
+  it('rejects an increase beyond available stock and rolls back', async () => {
+    const { user, customer, product, sale } = await seedSale(20, 100);
+
+    await expect(
+      updateSaleWithItems(prisma, inventoryId, sale.id, {
+        userId: user.id,
+        customerId: customer.id,
+        paidAmount: 50,
+        payDueDate: new Date('2026-12-31'),
+        date: new Date('2026-01-01'),
+        products: [{ id: product.id, quantity: 150, unitPrice: 10 }],
+      }),
+    ).rejects.toThrow('INSUFFICIENT_STOCK');
+
+    expect(await totalStock(product.id)).toBe(80);
+    const items = await prisma.saleItem.findMany({ where: { saleId: sale.id } });
+    expect(
+      items.reduce(
+        (sum: number, item: { quantity: number }) => sum + item.quantity,
+        0,
+      ),
+    ).toBe(20);
+  });
+
+  it('regroups a FIFO-split sale into the requested quantity', async () => {
+    const user = await seedUser(prisma);
+    const customer = await seedCustomer(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
+    await seedProductBatch(prisma, product.id, {
+      quantity: 30,
+      expirationDate: new Date('2026-06-30'),
+    });
+    await seedProductBatch(prisma, product.id, {
+      quantity: 30,
+      expirationDate: new Date('2027-06-30'),
+    });
+
+    const sale = await createSale(prisma, inventoryId, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 50,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [{ id: product.id, quantity: 50, unitPrice: 10 }],
+    });
+
+    const splitItems = await prisma.saleItem.findMany({
+      where: { saleId: sale.id },
+    });
+    expect(splitItems.length).toBeGreaterThan(1);
+
+    await updateSaleWithItems(prisma, inventoryId, sale.id, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 50,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [{ id: product.id, quantity: 20, unitPrice: 10 }],
+    });
+
+    const items = await prisma.saleItem.findMany({ where: { saleId: sale.id } });
+    expect(
+      items.reduce(
+        (sum: number, item: { quantity: number }) => sum + item.quantity,
+        0,
+      ),
+    ).toBe(20);
+    expect(await totalStock(product.id)).toBe(40);
+  });
+
+  it('swaps to a different product, returning the original stock', async () => {
+    const { user, customer, product, sale } = await seedSale(20, 100);
+    const other = await seedProduct(prisma, {}, inventoryId);
+    await seedProductBatch(prisma, other.id, { quantity: 50 });
+
+    await updateSaleWithItems(prisma, inventoryId, sale.id, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 50,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [{ id: other.id, quantity: 10, unitPrice: 10 }],
+    });
+
+    expect(await totalStock(product.id)).toBe(100);
+    expect(await totalStock(other.id)).toBe(40);
+  });
+
+  it('updates the sale scalar fields', async () => {
+    const { user, customer, product, sale } = await seedSale(10, 100);
+
+    await updateSaleWithItems(prisma, inventoryId, sale.id, {
+      userId: user.id,
+      customerId: customer.id,
+      paidAmount: 321,
+      discount: 15,
+      payDueDate: new Date('2027-03-31'),
+      date: new Date('2026-02-02'),
+      products: [{ id: product.id, quantity: 10, unitPrice: 10 }],
+    });
+
+    const updated = await prisma.sale.findUnique({ where: { id: sale.id } });
+    expect(updated?.paidAmount).toBe(321);
+    expect(updated?.discount).toBe(15);
   });
 });
 

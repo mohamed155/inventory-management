@@ -420,3 +420,109 @@ export const getAllSaleItems = async (prisma: PrismaClient, saleId: string) => {
     }),
   );
 };
+
+export const updateSaleWithItems = async (
+  prisma: PrismaClient,
+  inventoryId: string,
+  id: string,
+  body: SaleFormData,
+) => {
+  return prisma.$transaction(async (tx: PrismaClient) => {
+    let customerId: string;
+    if (body.customerId) {
+      const customer = await tx.customer.findFirst({
+        where: { id: body.customerId, inventoryId },
+        select: { id: true },
+      });
+      if (!customer) {
+        throw new Error('Customer not found in selected inventory');
+      }
+      customerId = body.customerId;
+    } else {
+      const customer = await tx.customer.upsert({
+        where: {
+          inventoryId_phone: { inventoryId, phone: body.customerPhone },
+        },
+        update: {},
+        create: {
+          firstname: body.customerFirstname,
+          lastname: body.customerLastname,
+          phone: body.customerPhone,
+          address: body.customerAddress,
+          inventory: { connect: { id: inventoryId } },
+        },
+      });
+      customerId = customer.id;
+    }
+
+    const existingItems = await tx.saleItem.findMany({ where: { saleId: id } });
+    for (const item of existingItems as SaleItem[]) {
+      await tx.productBatch.update({
+        where: { id: item.batchId },
+        data: { quantity: { increment: item.quantity } },
+      });
+    }
+    await tx.saleItem.deleteMany({ where: { saleId: id } });
+
+    for (const product of body.products) {
+      const existingProduct = await tx.product.findFirst({
+        where: { id: product.id, inventoryId },
+        select: { id: true },
+      });
+      if (!existingProduct) {
+        throw new Error('Product not found in selected inventory');
+      }
+
+      const batches = await tx.productBatch.findMany({
+        where: { productId: product.id, quantity: { gt: 0 } },
+        orderBy: [
+          { expirationDate: { sort: 'asc', nulls: 'last' } },
+          { productionDate: { sort: 'asc', nulls: 'last' } },
+          { createdAt: 'asc' },
+        ],
+      });
+
+      const totalAvailable = batches.reduce(
+        (sum: number, batch: ProductBatch) => sum + batch.quantity,
+        0,
+      );
+      if (totalAvailable < product.quantity) {
+        throw insufficientStockError(product.id, totalAvailable);
+      }
+
+      let remaining = product.quantity;
+      for (const batch of batches as ProductBatch[]) {
+        if (remaining <= 0) break;
+        const deduct = Math.min(batch.quantity, remaining);
+
+        await tx.productBatch.update({
+          where: { id: batch.id },
+          data: { quantity: { decrement: deduct } },
+        });
+
+        await tx.saleItem.create({
+          data: {
+            quantity: deduct,
+            unitPrice: product.unitPrice,
+            sale: { connect: { id } },
+            product: { connect: { id: product.id } },
+            batch: { connect: { id: batch.id } },
+          },
+        });
+
+        remaining -= deduct;
+      }
+    }
+
+    return tx.sale.update({
+      where: { id },
+      data: {
+        paidAmount: body.paidAmount,
+        discount: body.discount ?? 0,
+        payDueDate: body.payDueDate,
+        date: body.date,
+        customer: { connect: { id: customerId } },
+      },
+    });
+  });
+};
