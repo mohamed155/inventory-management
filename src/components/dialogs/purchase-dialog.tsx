@@ -30,7 +30,10 @@ import {
   FieldLabel,
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
-import type { PurchaseFormData } from '@/models/purchase-form.ts';
+import type {
+  PurchaseEditData,
+  PurchaseFormData,
+} from '@/models/purchase-form.ts';
 import { getAllProducts } from '@/services/products.ts';
 import { getAllProviders } from '@/services/providers.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
@@ -38,12 +41,53 @@ import { useCurrentUserStore } from '@/store/user.store.ts';
 const nextTenYears = new Date();
 nextTenYears.setFullYear(nextTenYears.getFullYear() + 10);
 
+const buildDefaultValues = (
+  providerStatus: 'exist' | 'add',
+  initialData?: PurchaseEditData,
+) => ({
+  providerId:
+    providerStatus === 'exist' ? (initialData?.providerId ?? '') : undefined,
+  providerName: providerStatus === 'add' ? '' : undefined,
+  providerPhone: providerStatus === 'add' ? '' : undefined,
+  providerAddress: providerStatus === 'add' ? '' : undefined,
+  products: initialData
+    ? initialData.products.map((product) => ({
+        status: 'exist' as const,
+        id: product.id,
+        name: '',
+        isExpirable: product.isExpirable,
+        quantity: product.quantity,
+        unitPrice: product.unitPrice,
+        productionDate: product.productionDate,
+        expirationDate: product.expirationDate,
+      }))
+    : [
+        {
+          status: 'exist' as const,
+          name: '',
+          isExpirable: true,
+          quantity: 0,
+          unitPrice: 0,
+          productionDate: undefined,
+          expirationDate: undefined,
+        },
+      ],
+  paidAmount: initialData?.paidAmount ?? 0,
+  discount: initialData?.discount ?? 0,
+  payDueDate: initialData?.payDueDate,
+  date: initialData?.date ?? new Date(),
+});
+
 function PurchaseDialog({
   open,
   onClose,
+  initialData,
+  stockError,
 }: {
   open: boolean;
   onClose?: (purchase?: PurchaseFormData) => void;
+  initialData?: PurchaseEditData;
+  stockError?: { productId: string; available: number } | null;
 }) {
   const { t } = useTranslation();
   const currentUser = useCurrentUserStore((state) => state.currentUser);
@@ -110,7 +154,10 @@ function PurchaseDialog({
               ),
           ),
           paidAmount: z.number().min(0, t('Paid amount cannot be negative')),
-          discount: z.number().min(0, t('Discount cannot be negative')).optional(),
+          discount: z
+            .number()
+            .min(0, t('Discount cannot be negative'))
+            .optional(),
           payDueDate: z.date().optional(),
           date: z.date(),
         })
@@ -123,27 +170,7 @@ function PurchaseDialog({
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      providerId: providerStatus === 'exist' ? '' : undefined,
-      providerName: providerStatus === 'add' ? '' : undefined,
-      providerPhone: providerStatus === 'add' ? '' : undefined,
-      providerAddress: providerStatus === 'add' ? '' : undefined,
-      products: [
-        {
-          status: 'exist',
-          name: '',
-          isExpirable: true,
-          quantity: 0,
-          unitPrice: 0,
-          productionDate: undefined,
-          expirationDate: undefined,
-        },
-      ],
-      paidAmount: 0,
-      discount: 0,
-      payDueDate: undefined,
-      date: new Date(),
-    },
+    defaultValues: buildDefaultValues(providerStatus, initialData),
   });
 
   const {
@@ -154,6 +181,12 @@ function PurchaseDialog({
     control: form.control,
     name: 'products',
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setProviderStatus('exist');
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (providerStatus === 'add') {
@@ -168,28 +201,20 @@ function PurchaseDialog({
         form.unregister(`products.${idx}.id`);
       }
     }
-    form.reset({
-      providerId: providerStatus === 'exist' ? '' : undefined,
-      providerName: providerStatus === 'add' ? '' : undefined,
-      providerPhone: providerStatus === 'add' ? '' : undefined,
-      providerAddress: providerStatus === 'add' ? '' : undefined,
-      products: [
-        {
-          status: 'exist',
-          name: '',
-          isExpirable: true,
-          quantity: 0,
-          unitPrice: 0,
-          productionDate: undefined,
-          expirationDate: undefined,
-        },
-      ],
-      paidAmount: 0,
-      discount: 0,
-      payDueDate: undefined,
-      date: new Date(),
+    form.reset(buildDefaultValues(providerStatus, initialData));
+  }, [providerStatus, form, initialData]);
+
+  useEffect(() => {
+    if (!stockError) return;
+    const index = form
+      .getValues('products')
+      .findIndex((product) => product.id === stockError.productId);
+    if (index === -1) return;
+    form.setError(`products.${index}.quantity`, {
+      message: `${t('Cannot reduce below already sold quantity')} (${t('Minimum')}: ${stockError.available})`,
     });
-  }, [providerStatus, form]);
+    form.setFocus(`products.${index}.quantity`);
+  }, [stockError, form, t]);
 
   const watchedProducts = form.watch('products');
   const watchedDiscount = form.watch('discount');
@@ -242,7 +267,9 @@ function PurchaseDialog({
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <DialogContent className="grid max-h-[90vh] grid-rows-[auto_1fr_auto]">
           <DialogHeader>
-            <DialogTitle>{t('Add Purchase')}</DialogTitle>
+            <DialogTitle>
+              {initialData ? t('Edit Purchase') : t('Add Purchase')}
+            </DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto pb-2">
             <Tabs
@@ -528,7 +555,9 @@ function PurchaseDialog({
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>{t('Production Date')}</FieldLabel>
+                                  <FieldLabel>
+                                    {t('Production Date')}
+                                  </FieldLabel>
                                   <DatePicker
                                     {...field}
                                     dismissable
@@ -553,7 +582,9 @@ function PurchaseDialog({
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>{t('Expiration Date')}</FieldLabel>
+                                  <FieldLabel>
+                                    {t('Expiration Date')}
+                                  </FieldLabel>
                                   <DatePicker
                                     {...field}
                                     dismissable
@@ -601,7 +632,9 @@ function PurchaseDialog({
                         aria-invalid={fieldState.invalid}
                         autoComplete="off"
                       />
-                      <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                      <Activity
+                        mode={fieldState.invalid ? 'visible' : 'hidden'}
+                      >
                         <FieldError errors={[fieldState.error]} />
                       </Activity>
                     </Field>
@@ -683,7 +716,7 @@ function PurchaseDialog({
                 {t('Cancel')}
               </Button>
             </DialogClose>
-						<Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
+            <Button onClick={form.handleSubmit(onSubmit)}>{t('Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </form>
