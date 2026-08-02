@@ -1,5 +1,7 @@
 # Edit Purchase / Edit Sale Implementation Plan
 
+> **Execution status (2026-08-03):** Tasks 1–10 are implemented and committed through `80867c0`; Task 11 automated verification passed tests, typecheck, and build. Full ESLint is blocked by the repository's installed `typescript-eslint`/TypeScript 7 incompatibility. Detailed progress is recorded in `.superpowers/sdd/2026-08-03-edit-purchase-sale/progress.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let users edit an existing purchase or sale — provider/customer, line items, quantities, prices, dates, discount, paid amount — by reusing the existing `PurchaseDialog`/`SaleDialog` in an edit mode, with an admin-only setting choosing between the old payment-only dialog and the new full edit.
