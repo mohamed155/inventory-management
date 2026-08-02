@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, X } from 'lucide-react';
-import { Activity, useEffect, useMemo, useState } from 'react';
+import { Activity, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import z from 'zod';
@@ -29,19 +29,44 @@ import {
   FieldLabel,
 } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
-import type { SaleFormData } from '@/models/sales-form.ts';
+import type { SaleEditData, SaleFormData } from '@/models/sales-form.ts';
 import { getAllCustomers } from '@/services/customers.ts';
 import { getAllProductBatches, getAllProducts } from '@/services/products.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
+
+const buildDefaultValues = (
+  customerStatus: 'exist' | 'add',
+  initialData?: SaleEditData,
+) => ({
+  customerId:
+    customerStatus === 'exist' ? (initialData?.customerId ?? '') : undefined,
+  customerFirstname: customerStatus === 'add' ? '' : undefined,
+  customerLastname: customerStatus === 'add' ? '' : undefined,
+  customerPhone: customerStatus === 'add' ? '' : undefined,
+  customerAddress: customerStatus === 'add' ? '' : undefined,
+  products: initialData
+    ? initialData.products.map((product) => ({
+        id: product.id,
+        quantity: product.quantity,
+        unitPrice: product.unitPrice,
+      }))
+    : [{ id: '', quantity: 1, unitPrice: 0 }],
+  paidAmount: initialData?.paidAmount ?? 0,
+  discount: initialData?.discount ?? 0,
+  payDueDate: initialData?.payDueDate,
+  date: initialData?.date ?? new Date(),
+});
 
 function SaleDialog({
   open,
   onClose,
   stockError,
+  initialData,
 }: {
   open: boolean;
   onClose?: (sale?: SaleFormData) => void;
   stockError?: { productId: string; available: number } | null;
+  initialData?: SaleEditData;
 }) {
   const { t } = useTranslation();
   const currentUser = useCurrentUserStore((state) => state.currentUser);
@@ -68,11 +93,29 @@ function SaleDialog({
     queryFn: () => getAllProductBatches(),
   });
 
-  const getProductStock = (productId: string) => {
-    const batches =
-      productBatches?.filter((b) => b.productId === productId) || [];
-    return batches.reduce((sum: number, b) => sum + (b.quantity || 0), 0);
-  };
+  const editQuantities = useMemo(() => {
+    const quantities = new Map<string, number>();
+    for (const product of initialData?.products ?? []) {
+      quantities.set(
+        product.id,
+        (quantities.get(product.id) ?? 0) + product.quantity,
+      );
+    }
+    return quantities;
+  }, [initialData]);
+
+  const getProductStock = useCallback(
+    (productId: string) => {
+      const batches =
+        productBatches?.filter((b) => b.productId === productId) || [];
+      const current = batches.reduce(
+        (sum: number, b) => sum + (b.quantity || 0),
+        0,
+      );
+      return current + (editQuantities.get(productId) ?? 0);
+    },
+    [productBatches, editQuantities],
+  );
 
   const formSchema = useMemo(
     () =>
@@ -124,29 +167,12 @@ function SaleDialog({
             }
           });
         }),
-    [t, customerStatus, productBatches],
+    [t, customerStatus, getProductStock],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      customerId: customerStatus === 'exist' ? '' : undefined,
-      customerFirstname: customerStatus === 'add' ? '' : undefined,
-      customerLastname: customerStatus === 'add' ? '' : undefined,
-      customerPhone: customerStatus === 'add' ? '' : undefined,
-      customerAddress: customerStatus === 'add' ? '' : undefined,
-      products: [
-        {
-          id: '',
-          quantity: 1,
-          unitPrice: 0,
-        },
-      ],
-      paidAmount: 0,
-      discount: 0,
-      payDueDate: undefined,
-      date: new Date(),
-    },
+    defaultValues: buildDefaultValues(customerStatus, initialData),
   });
 
   const {
@@ -157,6 +183,12 @@ function SaleDialog({
     control: form.control,
     name: 'products',
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setCustomerStatus('exist');
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (!stockError) return;
@@ -181,19 +213,8 @@ function SaleDialog({
         'customerAddress',
       ]);
     }
-    form.reset({
-      customerId: customerStatus === 'exist' ? '' : undefined,
-      customerFirstname: customerStatus === 'add' ? '' : undefined,
-      customerLastname: customerStatus === 'add' ? '' : undefined,
-      customerPhone: customerStatus === 'add' ? '' : undefined,
-      customerAddress: customerStatus === 'add' ? '' : undefined,
-      products: [{ id: '', quantity: 1, unitPrice: 0 }],
-      paidAmount: 0,
-      discount: 0,
-      payDueDate: undefined,
-      date: new Date(),
-    });
-  }, [customerStatus, form]);
+    form.reset(buildDefaultValues(customerStatus, initialData));
+  }, [customerStatus, form, initialData]);
 
   const watchedProducts = form.watch('products');
   const watchedDiscount = form.watch('discount');
@@ -241,7 +262,7 @@ function SaleDialog({
 
   const availableProducts = useMemo(
     () => (products || []).filter((product) => getProductStock(product.id) > 0),
-    [products, productBatches],
+    [products, getProductStock],
   );
 
   return (
@@ -249,7 +270,9 @@ function SaleDialog({
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <DialogContent className="grid max-h-[90vh] grid-rows-[auto_1fr_auto]">
           <DialogHeader>
-            <DialogTitle>{t('Add Sale')}</DialogTitle>
+            <DialogTitle>
+              {initialData ? t('Edit Sale') : t('Add Sale')}
+            </DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto pb-2">
             <Tabs

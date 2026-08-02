@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -19,15 +19,18 @@ import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
 import { formatDate } from '@/lib/format-date.ts';
-import type { SaleFormData } from '@/models/sales-form.ts';
+import type { SaleEditData, SaleFormData } from '@/models/sales-form.ts';
 import type { SalesListResult } from '@/models/sales-list-result.ts';
 import {
   createSale,
   deleteSale,
+  getAllSaleItems,
   getAllSalesPaginated,
   updateSale,
+  updateSaleWithItems,
 } from '@/services/sales.ts';
 import { useCurrentSettings } from '@/store/settings.store.ts';
+import { toSaleEditData } from '@/util/sale-edit-data.ts';
 import { parseInsufficientStockError } from '@/util/stock-error.ts';
 import type { Sale } from '../../generated/prisma/browser.ts';
 import type { SaleWhereInput } from '../../generated/prisma/models/Sale.ts';
@@ -36,9 +39,12 @@ function Sales() {
   const { t } = useTranslation();
   const currency = useCurrentSettings((s) => s.currency);
   const dateFormat = useCurrentSettings((s) => s.dateFormat);
+  const editMode = useCurrentSettings((s) => s.purchaseSaleEditMode);
   const { confirm } = useConfirm();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [saleDialogOpen, setSaleDialogOpen] = useState<boolean>(false);
+  const [editSale, setEditSale] = useState<SaleEditData>();
   const [saleStockError, setSaleStockError] = useState<{
     productId: string;
     available: number;
@@ -46,6 +52,7 @@ function Sales() {
 
   useEffect(() => {
     if (location.state?.openDialog) {
+      setEditSale(undefined);
       setSaleStockError(null);
       setSaleDialogOpen(true);
       window.history.replaceState({}, '');
@@ -147,6 +154,24 @@ function Sales() {
     setUpdatePaymentOpen(true);
   }, []);
 
+  const openEditDialog = useCallback(async (sale: SalesListResult) => {
+    const items = await getAllSaleItems(sale.id);
+    setEditSale(toSaleEditData(sale, items));
+    setSaleStockError(null);
+    setSaleDialogOpen(true);
+  }, []);
+
+  const handleEditAction = useCallback(
+    (sale: SalesListResult) => {
+      if (editMode === 'paymentOnly') {
+        openUpdatePaymentDialog(sale as Sale);
+        return;
+      }
+      openEditDialog(sale);
+    },
+    [editMode, openEditDialog, openUpdatePaymentDialog],
+  );
+
   const columns = useMemo<ColumnDef<SalesListResult>[]>(
     () => [
       {
@@ -215,7 +240,7 @@ function Sales() {
             <Button
               variant="outline"
               className="cursor-pointer"
-              onClick={() => openUpdatePaymentDialog(info.row.original as Sale)}
+              onClick={() => handleEditAction(info.row.original)}
             >
               <Edit className="text-primary" />
             </Button>
@@ -236,21 +261,29 @@ function Sales() {
       dateFormat,
       performDeleteSale,
       openDetailsDialog,
-      openUpdatePaymentDialog,
+      handleEditAction,
     ],
   );
 
   const handleDialogClose = async (sale?: SaleFormData) => {
     if (!sale) {
       setSaleStockError(null);
+      setEditSale(undefined);
       setSaleDialogOpen(false);
       return;
     }
     try {
-      await createSale(sale);
+      if (editSale) {
+        await updateSaleWithItems(editSale.id, sale);
+      } else {
+        await createSale(sale);
+      }
       setSaleStockError(null);
+      setEditSale(undefined);
       setSaleDialogOpen(false);
       refetchSales();
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['productBatches'] });
     } catch (error) {
       const stockError = parseInsufficientStockError(error);
       if (stockError) {
@@ -258,7 +291,11 @@ function Sales() {
         return;
       }
       toast.error(
-        error instanceof Error ? error.message : t('Failed to create sale'),
+        error instanceof Error
+          ? error.message
+          : editSale
+            ? t('Failed to update sale')
+            : t('Failed to create sale'),
       );
     }
   };
@@ -282,6 +319,7 @@ function Sales() {
         open={saleDialogOpen}
         onClose={handleDialogClose}
         stockError={saleStockError}
+        initialData={editSale}
       />
       <Activity mode={selectedSale ? 'visible' : 'hidden'}>
         <InvoiceDialog
@@ -318,6 +356,7 @@ function Sales() {
           <Button
             className="bg-primary text-white"
             onClick={() => {
+              setEditSale(undefined);
               setSaleStockError(null);
               setSaleDialogOpen(true);
             }}
