@@ -41,5 +41,10 @@ export const createSale = (sale: SaleFormData) =>
 export const updateSale = (id: string, sale: Partial<Sale>) =>
   window.electronAPI.updateSale(id, sale).then(unwrap);
 
+export const updateSaleWithItems = (id: string, sale: SaleFormData) =>
+  window.electronAPI
+    .updateSaleWithItems(getInventoryId(), id, sale)
+    .then(unwrap);
+
 export const deleteSale = (id: string) =>
   window.electronAPI.deleteSale(id).then(unwrap);

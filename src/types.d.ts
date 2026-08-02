@@ -245,6 +245,11 @@ declare global {
         id: string,
         purchase: Partial<Purchase>,
       ) => Promise<IpcResponse<Purchase>>;
+      updatePurchaseWithItems: (
+        inventoryId: string,
+        id: string,
+        purchase: PurchaseFormData,
+      ) => Promise<IpcResponse<Purchase>>;
       deletePurchase: (id: string) => Promise<IpcResponse<Purchase>>;
       getAllPurchaseItems: (
         purchaseId: string,
@@ -289,6 +294,11 @@ declare global {
       updateSale: (
         id: string,
         sale: Partial<Sale>,
+      ) => Promise<IpcResponse<Sale>>;
+      updateSaleWithItems: (
+        inventoryId: string,
+        id: string,
+        sale: SaleFormData,
       ) => Promise<IpcResponse<Sale>>;
       deleteSale: (id: string) => Promise<IpcResponse<Sale>>;
       getAllSaleItems: (

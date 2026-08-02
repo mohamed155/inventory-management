@@ -78,6 +78,7 @@ import {
   getPurchaseById,
   getPurchasesByProviderId,
   updatePurchase,
+  updatePurchaseWithItems,
 } from './prisma-actions/purchases.action.ts';
 import {
   createSale,
@@ -88,6 +89,7 @@ import {
   getSaleById,
   getSalesByCustomerId,
   updateSale,
+  updateSaleWithItems,
 } from './prisma-actions/sales.action.ts';
 import {
   createUser,
@@ -270,6 +272,11 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   ipcMain.handle('updatePurchase', (_, id: string, purchase: Purchase) =>
     ok(() => updatePurchase(prisma, id, purchase)),
   );
+  ipcMain.handle(
+    'updatePurchaseWithItems',
+    (_, inventoryId: string, id: string, data: PurchaseFormData) =>
+      ok(() => updatePurchaseWithItems(prisma, inventoryId, id, data)),
+  );
   ipcMain.handle('deletePurchase', (_, id: string) =>
     ok(() => deletePurchase(prisma, id)),
   );
@@ -295,6 +302,11 @@ export const initPrismaActions = (prisma: PrismaClient) => {
   );
   ipcMain.handle('updateSale', (_, id: string, sale: Sale) =>
     ok(() => updateSale(prisma, id, sale)),
+  );
+  ipcMain.handle(
+    'updateSaleWithItems',
+    (_, inventoryId: string, id: string, data: SaleFormData) =>
+      ok(() => updateSaleWithItems(prisma, inventoryId, id, data)),
   );
   ipcMain.handle('deleteSale', (_, id: string) =>
     ok(() => deleteSale(prisma, id)),

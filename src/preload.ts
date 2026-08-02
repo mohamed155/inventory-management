@@ -124,6 +124,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('createPurchase', inventoryId, body),
   updatePurchase: (id: string, purchase: Purchase) =>
     ipcRenderer.invoke('updatePurchase', id, purchase),
+  updatePurchaseWithItems: (
+    inventoryId: string,
+    id: string,
+    purchase: PurchaseFormData,
+  ) => ipcRenderer.invoke('updatePurchaseWithItems', inventoryId, id, purchase),
   deletePurchase: (id: string) => ipcRenderer.invoke('deletePurchase', id),
   getAllPurchaseItems: (purchaseId: string) =>
     ipcRenderer.invoke('getAllPurchaseItems', purchaseId),
@@ -138,6 +143,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createSale: (inventoryId: string, body: SaleFormData) => ipcRenderer.invoke('createSale', inventoryId, body),
   updateSale: (id: string, sale: Partial<Sale>) =>
     ipcRenderer.invoke('updateSale', id, sale),
+  updateSaleWithItems: (inventoryId: string, id: string, sale: SaleFormData) =>
+    ipcRenderer.invoke('updateSaleWithItems', inventoryId, id, sale),
   deleteSale: (id: string) => ipcRenderer.invoke('deleteSale', id),
   getAllSaleItems: (saleId: string) =>
     ipcRenderer.invoke('getAllSaleItems', saleId),

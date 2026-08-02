@@ -51,6 +51,25 @@ describe('sales service', () => {
     expect(mock.updateSale).toHaveBeenCalledWith('sale-id', partial);
   });
 
+  it('updateSaleWithItems delegates with inventory id, id and form data', async () => {
+    const mock = stubElectronAPI();
+    const { updateSaleWithItems } = await import(
+      '../../../src/services/sales.ts'
+    );
+    const formData = {
+      userId: 'u1',
+      customerId: 'c1',
+      paidAmount: 100,
+      products: [],
+    } as any;
+    await updateSaleWithItems('sale-id', formData);
+    expect(mock.updateSaleWithItems).toHaveBeenCalledWith(
+      '',
+      'sale-id',
+      formData,
+    );
+  });
+
   it('deleteSale delegates with the id', async () => {
     const mock = stubElectronAPI();
     const { deleteSale } = await import('../../../src/services/sales.ts');
