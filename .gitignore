@@ -37,3 +37,6 @@ public
 coverage/
 
 .specify
+
+# Subagent-driven-development scratch workspace
+.superpowers/
