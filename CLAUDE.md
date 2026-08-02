@@ -17,7 +17,7 @@ bun run build        # Prisma generate → tsc → Vite build → esbuild Electr
 bun run package      # Build + package as NSIS installer
 bun run lint         # ESLint
 bun run db:generate  # Regenerate Prisma client
-bun run db:push      # Push schema changes to SQLite
+bun run db:push      # (unsafe here — see below; do not use for schema changes)
 ```
 
 ## Architecture
@@ -69,7 +69,7 @@ Hash-based routing (`createHashRouter`) is required for Electron. Auth loaders i
 
 Core models: `User`, `Product`, `ProductBatch` (with production/expiry dates and quantities), `Customer`, `Provider`, `Purchase` + `PurchaseItem`, `Sale` + `SaleItem`.
 
-After changing `prisma/schema.prisma`, run `bun run db:push` then `bun run db:generate`.
+After changing `prisma/schema.prisma`, do **not** run `bun run db:push` or `prisma migrate dev` — both refuse to run safely against this repo because they want to drop the custom `_applied_migrations` bookkeeping table that `src/electron.ts`'s `ensureDatabase()` depends on. Instead, hand-write a `prisma/migrations/<timestamp>_<name>/migration.sql` file (plain `ALTER TABLE`/etc. statements, matching existing migrations under `prisma/migrations/`), then run `bun run db:generate` to regenerate the Prisma client types. Both `tests/setup/db.ts` and `src/electron.ts` scan `prisma/migrations/*/migration.sql` directly and apply whatever hasn't been recorded yet, so the new file is picked up automatically.
 
 ## Tooling notes
 

@@ -74,6 +74,87 @@ describe('createProductBatch', () => {
       } as any),
     ).rejects.toThrow();
   });
+
+  it('sets isExpirable on a newly created product', async () => {
+    const batch = await createProductBatch(prisma, inventoryId, {
+      name: 'Non Expirable Product',
+      isExpirable: false,
+      quantity: 10,
+    } as any);
+
+    const product = await prisma.product.findUnique({
+      where: { id: batch.productId },
+    });
+    expect(product?.isExpirable).toBe(false);
+  });
+
+  it('defaults isExpirable to true when not provided for a new product', async () => {
+    const batch = await createProductBatch(prisma, inventoryId, {
+      name: 'Default Expirable Product',
+      quantity: 10,
+    } as any);
+
+    const product = await prisma.product.findUnique({
+      where: { id: batch.productId },
+    });
+    expect(product?.isExpirable).toBe(true);
+  });
+
+  it('updates isExpirable on an existing product when provided', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Existing Expirable', inventoryId, isExpirable: true },
+    });
+
+    await createProductBatch(prisma, inventoryId, {
+      productId: product.id,
+      isExpirable: false,
+      quantity: 5,
+    } as any);
+
+    const updated = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updated?.isExpirable).toBe(false);
+  });
+
+  it('returns the created batch (not the product update result) when isExpirable is provided', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Transactional Product', inventoryId, isExpirable: true },
+    });
+
+    const batch = await createProductBatch(prisma, inventoryId, {
+      productId: product.id,
+      isExpirable: false,
+      quantity: 42,
+      productionDate: new Date('2025-01-01'),
+      expirationDate: new Date('2026-12-31'),
+    } as any);
+
+    expect(batch).toBeDefined();
+    expect(batch.productId).toBe(product.id);
+    expect(batch.quantity).toBe(42);
+
+    const persistedBatch = await prisma.productBatch.findUnique({
+      where: { id: batch.id },
+    });
+    expect(persistedBatch).toBeDefined();
+    expect(persistedBatch?.quantity).toBe(42);
+
+    const updatedProduct = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updatedProduct?.isExpirable).toBe(false);
+  });
+
+  it('leaves isExpirable unchanged on an existing product when not provided', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Untouched Flag', inventoryId, isExpirable: false },
+    });
+
+    await createProductBatch(prisma, inventoryId, {
+      productId: product.id,
+      quantity: 5,
+    } as any);
+
+    const updated = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updated?.isExpirable).toBe(false);
+  });
 });
 
 describe('updateProductBatch', () => {
@@ -105,6 +186,84 @@ describe('updateProductBatch', () => {
 
     expect(updatedProduct?.name).toBe('Updated Name');
     expect(updatedBatch?.quantity).toBe(75);
+  });
+
+  it('updates isExpirable alongside other product fields', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Original', inventoryId, isExpirable: true },
+    });
+    const batch = await prisma.productBatch.create({
+      data: {
+        productId: product.id,
+        productionDate: new Date('2025-01-01'),
+        expirationDate: new Date('2026-12-31'),
+        quantity: 100,
+      },
+    });
+
+    await updateProductBatch(prisma, batch.id, {
+      productId: product.id,
+      name: 'Original',
+      isExpirable: false,
+      quantity: 100,
+      productionDate: null,
+      expirationDate: null,
+    } as any);
+
+    const updatedProduct = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updatedProduct?.isExpirable).toBe(false);
+  });
+
+  it('leaves isExpirable unchanged when not provided', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Keep Flag', inventoryId, isExpirable: false },
+    });
+    const batch = await prisma.productBatch.create({
+      data: {
+        productId: product.id,
+        productionDate: new Date('2025-01-01'),
+        expirationDate: new Date('2026-12-31'),
+        quantity: 100,
+      },
+    });
+
+    await updateProductBatch(prisma, batch.id, {
+      productId: product.id,
+      name: 'Keep Flag',
+      quantity: 90,
+      productionDate: new Date('2025-01-01'),
+      expirationDate: new Date('2026-12-31'),
+    } as any);
+
+    const updatedProduct = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updatedProduct?.isExpirable).toBe(false);
+  });
+
+  it('clears productionDate and expirationDate when they are sent as undefined (Expirable unchecked)', async () => {
+    const product = await prisma.product.create({
+      data: { name: 'Toggle Off', inventoryId, isExpirable: true },
+    });
+    const batch = await prisma.productBatch.create({
+      data: {
+        productId: product.id,
+        productionDate: new Date('2025-01-01'),
+        expirationDate: new Date('2026-12-31'),
+        quantity: 100,
+      },
+    });
+
+    await updateProductBatch(prisma, batch.id, {
+      productId: product.id,
+      name: 'Toggle Off',
+      isExpirable: false,
+      quantity: 100,
+      productionDate: undefined,
+      expirationDate: undefined,
+    } as any);
+
+    const updatedBatch = await prisma.productBatch.findUnique({ where: { id: batch.id } });
+    expect(updatedBatch?.productionDate).toBeNull();
+    expect(updatedBatch?.expirationDate).toBeNull();
   });
 });
 
@@ -204,5 +363,20 @@ describe('getProductBatch', () => {
   it('returns null for unknown id', async () => {
     const result = await getProductBatch(prisma, 'unknown-id');
     expect(result).toBeNull();
+  });
+});
+
+describe('getAllProducts', () => {
+  it('includes isExpirable in the returned fields', async () => {
+    await prisma.product.create({
+      data: { name: 'Flagged Product', inventoryId, isExpirable: false },
+    });
+
+    const { getAllProducts } = await import('@/prisma-actions/product.action.ts');
+    const products = await getAllProducts(prisma, inventoryId);
+
+    const found = products.find((p: { name: string }) => p.name === 'Flagged Product');
+    expect(found).toBeDefined();
+    expect(found.isExpirable).toBe(false);
   });
 });

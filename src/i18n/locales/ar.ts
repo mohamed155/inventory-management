@@ -48,9 +48,11 @@ export default {
   'Exist customer': 'العميل موجود',
   'Exist product': 'المنتج موجود',
   'Exist provider': 'المورد موجود',
+  Expirable: 'قابل للتلف',
   'Expiration Date': 'تاريخ انتهاء الصلاحية',
   'Expiration date can not be before production date':
     'لا يمكن أن يكون تاريخ انتهاء الصلاحية قبل تاريخ الإنتاج',
+  'Expiration Date is required': 'تاريخ انتهاء الصلاحية مطلوب',
   'Expire Date': 'تاريخ انتهاء الصلاحية',
   Expired: 'منتهي الصلاحية',
   Expires: 'ينتهي',
@@ -79,6 +81,7 @@ export default {
   USD: 'دولار',
   Violet: 'بنفسجي',
   Zinc: 'رمادي',
+  'Insufficient stock': 'المخزون غير كافٍ',
   'Invalid username or password': 'اسم المستخدم أو كلمة المرور غير صحيحة',
   Inventory: 'المخزون',
   'Inventory Manager': 'مدير المخزون',
@@ -131,6 +134,7 @@ export default {
   'Product is required': 'المنتج مطلوب',
   'Product name': 'اسم المنتج',
   'Product name is required': 'اسم المنتج مطلوب',
+  'Production Date is required': 'تاريخ الإنتاج مطلوب',
   'Production Date': 'تاريخ الإنتاج',
   Products: 'المنتجات',
   'Products about to expire': 'منتجات قاربت على الانتهاء',
@@ -237,4 +241,5 @@ export default {
   'Failed to add inventory': 'فشل إضافة المخزن',
   'Failed to delete inventory': 'فشل حذف المخزن',
   'Database error': 'خطأ في قاعدة البيانات',
+  'Failed to create sale': 'فشل إنشاء الفاتورة',
 };

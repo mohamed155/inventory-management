@@ -167,6 +167,82 @@ describe('createPurchase - batch management', () => {
     });
     expect(newProduct).toBeDefined();
   });
+
+  it('sets isExpirable on a newly created product from a purchase', async () => {
+    const user = await seedUser(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+
+    await createPurchase(prisma, inventoryId, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date(),
+      products: [
+        {
+          id: undefined,
+          name: 'Non Expirable Purchase Product',
+          isExpirable: false,
+          quantity: 5,
+          unitPrice: 20,
+        },
+      ],
+    } as any);
+
+    const newProduct = await prisma.product.findFirst({
+      where: { name: 'Non Expirable Purchase Product' },
+    });
+    expect(newProduct?.isExpirable).toBe(false);
+  });
+
+  it('updates isExpirable on an existing product when provided in a purchase', async () => {
+    const user = await seedUser(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, { isExpirable: true }, inventoryId);
+
+    await createPurchase(prisma, inventoryId, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date(),
+      products: [
+        {
+          id: product.id,
+          isExpirable: false,
+          quantity: 5,
+          unitPrice: 20,
+        },
+      ],
+    } as any);
+
+    const updated = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updated?.isExpirable).toBe(false);
+  });
+
+  it('leaves isExpirable unchanged on an existing product when not provided in a purchase', async () => {
+    const user = await seedUser(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, { isExpirable: false }, inventoryId);
+
+    await createPurchase(prisma, inventoryId, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date(),
+      products: [
+        {
+          id: product.id,
+          quantity: 5,
+          unitPrice: 20,
+        },
+      ],
+    } as any);
+
+    const updated = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updated?.isExpirable).toBe(false);
+  });
 });
 
 describe('updatePurchase', () => {

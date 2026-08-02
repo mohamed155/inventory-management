@@ -11,6 +11,7 @@ export type PurchaseFormData = {
   products: {
     id?: string;
     name?: string;
+    isExpirable?: boolean;
     quantity: number;
     unitPrice: number;
     productionDate?: Date;

@@ -30,11 +30,6 @@ public
 .env
 .env.local
 
-.ai
-.claude
-.mcp.json
-.agents
-
 # TypeScript incremental build cache
 *.tsbuildinfo
 
@@ -42,4 +37,3 @@ public
 coverage/
 
 .specify
-specs

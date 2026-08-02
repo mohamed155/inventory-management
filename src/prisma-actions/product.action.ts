@@ -36,6 +36,7 @@ export const getAllProducts = async (
   return products.map((product: Product) => ({
     id: product.id,
     name: product.name,
+    isExpirable: product.isExpirable,
   }));
 };
 
@@ -172,32 +173,51 @@ export const createProductBatch = async (
       throw new Error('Product not found in selected inventory');
     }
 
-    return prisma.productBatch.create({
-      data: {
-        id: productBatch.id,
-        productId: product.id,
-        productionDate: productBatch.productionDate,
-        expirationDate: productBatch.expirationDate,
-        quantity: productBatch.quantity,
-      },
-    });
+    const operations = [
+      ...(productBatch.isExpirable !== undefined
+        ? [
+            prisma.product.update({
+              where: { id: product.id },
+              data: { isExpirable: productBatch.isExpirable },
+            }),
+          ]
+        : []),
+      prisma.productBatch.create({
+        data: {
+          id: productBatch.id,
+          productId: product.id,
+          productionDate: productBatch.productionDate,
+          expirationDate: productBatch.expirationDate,
+          quantity: productBatch.quantity,
+        },
+      }),
+    ];
+    const results = await prisma.$transaction(operations);
+    return results[results.length - 1] as ProductBatch;
   } else {
-    const product = await prisma.product.create({
-      data: {
-        name: productBatch.name,
-        description: productBatch.description,
-        unitPrice: productBatch.unitPrice ?? 0,
-        inventory: { connect: { id: inventoryId } },
-      },
-    });
-    return prisma.productBatch.create({
-      data: {
-        productId: product.id,
-        productionDate: productBatch.productionDate,
-        expirationDate: productBatch.expirationDate,
-        quantity: productBatch.quantity,
-      },
-    });
+    const newProductId = crypto.randomUUID();
+    const operations = [
+      prisma.product.create({
+        data: {
+          id: newProductId,
+          name: productBatch.name,
+          description: productBatch.description,
+          unitPrice: productBatch.unitPrice ?? 0,
+          isExpirable: productBatch.isExpirable ?? true,
+          inventory: { connect: { id: inventoryId } },
+        },
+      }),
+      prisma.productBatch.create({
+        data: {
+          productId: newProductId,
+          productionDate: productBatch.productionDate,
+          expirationDate: productBatch.expirationDate,
+          quantity: productBatch.quantity,
+        },
+      }),
+    ];
+    const results = await prisma.$transaction(operations);
+    return results[results.length - 1] as ProductBatch;
   }
 };
 
@@ -213,14 +233,17 @@ export const updateProductBatch = async (
         name: productBatch.name,
         description: productBatch.description,
         unitPrice: productBatch.unitPrice ?? 0,
+        ...(productBatch.isExpirable !== undefined
+          ? { isExpirable: productBatch.isExpirable }
+          : {}),
       },
     }),
     prisma.productBatch.update({
       where: { id },
       data: {
         quantity: productBatch.quantity,
-        productionDate: productBatch.productionDate,
-        expirationDate: productBatch.expirationDate,
+        productionDate: productBatch.productionDate ?? null,
+        expirationDate: productBatch.expirationDate ?? null,
       },
     }),
   ]);

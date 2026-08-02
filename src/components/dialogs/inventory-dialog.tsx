@@ -12,6 +12,7 @@ import {
 import Combobox from '@/components/combobox.tsx';
 import DatePicker from '@/components/date-picker.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { Checkbox } from '@/components/ui/checkbox.tsx';
 import {
   Dialog,
   DialogClose,
@@ -71,11 +72,21 @@ function InventoryDialog({
               }),
           unitPrice: z.number().min(0, t('Unit Price must be positive')),
           quantity: z.number().min(1, t('Quantity can not be zero or less')),
+          isExpirable: z.boolean(),
           productionDate: z.date().optional(),
           expirationDate: z.date().optional(),
         })
+        .refine((data) => !data.isExpirable || !!data.productionDate, {
+          message: t('Production Date is required'),
+          path: ['productionDate'],
+        })
+        .refine((data) => !data.isExpirable || !!data.expirationDate, {
+          message: t('Expiration Date is required'),
+          path: ['expirationDate'],
+        })
         .refine(
           (data) =>
+            !data.isExpirable ||
             !data.expirationDate ||
             !data.productionDate ||
             data.expirationDate > data.productionDate,
@@ -95,6 +106,7 @@ function InventoryDialog({
       description: status === 'new' ? '' : undefined,
       unitPrice: 0,
       quantity: 0,
+      isExpirable: true,
       productionDate: undefined,
       expirationDate: undefined,
     },
@@ -120,26 +132,36 @@ function InventoryDialog({
           : undefined,
       unitPrice: product ? (product.unitPrice ?? 0) : 0,
       quantity: product ? product.quantity : 0,
+      isExpirable: product ? (product.isExpirable ?? true) : true,
       productionDate: product ? product.productionDate ?? undefined : undefined,
       expirationDate: product ? product.expirationDate ?? undefined : undefined,
     });
   }, [status, form, product]);
 
+  const isExpirable = form.watch('isExpirable');
+
   const onSubmit = async () => {
     if (onClose) {
+      const values = form.getValues();
+      const payload = {
+        ...values,
+        ...(values.isExpirable
+          ? {}
+          : { productionDate: undefined, expirationDate: undefined }),
+      };
       if (product) {
         const editConfirm = await confirm(
           t('Are you sure to edit this record?'),
         );
         if (editConfirm) {
           onClose({
-            ...form.getValues(),
+            ...payload,
             productId: product?.productId,
             id: product.id,
           } as Partial<Product & ProductBatch>);
         }
       } else {
-        onClose(form.getValues() as Partial<Product & ProductBatch>);
+        onClose(payload as Partial<Product & ProductBatch>);
       }
     }
   };
@@ -218,6 +240,15 @@ function InventoryDialog({
                       list={data || []}
                       valueProp="id"
                       labelProp="name"
+                      onChange={(value) => {
+                        field.onChange(value);
+                        const selected = data?.find(
+                          (p) => p.id === (value as string),
+                        );
+                        if (selected) {
+                          form.setValue('isExpirable', selected.isExpirable);
+                        }
+                      }}
                     />
                     <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
                       <FieldError errors={[fieldState.error]} />
@@ -269,45 +300,61 @@ function InventoryDialog({
               )}
             />
             <Controller
-              name="productionDate"
+              name="isExpirable"
               control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>{t('Production Date')}</FieldLabel>
-                  <DatePicker
-                    {...field}
-                    dismissable
-                    onChange={(date) =>
-                      field.onChange({ target: { value: date } })
-                    }
-                  ></DatePicker>
-                  <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
-                    <FieldError errors={[fieldState.error]} />
-                  </Activity>
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="isExpirable"
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                  <FieldLabel htmlFor="isExpirable">{t('Expirable')}</FieldLabel>
                 </Field>
               )}
             />
-            <Controller
-              name="expirationDate"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>{t('Expiration Date')}</FieldLabel>
-                  <DatePicker
-                    {...field}
-                    dismissable
-                    onChange={(date) =>
-                      field.onChange({ target: { value: date } })
-                    }
-                    aria-invalid={fieldState.invalid}
-                    maxDate={nextTenYears}
-                  ></DatePicker>
-                  <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
-                    <FieldError errors={[fieldState.error]} />
-                  </Activity>
-                </Field>
-              )}
-            />
+            <Activity mode={isExpirable ? 'visible' : 'hidden'}>
+              <Controller
+                name="productionDate"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>{t('Production Date')}</FieldLabel>
+                    <DatePicker
+                      {...field}
+                      dismissable
+                      onChange={(date) =>
+                        field.onChange({ target: { value: date } })
+                      }
+                    ></DatePicker>
+                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                      <FieldError errors={[fieldState.error]} />
+                    </Activity>
+                  </Field>
+                )}
+              />
+              <Controller
+                name="expirationDate"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>{t('Expiration Date')}</FieldLabel>
+                    <DatePicker
+                      {...field}
+                      dismissable
+                      onChange={(date) =>
+                        field.onChange({ target: { value: date } })
+                      }
+                      aria-invalid={fieldState.invalid}
+                      maxDate={nextTenYears}
+                    ></DatePicker>
+                    <Activity mode={fieldState.invalid ? 'visible' : 'hidden'}>
+                      <FieldError errors={[fieldState.error]} />
+                    </Activity>
+                  </Field>
+                )}
+              />
+            </Activity>
           </FieldGroup>
           <DialogFooter>
             <DialogClose asChild>

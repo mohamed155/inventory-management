@@ -48,9 +48,11 @@ export default {
   'Exist customer': 'Exist customer',
   'Exist product': 'Exist product',
   'Exist provider': 'Exist provider',
+  Expirable: 'Expirable',
   'Expiration Date': 'Expiration Date',
   'Expiration date can not be before production date':
     'Expiration date can not be before production date',
+  'Expiration Date is required': 'Expiration Date is required',
   'Expire Date': 'Expire Date',
   Expired: 'Expired',
   Expires: 'Expires',
@@ -79,6 +81,7 @@ export default {
   USD: 'USD',
   Violet: 'Violet',
   Zinc: 'Zinc',
+  'Insufficient stock': 'Insufficient stock',
   'Invalid username or password': 'Invalid username or password',
   Inventory: 'Inventory',
   'Inventory Manager': 'Inventory Manager',
@@ -131,6 +134,7 @@ export default {
   'Product is required': 'Product is required',
   'Product name': 'Product name',
   'Product name is required': 'Product name is required',
+  'Production Date is required': 'Production Date is required',
   'Production Date': 'Production Date',
   Products: 'Products',
   'Products about to expire': 'Products about to expire',
@@ -238,4 +242,5 @@ export default {
   'Failed to add inventory': 'Failed to add inventory',
   'Failed to delete inventory': 'Failed to delete inventory',
   'Database error': 'Database error',
+  'Failed to create sale': 'Failed to create sale',
 };

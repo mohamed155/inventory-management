@@ -37,9 +37,11 @@ import { useCurrentUserStore } from '@/store/user.store.ts';
 function SaleDialog({
   open,
   onClose,
+  stockError,
 }: {
   open: boolean;
   onClose?: (sale?: SaleFormData) => void;
+  stockError?: { productId: string; available: number } | null;
 }) {
   const { t } = useTranslation();
   const currentUser = useCurrentUserStore((state) => state.currentUser);
@@ -65,6 +67,12 @@ function SaleDialog({
     queryKey: ['productBatches'],
     queryFn: () => getAllProductBatches(),
   });
+
+  const getProductStock = (productId: string) => {
+    const batches =
+      productBatches?.filter((b) => b.productId === productId) || [];
+    return batches.reduce((sum: number, b) => sum + (b.quantity || 0), 0);
+  };
 
   const formSchema = useMemo(
     () =>
@@ -102,8 +110,21 @@ function SaleDialog({
         .refine((data) => !data.payDueDate || data.payDueDate >= data.date, {
           message: t('Payment due date cannot be before the transaction date'),
           path: ['payDueDate'],
+        })
+        .superRefine((data, ctx) => {
+          data.products.forEach((product, index) => {
+            if (!product.id) return;
+            const stock = getProductStock(product.id);
+            if (product.quantity > stock) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `${t('Insufficient stock')} (${t('Available Stock')}: ${stock})`,
+                path: ['products', index, 'quantity'],
+              });
+            }
+          });
         }),
-    [t, customerStatus],
+    [t, customerStatus, productBatches],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -136,6 +157,18 @@ function SaleDialog({
     control: form.control,
     name: 'products',
   });
+
+  useEffect(() => {
+    if (!stockError) return;
+    const index = form
+      .getValues('products')
+      .findIndex((product) => product.id === stockError.productId);
+    if (index === -1) return;
+    form.setError(`products.${index}.quantity`, {
+      message: `${t('Insufficient stock')} (${t('Available Stock')}: ${stockError.available})`,
+    });
+    form.setFocus(`products.${index}.quantity`);
+  }, [stockError, form, t]);
 
   useEffect(() => {
     if (customerStatus === 'add') {
@@ -204,12 +237,6 @@ function SaleDialog({
       quantity: 1,
       unitPrice: 0,
     });
-  };
-
-  const getProductStock = (productId: string) => {
-    const batches =
-      productBatches?.filter((b) => b.productId === productId) || [];
-    return batches.reduce((sum: number, b) => sum + (b.quantity || 0), 0);
   };
 
   const availableProducts = useMemo(

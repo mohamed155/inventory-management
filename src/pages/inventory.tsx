@@ -185,7 +185,9 @@ function Inventory() {
         accessorKey: 'expirationDate',
         header: () => t('Expire Date'),
         cell: (info) => {
-          const expireDate = new Date(info.getValue() as Date);
+          const raw = info.getValue();
+          if (!raw) return '';
+          const expireDate = new Date(raw as Date);
           const today = new Date();
           const daysUntilExpiry = Math.floor(
             (expireDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
