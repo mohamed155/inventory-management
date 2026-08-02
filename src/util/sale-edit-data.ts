@@ -26,11 +26,12 @@ export const toSaleEditData = (
   const grouped = new Map<string, SaleEditData['products'][number]>();
 
   for (const item of items) {
-    const existing = grouped.get(item.productId);
+    const groupedKey = `${item.productId}|${item.unitPrice}`;
+    const existing = grouped.get(groupedKey);
     if (existing) {
       existing.quantity += item.quantity;
     } else {
-      grouped.set(item.productId, {
+      grouped.set(groupedKey, {
         id: item.productId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,

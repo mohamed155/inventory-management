@@ -24,6 +24,21 @@ describe('toSaleEditData', () => {
     expect(result.products[0].unitPrice).toBe(12);
   });
 
+  it('keeps same product rows with different unit prices as separate lines', () => {
+    const result = toSaleEditData(sale, [
+      { id: 'si-1', productId: 'product-1', quantity: 10, unitPrice: 12 },
+      { id: 'si-2', productId: 'product-1', quantity: 5, unitPrice: 20 },
+    ]);
+
+    expect(result.products).toHaveLength(2);
+    expect(result.products[0].id).toBe('product-1');
+    expect(result.products[0].quantity).toBe(10);
+    expect(result.products[0].unitPrice).toBe(12);
+    expect(result.products[1].id).toBe('product-1');
+    expect(result.products[1].quantity).toBe(5);
+    expect(result.products[1].unitPrice).toBe(20);
+  });
+
   it('keeps distinct products as separate lines in first-seen order', () => {
     const result = toSaleEditData(sale, [
       { id: 'si-1', productId: 'product-a', quantity: 2, unitPrice: 5 },
