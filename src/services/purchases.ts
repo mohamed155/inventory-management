@@ -41,5 +41,13 @@ export const createPurchase = (purchase: PurchaseFormData) =>
 export const updatePurchase = (id: string, purchase: Partial<Purchase>) =>
   window.electronAPI.updatePurchase(id, purchase).then(unwrap);
 
+export const updatePurchaseWithItems = (
+  id: string,
+  purchase: PurchaseFormData,
+) =>
+  window.electronAPI
+    .updatePurchaseWithItems(getInventoryId(), id, purchase)
+    .then(unwrap);
+
 export const deletePurchase = (id: string) =>
   window.electronAPI.deletePurchase(id).then(unwrap);

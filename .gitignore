@@ -37,3 +37,9 @@ public
 coverage/
 
 .specify
+
+# Subagent-driven-development scratch workspace
+.superpowers/
+
+# Codex CLI local per-repo config
+.codex/

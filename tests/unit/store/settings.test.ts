@@ -7,6 +7,7 @@ const defaults = {
   dateFormat: 'dd/MM/yyyy' as const,
   expiryWarningDays: 10,
   lowStockThreshold: 10,
+  purchaseSaleEditMode: 'fullEdit' as const,
 };
 
 beforeEach(() => {
@@ -21,6 +22,7 @@ describe('settings store', () => {
     expect(state.dateFormat).toBe('dd/MM/yyyy');
     expect(state.expiryWarningDays).toBe(10);
     expect(state.lowStockThreshold).toBe(10);
+    expect(state.purchaseSaleEditMode).toBe('fullEdit');
   });
 
   it('setPrimaryColor updates the color', () => {
@@ -46,6 +48,23 @@ describe('settings store', () => {
   it('setLowStockThreshold updates the threshold', () => {
     useCurrentSettings.getState().setLowStockThreshold(5);
     expect(useCurrentSettings.getState().lowStockThreshold).toBe(5);
+  });
+
+  it('defaults purchaseSaleEditMode to fullEdit', () => {
+    expect(useCurrentSettings.getState().purchaseSaleEditMode).toBe('fullEdit');
+  });
+
+  it('setPurchaseSaleEditMode updates the mode', () => {
+    useCurrentSettings.getState().setPurchaseSaleEditMode('paymentOnly');
+    expect(useCurrentSettings.getState().purchaseSaleEditMode).toBe(
+      'paymentOnly',
+    );
+  });
+
+  it('resetSettings reverts purchaseSaleEditMode to fullEdit', () => {
+    useCurrentSettings.getState().setPurchaseSaleEditMode('paymentOnly');
+    useCurrentSettings.getState().resetSettings();
+    expect(useCurrentSettings.getState().purchaseSaleEditMode).toBe('fullEdit');
   });
 
   it('resetSettings reverts all values to defaults', () => {

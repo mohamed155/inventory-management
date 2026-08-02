@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -10,6 +10,7 @@ import { Edit, Funnel, FunnelX, Plus, Trash2 } from 'lucide-react';
 import { Activity, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
+import { toast } from 'sonner';
 import DataTable from '@/components/data-table.tsx';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog.tsx';
 import PurchaseDialog from '@/components/dialogs/purchase-dialog.tsx';
@@ -18,15 +19,22 @@ import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useConfirm } from '@/context/confirm-context.tsx';
 import { formatDate } from '@/lib/format-date.ts';
-import type { PurchaseFormData } from '@/models/purchase-form.ts';
+import type {
+  PurchaseEditData,
+  PurchaseFormData,
+} from '@/models/purchase-form.ts';
 import type { PurchasesListResult } from '@/models/purchases-list-result.ts';
 import {
   createPurchase,
   deletePurchase,
+  getAllPurchaseItems,
   getAllPurchasesPaginated,
   updatePurchase,
+  updatePurchaseWithItems,
 } from '@/services/purchases.ts';
 import { useCurrentSettings } from '@/store/settings.store.ts';
+import { toPurchaseEditData } from '@/util/purchase-edit-data.ts';
+import { parseInsufficientStockError } from '@/util/stock-error.ts';
 import type { Purchase } from '../../generated/prisma/browser.ts';
 import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.ts';
 
@@ -34,12 +42,21 @@ function Purchases() {
   const { t } = useTranslation();
   const currency = useCurrentSettings((s) => s.currency);
   const dateFormat = useCurrentSettings((s) => s.dateFormat);
+  const editMode = useCurrentSettings((s) => s.purchaseSaleEditMode);
   const { confirm } = useConfirm();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState<boolean>(false);
+  const [editPurchase, setEditPurchase] = useState<PurchaseEditData>();
+  const [purchaseStockError, setPurchaseStockError] = useState<{
+    productId: string;
+    available: number;
+  } | null>(null);
 
   useEffect(() => {
     if (location.state?.openDialog) {
+      setEditPurchase(undefined);
+      setPurchaseStockError(null);
       setPurchaseDialogOpen(true);
       window.history.replaceState({}, '');
     }
@@ -131,6 +148,24 @@ function Purchases() {
     setUpdatePaymentOpen(true);
   }, []);
 
+  const openEditDialog = useCallback(async (purchase: PurchasesListResult) => {
+    const items = await getAllPurchaseItems(purchase.id);
+    setEditPurchase(toPurchaseEditData(purchase, items));
+    setPurchaseStockError(null);
+    setPurchaseDialogOpen(true);
+  }, []);
+
+  const handleEditAction = useCallback(
+    (purchase: PurchasesListResult) => {
+      if (editMode === 'paymentOnly') {
+        openUpdatePaymentDialog(purchase as Purchase);
+        return;
+      }
+      openEditDialog(purchase);
+    },
+    [editMode, openEditDialog, openUpdatePaymentDialog],
+  );
+
   const columns = useMemo<ColumnDef<PurchasesListResult>[]>(
     () => [
       {
@@ -199,9 +234,7 @@ function Purchases() {
             <Button
               variant="outline"
               className="cursor-pointer"
-              onClick={() =>
-                openUpdatePaymentDialog(info.row.original as Purchase)
-              }
+              onClick={() => handleEditAction(info.row.original)}
             >
               <Edit className="text-primary" />
             </Button>
@@ -222,15 +255,39 @@ function Purchases() {
       dateFormat,
       performDeletePurchase,
       openDetailsDialog,
-      openUpdatePaymentDialog,
+      handleEditAction,
     ],
   );
 
-  const handleDialogClose = (purchase?: PurchaseFormData) => {
-    if (purchase) {
-      createPurchase(purchase).then(() => refetchPurchases());
+  const handleDialogClose = async (purchase?: PurchaseFormData) => {
+    if (!purchase) {
+      setPurchaseStockError(null);
+      setEditPurchase(undefined);
+      setPurchaseDialogOpen(false);
+      return;
     }
-    setPurchaseDialogOpen(false);
+    try {
+      if (editPurchase) {
+        await updatePurchaseWithItems(editPurchase.id, purchase);
+      } else {
+        await createPurchase(purchase);
+      }
+      setPurchaseStockError(null);
+      setEditPurchase(undefined);
+      setPurchaseDialogOpen(false);
+      refetchPurchases();
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['productBatches'] });
+    } catch (error) {
+      const stockError = parseInsufficientStockError(error);
+      if (stockError) {
+        setPurchaseStockError(stockError);
+        return;
+      }
+      toast.error(
+        error instanceof Error ? error.message : t('Failed to update purchase'),
+      );
+    }
   };
 
   const handleUpdatePayment = (data?: {
@@ -248,7 +305,12 @@ function Purchases() {
 
   return (
     <div>
-      <PurchaseDialog open={purchaseDialogOpen} onClose={handleDialogClose} />
+      <PurchaseDialog
+        open={purchaseDialogOpen}
+        onClose={handleDialogClose}
+        initialData={editPurchase}
+        stockError={purchaseStockError}
+      />
       <Activity mode={selectedPurchase ? 'visible' : 'hidden'}>
         <InvoiceDialog
           open={detailsDialogOpen}
@@ -283,7 +345,11 @@ function Purchases() {
           </Button>
           <Button
             className="bg-primary text-white"
-            onClick={() => setPurchaseDialogOpen(true)}
+            onClick={() => {
+              setEditPurchase(undefined);
+              setPurchaseStockError(null);
+              setPurchaseDialogOpen(true);
+            }}
           >
             <Plus size={30} />
             {t('Add Purchase')}

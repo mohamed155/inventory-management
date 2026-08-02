@@ -16,3 +16,17 @@ export type SaleFormData = {
     unitPrice: number;
   }[];
 };
+
+export type SaleEditData = {
+  id: string;
+  customerId: string;
+  paidAmount: number;
+  discount: number;
+  payDueDate: Date;
+  date: Date;
+  products: {
+    id: string;
+    quantity: number;
+    unitPrice: number;
+  }[];
+};

@@ -12,6 +12,7 @@ import type { PurchaseWhereInput } from '../../generated/prisma/models/Purchase.
 import type { DataParams } from '../models/params.ts';
 import type { PurchaseFormData } from '../models/purchase-form.ts';
 import { intersectIds } from '../util/intersect-ids.ts';
+import { insufficientStockError } from '../util/stock-error.ts';
 
 type PurchaseOrderKey =
   | keyof Purchase
@@ -458,4 +459,225 @@ export const getAllPurchaseItems = async (
       ...item,
     }),
   );
+};
+
+const batchKey = (
+  productId: string,
+  productionDate?: Date | null,
+  expirationDate?: Date | null,
+) =>
+  `${productId}|${productionDate?.getTime() ?? ''}|${expirationDate?.getTime() ?? ''}`;
+
+export const updatePurchaseWithItems = async (
+  prisma: PrismaClient,
+  inventoryId: string,
+  id: string,
+  body: PurchaseFormData,
+) => {
+  return prisma.$transaction(async (tx: PrismaClient) => {
+    let providerId: string;
+    if (body.providerId) {
+      const provider = await tx.provider.findFirst({
+        where: { id: body.providerId, inventoryId },
+        select: { id: true },
+      });
+      if (!provider) {
+        throw new Error('Provider not found in selected inventory');
+      }
+      providerId = body.providerId;
+    } else {
+      const provider = await tx.provider.upsert({
+        where: {
+          inventoryId_phone: { inventoryId, phone: body.providerPhone },
+        },
+        update: {},
+        create: {
+          name: body.providerName,
+          phone: body.providerPhone,
+          address: body.providerAddress,
+          inventory: { connect: { id: inventoryId } },
+        },
+      });
+      providerId = provider.id;
+    }
+
+    const existingItems = await tx.purchaseItem.findMany({
+      where: { purchaseId: id },
+      include: { batch: true },
+    });
+
+    const oldByKey = new Map<
+      string,
+      { productId: string; batchId: string; quantity: number }
+    >();
+    for (const item of existingItems as (PurchaseItem & {
+      batch: ProductBatch;
+    })[]) {
+      const key = batchKey(
+        item.productId,
+        item.batch.productionDate,
+        item.batch.expirationDate,
+      );
+      const existing = oldByKey.get(key);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        oldByKey.set(key, {
+          productId: item.productId,
+          batchId: item.batchId,
+          quantity: item.quantity,
+        });
+      }
+    }
+
+    const resolved: {
+      key: string;
+      productId: string;
+      productionDate: Date | null;
+      expirationDate: Date | null;
+      quantity: number;
+      unitPrice: number;
+      isExpirable?: boolean;
+    }[] = [];
+
+    for (const product of body.products) {
+      let productId: string;
+      if (!product.id) {
+        const newProduct = await tx.product.create({
+          data: {
+            name: product.name || 'Unnamed Product',
+            isExpirable: product.isExpirable ?? true,
+            inventory: { connect: { id: inventoryId } },
+          },
+        });
+        productId = newProduct.id;
+      } else {
+        const existingProduct = await tx.product.findFirst({
+          where: { id: product.id, inventoryId },
+          select: { id: true },
+        });
+        if (!existingProduct) {
+          throw new Error('Product not found in selected inventory');
+        }
+        productId = product.id;
+      }
+
+      const productionDate = product.productionDate ?? null;
+      const expirationDate = product.expirationDate ?? null;
+
+      resolved.push({
+        key: batchKey(productId, productionDate, expirationDate),
+        productId,
+        productionDate,
+        expirationDate,
+        quantity: product.quantity,
+        unitPrice: product.unitPrice,
+        isExpirable: product.isExpirable,
+      });
+    }
+
+    const newByKey = new Map<string, (typeof resolved)[number]>();
+    for (const line of resolved) {
+      const existing = newByKey.get(line.key);
+      if (existing) {
+        existing.quantity += line.quantity;
+      } else {
+        newByKey.set(line.key, { ...line });
+      }
+    }
+
+    const batchIdByKey = new Map<string, string>();
+
+    for (const [key, line] of newByKey) {
+      const oldQuantity = oldByKey.get(key)?.quantity ?? 0;
+      const delta = line.quantity - oldQuantity;
+
+      let batch = await tx.productBatch.findFirst({
+        where: {
+          productId: line.productId,
+          productionDate: line.productionDate,
+          expirationDate: line.expirationDate,
+        },
+      });
+
+      if (!batch) {
+        batch = await tx.productBatch.create({
+          data: {
+            productId: line.productId,
+            productionDate: line.productionDate,
+            expirationDate: line.expirationDate,
+            quantity: delta > 0 ? delta : 0,
+          },
+        });
+      } else if (delta !== 0) {
+        if (batch.quantity + delta < 0) {
+          throw insufficientStockError(
+            line.productId,
+            Math.max(0, oldQuantity - batch.quantity),
+          );
+        }
+        batch = await tx.productBatch.update({
+          where: { id: batch.id },
+          data: { quantity: { increment: delta } },
+        });
+      }
+
+      batchIdByKey.set(key, batch.id);
+    }
+
+    for (const [key, old] of oldByKey) {
+      if (newByKey.has(key)) continue;
+      const batch = await tx.productBatch.findUnique({
+        where: { id: old.batchId },
+      });
+      if (!batch) continue;
+      if (batch.quantity - old.quantity < 0) {
+        throw insufficientStockError(
+          old.productId,
+          Math.max(0, old.quantity - batch.quantity),
+        );
+      }
+      await tx.productBatch.update({
+        where: { id: batch.id },
+        data: { quantity: { decrement: old.quantity } },
+      });
+    }
+
+    await tx.purchaseItem.deleteMany({ where: { purchaseId: id } });
+
+    for (const line of resolved) {
+      const batchId = batchIdByKey.get(line.key);
+      if (!batchId) continue;
+      await tx.purchaseItem.create({
+        data: {
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          purchase: { connect: { id } },
+          product: { connect: { id: line.productId } },
+          batch: { connect: { id: batchId } },
+        },
+      });
+
+      await tx.product.update({
+        where: { id: line.productId },
+        data: {
+          unitPrice: line.unitPrice,
+          ...(line.isExpirable !== undefined
+            ? { isExpirable: line.isExpirable }
+            : {}),
+        },
+      });
+    }
+
+    return tx.purchase.update({
+      where: { id },
+      data: {
+        paidAmount: body.paidAmount,
+        discount: body.discount ?? 0,
+        payDueDate: body.payDueDate,
+        date: body.date,
+        provider: { connect: { id: providerId } },
+      },
+    });
+  });
 };

@@ -5,6 +5,7 @@ import {
   getAllPurchaseItems,
   getAllPurchasesPaginated,
   updatePurchase,
+  updatePurchaseWithItems,
 } from '@/prisma-actions/purchases.action.ts';
 import type { PrismaClient } from '../../../generated/prisma/client.ts';
 import { seedProduct } from '../../fixtures/products.ts';
@@ -274,6 +275,320 @@ describe('updatePurchase', () => {
       where: { id: purchase.id },
     });
     expect(updated?.paidAmount).toBe(300);
+  });
+});
+
+describe('updatePurchaseWithItems', () => {
+  const seedPurchase = async (quantity = 100) => {
+    const user = await seedUser(prisma);
+    const provider = await seedProvider(prisma, {}, inventoryId);
+    const product = await seedProduct(prisma, {}, inventoryId);
+
+    const purchase = await createPurchase(prisma, inventoryId, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [
+        {
+          id: product.id,
+          quantity,
+          unitPrice: 10,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+
+    return { user, provider, product, purchase };
+  };
+
+  it('increases batch stock when quantity is increased', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(100);
+
+    await updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [
+        {
+          id: product.id,
+          quantity: 130,
+          unitPrice: 10,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+
+    const batch = await prisma.productBatch.findFirst({
+      where: { productId: product.id },
+    });
+    expect(batch?.quantity).toBe(130);
+  });
+
+  it('decreases batch stock when quantity is reduced within headroom', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(100);
+
+    await updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [
+        {
+          id: product.id,
+          quantity: 60,
+          unitPrice: 10,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+
+    const batch = await prisma.productBatch.findFirst({
+      where: { productId: product.id },
+    });
+    expect(batch?.quantity).toBe(60);
+  });
+
+  it('allows a reduction down to exactly the already-sold floor', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(100);
+    const batch = await prisma.productBatch.findFirst({
+      where: { productId: product.id },
+    });
+    if (!batch) throw new Error('Expected purchase batch');
+    await prisma.productBatch.update({
+      where: { id: batch.id },
+      data: { quantity: 30 },
+    });
+
+    await updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [
+        {
+          id: product.id,
+          quantity: 70,
+          unitPrice: 10,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+
+    const after = await prisma.productBatch.findUnique({
+      where: { id: batch.id },
+    });
+    expect(after?.quantity).toBe(0);
+  });
+
+  it('rejects a reduction below the already-sold floor and rolls back', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(100);
+    const batch = await prisma.productBatch.findFirst({
+      where: { productId: product.id },
+    });
+    if (!batch) throw new Error('Expected purchase batch');
+    await prisma.productBatch.update({
+      where: { id: batch.id },
+      data: { quantity: 30 },
+    });
+
+    await expect(
+      updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+        userId: user.id,
+        providerId: provider.id,
+        paidAmount: 100,
+        payDueDate: new Date('2026-12-31'),
+        date: new Date('2026-01-01'),
+        products: [
+          {
+            id: product.id,
+            quantity: 50,
+            unitPrice: 10,
+            productionDate: new Date('2025-01-01'),
+            expirationDate: new Date('2026-12-31'),
+          },
+        ],
+      }),
+    ).rejects.toThrow('INSUFFICIENT_STOCK');
+
+    const after = await prisma.productBatch.findUnique({
+      where: { id: batch.id },
+    });
+    expect(after?.quantity).toBe(30);
+    const items = await prisma.purchaseItem.findMany({
+      where: { purchaseId: purchase.id },
+    });
+    expect(items).toHaveLength(1);
+    expect(items[0].quantity).toBe(100);
+  });
+
+  it('reports the reduction floor, not remaining stock, in the error', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(100);
+    const batch = await prisma.productBatch.findFirst({
+      where: { productId: product.id },
+    });
+    if (!batch) throw new Error('Expected purchase batch');
+    await prisma.productBatch.update({
+      where: { id: batch.id },
+      data: { quantity: 30 },
+    });
+
+    await expect(
+      updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+        userId: user.id,
+        providerId: provider.id,
+        paidAmount: 100,
+        payDueDate: new Date('2026-12-31'),
+        date: new Date('2026-01-01'),
+        products: [
+          {
+            id: product.id,
+            quantity: 50,
+            unitPrice: 10,
+            productionDate: new Date('2025-01-01'),
+            expirationDate: new Date('2026-12-31'),
+          },
+        ],
+      }),
+    ).rejects.toThrow(`INSUFFICIENT_STOCK:${product.id}:70`);
+  });
+
+  it('moves stock between batches when a line changes its dates', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(40);
+
+    await updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [
+        {
+          id: product.id,
+          quantity: 40,
+          unitPrice: 10,
+          productionDate: new Date('2025-06-01'),
+          expirationDate: new Date('2027-06-30'),
+        },
+      ],
+    });
+
+    const oldBatch = await prisma.productBatch.findFirst({
+      where: {
+        productId: product.id,
+        productionDate: new Date('2025-01-01'),
+      },
+    });
+    const newBatch = await prisma.productBatch.findFirst({
+      where: {
+        productId: product.id,
+        productionDate: new Date('2025-06-01'),
+      },
+    });
+    expect(oldBatch?.quantity).toBe(0);
+    expect(newBatch?.quantity).toBe(40);
+  });
+
+  it('updates the purchase scalar fields', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(10);
+
+    await updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 777,
+      discount: 55,
+      payDueDate: new Date('2027-03-31'),
+      date: new Date('2026-02-02'),
+      products: [
+        {
+          id: product.id,
+          quantity: 10,
+          unitPrice: 10,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+
+    const updated = await prisma.purchase.findUnique({
+      where: { id: purchase.id },
+    });
+    expect(updated?.paidAmount).toBe(777);
+    expect(updated?.discount).toBe(55);
+  });
+
+  it('replaces purchase items rather than appending to them', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(10);
+
+    await updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [
+        {
+          id: product.id,
+          quantity: 25,
+          unitPrice: 12,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+      ],
+    });
+
+    const items = await prisma.purchaseItem.findMany({
+      where: { purchaseId: purchase.id },
+    });
+    expect(items).toHaveLength(1);
+    expect(items[0].quantity).toBe(25);
+    expect(items[0].unitPrice).toBe(12);
+  });
+
+  it('creates a brand new product added during an edit', async () => {
+    const { user, provider, product, purchase } = await seedPurchase(10);
+
+    await updatePurchaseWithItems(prisma, inventoryId, purchase.id, {
+      userId: user.id,
+      providerId: provider.id,
+      paidAmount: 100,
+      payDueDate: new Date('2026-12-31'),
+      date: new Date('2026-01-01'),
+      products: [
+        {
+          id: product.id,
+          quantity: 10,
+          unitPrice: 10,
+          productionDate: new Date('2025-01-01'),
+          expirationDate: new Date('2026-12-31'),
+        },
+        {
+          id: undefined,
+          name: 'Added During Edit',
+          isExpirable: false,
+          quantity: 6,
+          unitPrice: 30,
+        },
+      ],
+    });
+
+    const created = await prisma.product.findFirst({
+      where: { name: 'Added During Edit' },
+    });
+    expect(created).not.toBeNull();
+    const items = await prisma.purchaseItem.findMany({
+      where: { purchaseId: purchase.id },
+    });
+    expect(items).toHaveLength(2);
   });
 });
 
