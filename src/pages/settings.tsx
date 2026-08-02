@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColorSwatch } from '@/components/color-swatch.tsx';
 import UserManagement from '@/components/settings/user-management/user-management.tsx';
+import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { ArithmeticInput } from '@/components/ui/arithmetic-input.tsx';
 import {
   Select,
   SelectContent,
@@ -17,6 +17,7 @@ import { useCurrentLang } from '@/store/lang.store.ts';
 import {
   type CurrencyCode,
   type DateFormatPattern,
+  type PurchaseSaleEditMode,
   useCurrentSettings,
 } from '@/store/settings.store.ts';
 import { useCurrentUserStore } from '@/store/user.store.ts';
@@ -40,6 +41,9 @@ function Settings() {
   const dateFormat = useCurrentSettings((s) => s.dateFormat);
   const expiryWarningDays = useCurrentSettings((s) => s.expiryWarningDays);
   const lowStockThreshold = useCurrentSettings((s) => s.lowStockThreshold);
+  const purchaseSaleEditMode = useCurrentSettings(
+    (s) => s.purchaseSaleEditMode,
+  );
   const setPrimaryColor = useCurrentSettings((s) => s.setPrimaryColor);
   const setCurrency = useCurrentSettings((s) => s.setCurrency);
   const setDateFormat = useCurrentSettings((s) => s.setDateFormat);
@@ -49,6 +53,9 @@ function Settings() {
   const setLowStockThreshold = useCurrentSettings(
     (s) => s.setLowStockThreshold,
   );
+  const setPurchaseSaleEditMode = useCurrentSettings(
+    (s) => s.setPurchaseSaleEditMode,
+  );
   const resetSettings = useCurrentSettings((s) => s.resetSettings);
 
   const [expiryError, setExpiryError] = useState('');
@@ -56,12 +63,18 @@ function Settings() {
 
   function handleExpiryChange(n: number) {
     if (n < 1) setExpiryError(t('Must be at least 1'));
-    else { setExpiryError(''); setExpiryWarningDays(n); }
+    else {
+      setExpiryError('');
+      setExpiryWarningDays(n);
+    }
   }
 
   function handleStockChange(n: number) {
     if (n < 1) setStockError(t('Must be at least 1'));
-    else { setStockError(''); setLowStockThreshold(n); }
+    else {
+      setStockError('');
+      setLowStockThreshold(n);
+    }
   }
 
   function handleReset() {
@@ -127,6 +140,27 @@ function Settings() {
               </SelectContent>
             </Select>
           </Field>
+          {currentUser?.role === 'admin' && (
+            <Field className="w-50">
+              <FieldLabel>{t('Edit Mode')}</FieldLabel>
+              <Select
+                value={purchaseSaleEditMode}
+                onValueChange={(value) =>
+                  setPurchaseSaleEditMode(value as PurchaseSaleEditMode)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paymentOnly">
+                    {t('Payment only')}
+                  </SelectItem>
+                  <SelectItem value="fullEdit">{t('Full record')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
         </div>
       </div>
 
