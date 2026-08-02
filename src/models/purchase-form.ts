@@ -18,3 +18,20 @@ export type PurchaseFormData = {
     expirationDate?: Date;
   }[];
 };
+
+export type PurchaseEditData = {
+  id: string;
+  providerId: string;
+  paidAmount: number;
+  discount: number;
+  payDueDate: Date;
+  date: Date;
+  products: {
+    id: string;
+    isExpirable: boolean;
+    quantity: number;
+    unitPrice: number;
+    productionDate?: Date;
+    expirationDate?: Date;
+  }[];
+};
